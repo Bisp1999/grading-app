@@ -1,0 +1,753 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Review and Adjust Grades') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>{{ _('Review and Adjust Grades') }}</h2>
+            <p class="text-muted">{{ _('Review student grades across tests and make adjustments as needed.') }}</p>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>{{ _('Filters') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% if teacher_type == 'specialist' %}
+                        <!-- Filter by Class (Specialist only) - First -->
+                        <div class="col-md-3 mb-2">
+                            <label for="filter_class" class="form-label">{{ _('Class:') }}</label>
+                            <select class="form-select" id="filter_class" name="filter_class" onchange="updateGradeFromClass(); loadGradeMatrix()">
+                                <option value="">{{ _('All Classes') }}</option>
+                                {% for grade in grades %}
+                                    {% for class_name in classrooms_by_grade[grade] %}
+                                        <option value="{{ class_name }}" data-grade="{{ grade }}">{{ class_name }} ({{ grade }})</option>
+                                    {% endfor %}
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Filter by Semester -->
+                        <div class="col-md-3 mb-2">
+                            <label for="filter_semester" class="form-label">{{ _('Semester:') }}</label>
+                            <select class="form-select" id="filter_semester" name="filter_semester" onchange="loadGradeMatrix()">
+                                <option value="">{{ _('All Semesters') }}</option>
+                                {% for semester in semesters %}
+                                    <option value="{{ semester }}">{{ semester }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Filter by Competency -->
+                        <div class="col-md-3 mb-2">
+                            <label for="filter_competency" class="form-label">{{ _('Competency:') }}</label>
+                            <select class="form-select" id="filter_competency" name="filter_competency" onchange="loadGradeMatrix()">
+                                <option value="">{{ _('All Competencies') }}</option>
+                                {% for competency in competencies %}
+                                    <option value="{{ competency }}">{{ competency }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Filter by Grade (Specialist only) - Last -->
+                        <div class="col-md-3 mb-2">
+                            <label for="filter_grade" class="form-label">{{ _('Grade:') }}</label>
+                            <select class="form-select" id="filter_grade" name="filter_grade" onchange="updateFilterClassOptions(); loadGradeMatrix();">
+                                <option value="">{{ _('All Grades') }}</option>
+                                {% for grade in grades %}
+                                    <option value="{{ grade }}">{{ grade }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+
+                        {% if teacher_type == 'homeroom' %}
+                        <!-- Filter by Subject (Homeroom only) - First -->
+                        <div class="col-md-4 mb-2">
+                            <label for="filter_subject" class="form-label">{{ _('Subject:') }}</label>
+                            <select class="form-select" id="filter_subject" name="filter_subject" onchange="loadGradeMatrix()">
+                                <option value="">{{ _('All Subjects') }}</option>
+                                {% for subject in subjects %}
+                                    <option value="{{ subject }}">{{ subject }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Filter by Semester -->
+                        <div class="col-md-4 mb-2">
+                            <label for="filter_semester" class="form-label">{{ _('Semester:') }}</label>
+                            <select class="form-select" id="filter_semester" name="filter_semester" onchange="loadGradeMatrix()">
+                                <option value="">{{ _('All Semesters') }}</option>
+                                {% for semester in semesters %}
+                                    <option value="{{ semester }}">{{ semester }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Filter by Competency -->
+                        <div class="col-md-4 mb-2">
+                            <label for="filter_competency" class="form-label">{{ _('Competency:') }}</label>
+                            <select class="form-select" id="filter_competency" name="filter_competency" onchange="loadGradeMatrix()">
+                                <option value="">{{ _('All Competencies') }}</option>
+                                {% for competency in competencies %}
+                                    <option value="{{ competency }}">{{ competency }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grade Matrix Section -->
+    <div class="row" id="gradeMatrixSection" style="display: none;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>{{ _('Grade Matrix') }}</h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="exportToCSV()">
+                            {{ _('Export CSV') }}
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive" style="overflow-x: auto; max-height: 600px; overflow-y: auto;">
+                        <table id="gradeMatrix" class="table table-bordered table-sm" style="min-width: 100%; white-space: nowrap;">
+                            <thead id="gradeMatrixHeader" style="position: sticky; top: 0; z-index: 10; background-color: #f8f9fa;"></thead>
+                            <tbody id="gradeMatrixBody"></tbody>
+                            <tfoot id="gradeMatrixFooter" style="position: sticky; bottom: 0; z-index: 10; background-color: #f8f9fa;"></tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- No Data Message -->
+    <div class="row" id="noDataSection" style="display: none;">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h5>{{ _('No Data Found') }}</h5>
+                <p>{{ _('No tests or grades found for the selected filters. Please adjust your filters or ensure tests have been created and grades have been entered.') }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Translations for JavaScript -->
+<script type="application/json" id="translations">
+{
+    "allClasses": {{ _('All Classes')|tojson|safe }},
+    "studentName": {{ _('Student Name')|tojson|safe }},
+    "weight": {{ _('Weight:')|tojson|safe }},
+    "total": {{ _('Total')|tojson|safe }},
+    "grandTotal": {{ _('Grand Total')|tojson|safe }},
+    "weighted": {{ _('weighted')|tojson|safe }},
+    "notGraded": {{ _('Not graded')|tojson|safe }},
+    "classAverage": {{ _('Class Average')|tojson|safe }},
+    "noDataToExport": {{ _('No data to export.')|tojson|safe }}
+}
+</script>
+
+<script>
+// Store data for dynamic updates
+const classroomsByGrade = {{ classrooms_by_grade|tojson|safe }};
+const teacherType = {{ teacher_type|tojson|safe }};
+const translations = JSON.parse(document.getElementById('translations').textContent);
+let currentGradeData = null;
+
+// Update grade dropdown when class is selected (for specialist)
+function updateGradeFromClass() {
+    if (teacherType !== 'specialist') return;
+    
+    const classSelect = document.getElementById('filter_class');
+    const gradeSelect = document.getElementById('filter_grade');
+    const selectedClass = classSelect.value;
+    
+    if (selectedClass) {
+        // Get the grade from the selected class option's data-grade attribute
+        const selectedOption = classSelect.options[classSelect.selectedIndex];
+        const grade = selectedOption.getAttribute('data-grade');
+        
+        if (grade) {
+            gradeSelect.value = grade;
+        }
+    }
+}
+
+// Update filter class options based on selected grade (for specialist)
+function updateFilterClassOptions() {
+    if (teacherType !== 'specialist') return;
+    
+    const gradeSelect = document.getElementById('filter_grade');
+    const classSelect = document.getElementById('filter_class');
+    const selectedGrade = gradeSelect.value;
+    
+    // Store current selection
+    const currentSelection = classSelect.value;
+    
+    // Clear existing options
+    classSelect.innerHTML = '<option value="">' + translations.allClasses + '</option>';
+    
+    if (selectedGrade && classroomsByGrade[selectedGrade]) {
+        // Only show classes for the selected grade
+        classroomsByGrade[selectedGrade].forEach(className => {
+            const option = document.createElement('option');
+            option.value = className;
+            option.textContent = `${className} (${selectedGrade})`;
+            option.setAttribute('data-grade', selectedGrade);
+            classSelect.appendChild(option);
+        });
+    } else {
+        // Show all classes if no grade is selected
+        Object.keys(classroomsByGrade).forEach(grade => {
+            classroomsByGrade[grade].forEach(className => {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = `${className} (${grade})`;
+                option.setAttribute('data-grade', grade);
+                classSelect.appendChild(option);
+            });
+        });
+    }
+    
+    // Restore selection if it's still available
+    if (currentSelection) {
+        const optionExists = Array.from(classSelect.options).some(option => option.value === currentSelection);
+        if (optionExists) {
+            classSelect.value = currentSelection;
+        }
+    }
+}
+
+// Load grade matrix data
+function loadGradeMatrix() {
+    const semester = document.getElementById('filter_semester').value;
+    const grade = teacherType === 'specialist' ? document.getElementById('filter_grade').value : '';
+    const className = teacherType === 'specialist' ? document.getElementById('filter_class').value : '';
+    const subject = teacherType === 'homeroom' ? document.getElementById('filter_subject').value : '';
+    const competency = document.getElementById('filter_competency').value;
+    
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (semester) params.append('semester', semester);
+    if (grade) params.append('grade', grade);
+    if (className) params.append('class_name', className);
+    if (subject) params.append('subject', subject);
+    if (competency) params.append('competency', competency);
+    
+    fetch(`/api/get_grade_matrix?${params.toString()}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                console.error('API error:', data.error);
+                alert('Error loading grade data: ' + data.error);
+                return;
+            }
+            
+            buildGradeMatrix(data);
+        })
+        .catch(error => {
+            console.error('Error loading grade matrix:', error);
+            // Only show alert for actual errors, not successful data loads
+            if (error.message.includes('HTTP error') || error.message.includes('Failed to fetch')) {
+                alert('Error loading grade data');
+            }
+        });
+}
+
+// Build the grade matrix table grouped by competency
+function buildGradeMatrix(data) {
+    const { tests, students, grades, competency_weights } = data;
+    
+    if (tests.length === 0 || students.length === 0) {
+        document.getElementById('gradeMatrixSection').style.display = 'none';
+        document.getElementById('noDataSection').style.display = 'block';
+        return;
+    }
+    
+    document.getElementById('gradeMatrixSection').style.display = 'block';
+    document.getElementById('noDataSection').style.display = 'none';
+    
+    const table = document.getElementById('gradeMatrix');
+    const header = document.getElementById('gradeMatrixHeader');
+    const body = document.getElementById('gradeMatrixBody');
+    const footer = document.getElementById('gradeMatrixFooter');
+    
+    // Clear existing content
+    header.innerHTML = '';
+    body.innerHTML = '';
+    footer.innerHTML = '';
+    
+    // Group tests by competency
+    const testsByCompetency = {};
+    tests.forEach(test => {
+        const competency = test.competency || 'Unassigned';
+        if (!testsByCompetency[competency]) {
+            testsByCompetency[competency] = [];
+        }
+        testsByCompetency[competency].push(test);
+    });
+    
+    const competencies = Object.keys(testsByCompetency).sort();
+    const selectedCompetency = document.getElementById('filter_competency').value;
+    const showAllCompetencies = selectedCompetency === '' || selectedCompetency === 'All Competencies';
+    
+    // Build header
+    const headerRow = document.createElement('tr');
+    
+    // Student name column
+    const nameHeader = document.createElement('th');
+    nameHeader.textContent = translations.studentName;
+    nameHeader.style.position = 'sticky';
+    nameHeader.style.left = '0';
+    nameHeader.style.top = '0';
+    nameHeader.style.backgroundColor = '#f8f9fa';
+    nameHeader.style.zIndex = '11';
+    nameHeader.style.minWidth = '150px';
+    nameHeader.style.verticalAlign = 'middle';
+    headerRow.appendChild(nameHeader);
+    
+    // For each competency, add test columns and total column
+    competencies.forEach(competency => {
+        const competencyTests = testsByCompetency[competency];
+        
+        // Individual test columns for this competency
+        competencyTests.forEach(test => {
+            const testHeader = document.createElement('th');
+            testHeader.innerHTML = `
+                <div class="text-center">
+                    <div class="fw-bold">${test.test_name}</div>
+                    <div class="small text-muted">${translations.weight} ${test.test_weight}%</div>
+                </div>
+            `;
+            testHeader.style.minWidth = '100px';
+            testHeader.style.backgroundColor = '#f8f9fa';
+            testHeader.style.position = 'sticky';
+            testHeader.style.top = '0';
+            testHeader.style.zIndex = '10';
+            testHeader.style.verticalAlign = 'middle';
+            headerRow.appendChild(testHeader);
+        });
+        
+        // Competency total column
+        const competencyWeight = competency_weights[competency] || 0;
+        const competencyTotalHeader = document.createElement('th');
+        competencyTotalHeader.innerHTML = `
+            <div class="text-center fw-bold" style="background-color: #e9ecef; padding: 8px;">
+                <div>${translations.total} ${competency}</div>
+                <div class="small text-muted">${translations.weight} ${competencyWeight}%</div>
+            </div>
+        `;
+        competencyTotalHeader.style.minWidth = '120px';
+        competencyTotalHeader.style.backgroundColor = '#e9ecef';
+        competencyTotalHeader.style.verticalAlign = 'middle';
+        headerRow.appendChild(competencyTotalHeader);
+    });
+    
+    // Grand total header (only if showing all competencies)
+    if (showAllCompetencies && competencies.length > 1) {
+        const grandTotalHeader = document.createElement('th');
+        grandTotalHeader.innerHTML = translations.grandTotal + '<br/>(' + translations.weighted + ')';
+        grandTotalHeader.style.minWidth = '100px';
+        grandTotalHeader.style.backgroundColor = '#e7f3ff';
+        grandTotalHeader.style.textAlign = 'center';
+        grandTotalHeader.style.position = 'sticky';
+        grandTotalHeader.style.top = '0';
+        grandTotalHeader.style.zIndex = '10';
+        grandTotalHeader.style.verticalAlign = 'middle';
+        headerRow.appendChild(grandTotalHeader);
+    }  
+    header.appendChild(headerRow);
+    
+    // Build student rows
+    students.forEach(student => {
+        const row = document.createElement('tr');
+        
+        // Student name cell
+        const nameCell = document.createElement('td');
+        nameCell.textContent = `${student.first_name} ${student.last_name}`;
+        nameCell.style.position = 'sticky';
+        nameCell.style.left = '0';
+        nameCell.style.backgroundColor = '#fff';
+        nameCell.style.fontWeight = 'bold';
+        nameCell.style.zIndex = '5';
+        row.appendChild(nameCell);
+        
+        // For each competency
+        competencies.forEach(competency => {
+            const competencyTests = testsByCompetency[competency];
+            
+            // Individual test cells for this competency
+            competencyTests.forEach(test => {
+                const gradeCell = document.createElement('td');
+                gradeCell.style.textAlign = 'center';
+                
+                const studentGrades = grades[student.id] || {};
+                const grade = studentGrades[test.id];
+                
+                if (grade !== undefined && grade !== null) {
+                    const percentage = ((grade / test.max_points) * 100).toFixed(1);
+                    gradeCell.innerHTML = `
+                        <div class="fw-bold">${grade}/${test.max_points}</div>
+                        <div class="small text-muted">${percentage}%</div>
+                    `;
+                } else {
+                    gradeCell.innerHTML = `
+                        <div class="text-muted">--</div>
+                        <div class="small text-muted">${translations.notGraded}</div>
+                    `;
+                }
+                
+                row.appendChild(gradeCell);
+            });
+            
+            // Competency total cell - using weighted calculation
+            const competencyTotalCell = document.createElement('td');
+            competencyTotalCell.style.textAlign = 'center';
+            competencyTotalCell.style.fontWeight = 'bold';
+            competencyTotalCell.style.backgroundColor = '#f8f9fa';
+            
+            // Calculate weighted competency total: sum of (grade/max_points * weight) / sum of weights
+            let weightedSum = 0;
+            let totalWeights = 0;
+            let hasGradedTests = false;
+            
+            competencyTests.forEach(test => {
+                const studentGrades = grades[student.id] || {};
+                const grade = studentGrades[test.id];
+                
+                // Only include graded tests in the calculation
+                if (grade !== undefined && grade !== null) {
+                    const testPercentage = grade / test.max_points;
+                    weightedSum += testPercentage * test.test_weight;
+                    totalWeights += test.test_weight;
+                    hasGradedTests = true;
+                }
+            });
+            
+            if (hasGradedTests && totalWeights > 0) {
+                const competencyPercentage = ((weightedSum / totalWeights) * 100).toFixed(1);
+                competencyTotalCell.innerHTML = `<div class="fw-bold">${competencyPercentage}%</div>`;
+            } else {
+                competencyTotalCell.innerHTML = '<div class="text-muted">--</div>';
+            }
+            
+            row.appendChild(competencyTotalCell);
+        });
+        
+        // Grand total cell (only if showing all competencies)
+        if (showAllCompetencies && competencies.length > 1) {
+            const grandTotalCell = document.createElement('td');
+            grandTotalCell.style.textAlign = 'center';
+            grandTotalCell.style.fontWeight = 'bold';
+            grandTotalCell.style.backgroundColor = '#e7f3ff';
+            
+            // Calculate weighted grand total: sum of (competency_percentage * competency_weight)
+            let weightedTotal = 0;
+            let hasValidScores = false;
+            
+            competencies.forEach(competency => {
+                const competencyTests = testsByCompetency[competency];
+                
+                // Calculate weighted competency totals for this student (excluding ungraded tests)
+                let weightedSum = 0;
+                let totalWeight = 0;
+                
+                competencyTests.forEach(test => {
+                    const studentGrades = grades[student.id] || {};
+                    const grade = studentGrades[test.id];
+                    if (grade !== undefined && grade !== null) {
+                        const testPercentage = (grade / test.max_points) * 100;
+                        weightedSum += testPercentage * test.test_weight;
+                        totalWeight += test.test_weight;
+                    }
+                });
+                
+                if (totalWeight > 0) {
+                    const competencyPercentage = weightedSum / totalWeight;
+                    const competencyWeight = competency_weights[competency] || 0;
+                    weightedTotal += (competencyPercentage / 100) * competencyWeight;
+                    hasValidScores = true;
+                }
+            });
+            
+            if (hasValidScores) {
+                grandTotalCell.innerHTML = `<div class="fw-bold">${weightedTotal.toFixed(1)}%</div>`;
+            } else {
+                grandTotalCell.innerHTML = '<div class="text-muted">--</div>';
+            }
+            
+            row.appendChild(grandTotalCell);
+        }
+        
+        body.appendChild(row);
+    });
+    
+    // Build footer with averages
+    buildAverageRow(testsByCompetency, competencies, students, grades, footer, showAllCompetencies);
+}
+
+// Build average row for footer
+function buildAverageRow(testsByCompetency, competencies, students, grades, footer, showAllCompetencies) {
+    const avgRow = document.createElement('tr');
+    avgRow.style.backgroundColor = '#f8f9fa';
+    avgRow.style.fontWeight = 'bold';
+    
+    // Average label
+    const avgLabel = document.createElement('td');
+    avgLabel.textContent = translations.classAverage;
+    avgLabel.style.position = 'sticky';
+    avgLabel.style.left = '0';
+    avgLabel.style.backgroundColor = '#f8f9fa';
+    avgLabel.style.zIndex = '5';
+    avgRow.appendChild(avgLabel);
+    
+    const allGrades = [];
+    
+    // For each competency
+    competencies.forEach(competency => {
+        const competencyTests = testsByCompetency[competency];
+        const competencyGrades = [];
+        
+        // Test averages for this competency
+        competencyTests.forEach(test => {
+            const avgCell = document.createElement('td');
+            avgCell.style.textAlign = 'center';
+            
+            let testTotal = 0;
+            let testCount = 0;
+            
+            students.forEach(student => {
+                const studentGrades = grades[student.id] || {};
+                const grade = studentGrades[test.id];
+                if (grade !== undefined && grade !== null) {
+                    const percentage = (grade / test.max_points) * 100;
+                    testTotal += percentage;
+                    testCount++;
+                    competencyGrades.push(percentage);
+                    allGrades.push(percentage);
+                }
+            });
+            
+            if (testCount > 0) {
+                const testAvg = testTotal / testCount;
+                avgCell.innerHTML = `<div>${testAvg.toFixed(1)}%</div>`;
+            } else {
+                avgCell.innerHTML = '<div>--</div>';
+            }
+            
+            avgRow.appendChild(avgCell);
+        });
+        
+        // Competency average
+        const competencyAvgCell = document.createElement('td');
+        competencyAvgCell.style.textAlign = 'center';
+        competencyAvgCell.style.fontWeight = 'bold';
+        competencyAvgCell.style.backgroundColor = '#f8f9fa';
+        
+        if (competencyGrades.length > 0) {
+            const competencyAvg = competencyGrades.reduce((a, b) => a + b, 0) / competencyGrades.length;
+            competencyAvgCell.innerHTML = `<div>${competencyAvg.toFixed(1)}%</div>`;
+        } else {
+            competencyAvgCell.innerHTML = '<div>--</div>';
+        }
+        
+        avgRow.appendChild(competencyAvgCell);
+    });
+    
+    // Grand average (only if showing all competencies)
+    if (showAllCompetencies && competencies.length > 1) {
+        const grandAvgCell = document.createElement('td');
+        grandAvgCell.style.textAlign = 'center';
+        grandAvgCell.style.fontWeight = 'bold';
+        grandAvgCell.style.backgroundColor = '#e7f3ff';
+        
+        // Calculate weighted average across all students
+        let totalWeightedScores = 0;
+        let validStudentCount = 0;
+        
+        students.forEach(student => {
+            let weightedTotal = 0;
+            let hasValidScores = false;
+            
+            competencies.forEach(competency => {
+                const competencyTests = testsByCompetency[competency];
+                let compTotalPoints = 0;
+                let compTotalMaxPoints = 0;
+                
+                competencyTests.forEach(test => {
+                    const studentGrades = grades[student.id] || {};
+                    const grade = studentGrades[test.id];
+                    if (grade !== undefined && grade !== null) {
+                        compTotalPoints += grade;
+                        compTotalMaxPoints += test.max_points;
+                    } else {
+                        compTotalMaxPoints += test.max_points;
+                    }
+                });
+                
+                if (compTotalMaxPoints > 0) {
+                    const competencyPercentage = (compTotalPoints / compTotalMaxPoints) * 100;
+                    const competencyWeight = competency_weights[competency] || 0;
+                    weightedTotal += (competencyPercentage * competencyWeight) / 100;
+                    hasValidScores = true;
+                }
+            });
+            
+            if (hasValidScores) {
+                totalWeightedScores += weightedTotal;
+                validStudentCount++;
+            }
+        });
+        
+        if (validStudentCount > 0) {
+            const grandAvg = totalWeightedScores / validStudentCount;
+            grandAvgCell.innerHTML = `<div>${grandAvg.toFixed(1)}%</div>`;
+        } else {
+            grandAvgCell.innerHTML = '<div>--</div>';
+        }
+        
+        avgRow.appendChild(grandAvgCell);
+    }
+    
+    footer.appendChild(avgRow);
+}
+
+
+// Export to CSV
+function exportToCSV() {
+    if (!currentGradeData || currentGradeData.tests.length === 0) {
+        alert(translations.noDataToExport);
+        return;
+    }
+    
+    const { tests, students, grades } = currentGradeData;
+    
+    // Group tests by competency
+    const testsByCompetency = {};
+    tests.forEach(test => {
+        const competency = test.competency || 'Unassigned';
+        if (!testsByCompetency[competency]) {
+            testsByCompetency[competency] = [];
+        }
+        testsByCompetency[competency].push(test);
+    });
+    
+    const competencies = Object.keys(testsByCompetency).sort();
+    const selectedCompetency = document.getElementById('filter_competency').value;
+    const showAllCompetencies = selectedCompetency === '' || selectedCompetency === 'All Competencies';
+    
+    // Build CSV header
+    let csv = translations.studentName;
+    
+    // Add headers for each competency
+    competencies.forEach(competency => {
+        const competencyTests = testsByCompetency[competency];
+        
+        // Individual test columns
+        competencyTests.forEach(test => {
+            csv += `,"${test.test_name} (${test.max_points}pts)"`;
+        });
+        
+        // Competency total column
+        csv += `,"${translations.total} ${competency}"`;
+    });
+    
+    // Grand total column (only if showing all competencies)
+    if (showAllCompetencies && competencies.length > 1) {
+        csv += ',"' + translations.grandTotal + '"';
+    }
+    
+    csv += '\n';
+    
+    // Build student rows
+    students.forEach(student => {
+        csv += `"${student.first_name} ${student.last_name}"`;
+        let grandTotalPoints = 0;
+        let grandTotalMaxPoints = 0;
+        
+        // For each competency
+        competencies.forEach(competency => {
+            const competencyTests = testsByCompetency[competency];
+            let competencyTotalPoints = 0;
+            let competencyTotalMaxPoints = 0;
+            
+            // Individual test columns
+            competencyTests.forEach(test => {
+                const studentGrades = grades[student.id] || {};
+                const grade = studentGrades[test.id];
+                
+                if (grade !== undefined && grade !== null) {
+                    csv += `,"${grade}/${test.max_points}"`;
+                    competencyTotalPoints += grade;
+                    competencyTotalMaxPoints += test.max_points;
+                } else {
+                    csv += ',"--"';
+                    competencyTotalMaxPoints += test.max_points;
+                }
+            });
+            
+            // Competency total
+            if (competencyTotalMaxPoints > 0) {
+                const competencyPercentage = Math.round((competencyTotalPoints / competencyTotalMaxPoints) * 100);
+                csv += `,"${competencyTotalPoints}/${competencyTotalMaxPoints} (${competencyPercentage}%)"`;
+            } else {
+                csv += ',"--"';
+            }
+            
+            grandTotalPoints += competencyTotalPoints;
+            grandTotalMaxPoints += competencyTotalMaxPoints;
+        });
+        
+        // Grand total (only if showing all competencies)
+        if (showAllCompetencies && competencies.length > 1) {
+            if (grandTotalMaxPoints > 0) {
+                const grandPercentage = Math.round((grandTotalPoints / grandTotalMaxPoints) * 100);
+                csv += `,"${grandTotalPoints}/${grandTotalMaxPoints} (${grandPercentage}%)"`;
+            } else {
+                csv += ',"--"';
+            }
+        }
+        
+        csv += '\n';
+    });
+    
+    // Download CSV
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'grade_matrix_by_competency.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    if (teacherType === 'specialist') {
+        // Populate class dropdown with all classes initially
+        updateFilterClassOptions();
+    }
+    
+    // Load initial data if any filters are set
+    loadGradeMatrix();
+});
+</script>
+
+{% endblock %}

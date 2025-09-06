@@ -1,0 +1,1613 @@
+# Translations template for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-08-31 09:36-0400\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: app/routes.py:63
+msgid "Language changed successfully!"
+msgstr ""
+
+#: app/routes.py:1050
+#, python-format
+msgid "You have not inputted students for class %(class_names)s"
+msgstr ""
+
+#: app/routes.py:1051 app/routes.py:1098
+msgid "Let's go!"
+msgstr ""
+
+#: app/routes.py:1097
+#, python-format
+msgid "You have not created any tests for class %(class_names)s"
+msgstr ""
+
+#: app/templates/OLD/students.html:2 app/templates/base.html:6
+#: app/templates/student_tab.html:3
+msgid "Grading App"
+msgstr ""
+
+#: app/templates/base.html:12
+msgid "Grading Application for Teachers"
+msgstr ""
+
+#: app/templates/base.html:26
+msgid "Logged in as"
+msgstr ""
+
+#: app/templates/base.html:27
+msgid "Logout"
+msgstr ""
+
+#: app/templates/base.html:29
+msgid "Login"
+msgstr ""
+
+#: app/templates/base.html:30
+msgid "Register"
+msgstr ""
+
+#: app/templates/base.html:38
+msgid "Menu"
+msgstr ""
+
+#: app/templates/base.html:40 app/templates/dashboard.html:2
+#: app/templates/dashboard.html:8
+msgid "Dashboard"
+msgstr ""
+
+#: app/templates/base.html:41 app/templates/input_grades.html:3
+#: app/templates/input_grades.html:55 app/templates/input_grades.html:213
+msgid "Input Grades"
+msgstr ""
+
+#: app/templates/base.html:42 app/templates/create_tests.html:3
+#: app/templates/create_tests.html:9
+msgid "Create Tests"
+msgstr ""
+
+#: app/templates/base.html:43
+msgid "Review Grades"
+msgstr ""
+
+#: app/templates/OLD/students.html:2 app/templates/base.html:44
+msgid "Students"
+msgstr ""
+
+#: app/templates/base.html:45
+msgid "Setup Wizard"
+msgstr ""
+
+#: app/templates/base.html:46
+msgid "Student Management"
+msgstr ""
+
+#: app/templates/base.html:47
+msgid "Flush database"
+msgstr ""
+
+#: app/templates/create_tests.html:14
+msgid "Define Tests"
+msgstr ""
+
+#: app/templates/create_tests.html:15
+msgid "Please input the following information to define a test:"
+msgstr ""
+
+#: app/templates/create_tests.html:23 app/templates/create_tests.html:141
+#: app/templates/dashboard.html:90 app/templates/input_grades.html:73
+#: app/templates/student_tab.html:30 app/templates/student_tab.html:38
+msgid "Class"
+msgstr ""
+
+#: app/templates/create_tests.html:25 app/templates/student_tab.html:32
+#: app/templates/student_tab.html:40 app/templates/student_tab.html:162
+msgid "Select Class"
+msgstr ""
+
+#: app/templates/create_tests.html:47 app/templates/create_tests.html:168
+#: app/templates/input_grades.html:108 app/templates/input_grades.html:231
+#: app/templates/setup_wizard.html:109 app/templates/setup_wizard.html:142
+#: app/templates/setup_wizard.html:228 app/templates/student_tab.html:21
+#: app/templates/student_tab.html:124
+msgid "Grade"
+msgstr ""
+
+#: app/templates/create_tests.html:49 app/templates/student_tab.html:23
+msgid "Select Grade"
+msgstr ""
+
+#: app/templates/create_tests.html:71 app/templates/create_tests.html:198
+#: app/templates/dashboard.html:92 app/templates/input_grades.html:121
+#: app/templates/input_grades.html:308 app/templates/setup_wizard.html:98
+#: app/templates/setup_wizard.html:217 app/templates/student_tab.html:121
+msgid "Subject"
+msgstr ""
+
+#: app/templates/create_tests.html:73
+msgid "Select Subject"
+msgstr ""
+
+#: app/templates/create_tests.html:83 app/templates/dashboard.html:87
+#: app/templates/input_grades.html:97 app/templates/input_grades.html:143
+#: app/templates/input_grades.html:163 app/templates/input_grades.html:309
+#: app/templates/student_tab.html:122
+msgid "Competency"
+msgstr ""
+
+#: app/templates/create_tests.html:85
+msgid "Select Competency"
+msgstr ""
+
+#: app/templates/create_tests.html:94
+msgid "Test name"
+msgstr ""
+
+#: app/templates/create_tests.html:100
+msgid "Max points"
+msgstr ""
+
+#: app/templates/create_tests.html:106
+msgid "Test date"
+msgstr ""
+
+#: app/templates/create_tests.html:112
+msgid "Test weight"
+msgstr ""
+
+#: app/templates/create_tests.html:119
+msgid "Create Test"
+msgstr ""
+
+#: app/templates/create_tests.html:120
+msgid "Delete Test"
+msgstr ""
+
+#: app/templates/create_tests.html:133
+msgid "My Tests"
+msgstr ""
+
+#: app/templates/create_tests.html:143 app/templates/input_grades.html:75
+#: app/templates/input_grades.html:305 app/templates/review_grades.html:28
+#: app/templates/review_grades.html:150
+msgid "All Classes"
+msgstr ""
+
+#: app/templates/create_tests.html:154 app/templates/create_tests.html:160
+#: app/templates/create_tests.html:182 app/templates/create_tests.html:188
+#: app/templates/input_grades.html:86 app/templates/input_grades.html:132
+#: app/templates/student_tab.html:123
+msgid "Semester"
+msgstr ""
+
+#: app/templates/create_tests.html:156 app/templates/create_tests.html:184
+#: app/templates/input_grades.html:88 app/templates/input_grades.html:134
+#: app/templates/review_grades.html:41 app/templates/review_grades.html:87
+msgid "All Semesters"
+msgstr ""
+
+#: app/templates/create_tests.html:170 app/templates/input_grades.html:110
+#: app/templates/review_grades.html:63
+msgid "All Grades"
+msgstr ""
+
+#: app/templates/create_tests.html:200 app/templates/input_grades.html:123
+#: app/templates/review_grades.html:76
+msgid "All Subjects"
+msgstr ""
+
+#: app/templates/create_tests.html:225 app/templates/dashboard.html:85
+#: app/templates/input_grades.html:160 app/templates/student_tab.html:120
+msgid "Test Name"
+msgstr ""
+
+#: app/templates/create_tests.html:226
+msgid "Test Date"
+msgstr ""
+
+#: app/templates/create_tests.html:230 app/templates/setup_wizard.html:229
+#: app/templates/student_wizard.html:185
+msgid "Actions"
+msgstr ""
+
+#: app/templates/create_tests.html:251 app/templates/student_wizard.html:249
+msgid "Edit"
+msgstr ""
+
+#: app/templates/create_tests.html:258
+msgid "Totals"
+msgstr ""
+
+#: app/templates/create_tests.html:269
+msgid "No tests created yet. Use the form above to create your first test."
+msgstr ""
+
+#: app/templates/dashboard.html:13
+msgid "Notifications and Tasks"
+msgstr ""
+
+#: app/templates/dashboard.html:18 app/templates/dashboard.html:126
+msgid "Your first task is to complete the Schools and Classes wizard"
+msgstr ""
+
+#: app/templates/dashboard.html:19 app/templates/dashboard.html:127
+msgid "Let's do it!"
+msgstr ""
+
+#: app/templates/dashboard.html:30
+msgid "No new notifications or tasks at this time."
+msgstr ""
+
+#: app/templates/dashboard.html:39
+msgid "My tests and grades"
+msgstr ""
+
+#: app/templates/dashboard.html:43
+msgid "Complete the Setup Wizard to start creating tests and entering grades."
+msgstr ""
+
+#: app/templates/dashboard.html:48
+msgid "Test Overview"
+msgstr ""
+
+#: app/templates/dashboard.html:49
+msgid "Total tests created"
+msgstr ""
+
+#: app/templates/dashboard.html:50
+msgid "Tests with grades"
+msgstr ""
+
+#: app/templates/dashboard.html:50
+msgid "of"
+msgstr ""
+
+#: app/templates/dashboard.html:54
+msgid "You haven't created any tests yet."
+msgstr ""
+
+#: app/templates/dashboard.html:54
+msgid "Create your first test"
+msgstr ""
+
+#: app/templates/dashboard.html:58
+msgid "You have tests but no grades entered yet."
+msgstr ""
+
+#: app/templates/dashboard.html:58
+msgid "Start entering grades"
+msgstr ""
+
+#: app/templates/dashboard.html:65
+msgid "Grade Statistics"
+msgstr ""
+
+#: app/templates/dashboard.html:67
+msgid "Total grades entered"
+msgstr ""
+
+#: app/templates/dashboard.html:68
+msgid "Class average"
+msgstr ""
+
+#: app/templates/dashboard.html:69
+msgid "Highest grade"
+msgstr ""
+
+#: app/templates/dashboard.html:70
+msgid "Lowest grade"
+msgstr ""
+
+#: app/templates/dashboard.html:72
+msgid "No grades entered yet."
+msgstr ""
+
+#: app/templates/dashboard.html:80
+msgid "Recent Tests"
+msgstr ""
+
+#: app/templates/dashboard.html:86 app/templates/input_grades.html:161
+#: app/templates/input_grades.html:307 app/templates/student_tab.html:119
+msgid "Date"
+msgstr ""
+
+#: app/templates/dashboard.html:88
+msgid "Weight"
+msgstr ""
+
+#: app/templates/dashboard.html:121
+msgid "My classes and students"
+msgstr ""
+
+#: app/templates/dashboard.html:131
+msgid "I am a"
+msgstr ""
+
+#: app/templates/dashboard.html:131
+msgid "teacher, and I work at"
+msgstr ""
+
+#: app/templates/dashboard.html:134
+msgid "My class is"
+msgstr ""
+
+#: app/templates/dashboard.html:134
+msgid "I teach"
+msgstr ""
+
+#: app/templates/dashboard.html:139
+msgid "My subjects"
+msgstr ""
+
+#: app/templates/dashboard.html:143
+msgid "My grades and classes"
+msgstr ""
+
+#: app/templates/input_grades.html:56
+msgid "Select a test and input grades for your students."
+msgstr ""
+
+#: app/templates/input_grades.html:65
+msgid "Select Test"
+msgstr ""
+
+#: app/templates/input_grades.html:99 app/templates/input_grades.html:145
+#: app/templates/review_grades.html:52 app/templates/review_grades.html:98
+msgid "All Competencies"
+msgstr ""
+
+#: app/templates/input_grades.html:162
+msgid "Subject/Class"
+msgstr ""
+
+#: app/templates/input_grades.html:164
+msgid "Grading Completed"
+msgstr ""
+
+#: app/templates/input_grades.html:165
+msgid "Absent Students"
+msgstr ""
+
+#: app/templates/input_grades.html:166 app/templates/student_wizard.html:81
+#: app/templates/student_wizard.html:137
+msgid "Action"
+msgstr ""
+
+#: app/templates/input_grades.html:183 app/templates/input_grades.html:190
+msgid "Yes"
+msgstr ""
+
+#: app/templates/input_grades.html:185 app/templates/input_grades.html:192
+msgid "No"
+msgstr ""
+
+#: app/templates/input_grades.html:196 app/templates/setup_wizard.html:30
+#: app/templates/setup_wizard.html:41 app/templates/student_wizard.html:31
+#: app/templates/student_wizard.html:42 app/templates/student_wizard.html:53
+#: app/templates/student_wizard.html:248
+msgid "Select"
+msgstr ""
+
+#: app/templates/input_grades.html:230 app/templates/review_grades.html:151
+msgid "Student Name"
+msgstr ""
+
+#: app/templates/input_grades.html:231
+msgid "out of"
+msgstr ""
+
+#: app/templates/input_grades.html:232 app/templates/student_tab.html:125
+msgid "Percentage"
+msgstr ""
+
+#: app/templates/input_grades.html:233 app/templates/student_tab.html:126
+msgid "Status"
+msgstr ""
+
+#: app/templates/input_grades.html:234
+msgid "Absent?"
+msgstr ""
+
+#: app/templates/input_grades.html:247
+msgid "Save All Grades"
+msgstr ""
+
+#: app/templates/input_grades.html:259
+msgid "Test Stats"
+msgstr ""
+
+#: app/templates/input_grades.html:264
+msgid "Average"
+msgstr ""
+
+#: app/templates/input_grades.html:270
+msgid "Highest"
+msgstr ""
+
+#: app/templates/input_grades.html:276
+msgid "Lowest"
+msgstr ""
+
+#: app/templates/input_grades.html:282
+#, python-format
+msgid "Passing (≥60%%)"
+msgstr ""
+
+#: app/templates/input_grades.html:288
+#, python-format
+msgid "Failing (<60%%)"
+msgstr ""
+
+#: app/templates/input_grades.html:294
+msgid "Statistics update automatically as you enter grades."
+msgstr ""
+
+#: app/templates/input_grades.html:306
+msgid "Test"
+msgstr ""
+
+#: app/templates/input_grades.html:310
+msgid "Enter grade"
+msgstr ""
+
+#: app/templates/input_grades.html:311 app/templates/review_grades.html:156
+msgid "Not graded"
+msgstr ""
+
+#: app/templates/input_grades.html:312
+msgid "Passing"
+msgstr ""
+
+#: app/templates/input_grades.html:313
+msgid "Failing"
+msgstr ""
+
+#: app/templates/input_grades.html:314 app/templates/student_tab.html:167
+msgid "Absent"
+msgstr ""
+
+#: app/templates/input_grades.html:315
+msgid ""
+"There is a grade already entered for this student. Marking as absent will"
+" remove the grade. Continue?"
+msgstr ""
+
+#: app/templates/input_grades.html:316
+msgid "No test selected or no student data available"
+msgstr ""
+
+#: app/templates/input_grades.html:317
+msgid "Grades saved successfully!"
+msgstr ""
+
+#: app/templates/input_grades.html:318
+msgid "Error saving grades"
+msgstr ""
+
+#: app/templates/input_grades.html:319
+msgid "Error loading test"
+msgstr ""
+
+#: app/templates/input_grades.html:320
+msgid "Error loading test data"
+msgstr ""
+
+#: app/templates/review_grades.html:3 app/templates/review_grades.html:9
+msgid "Review and Adjust Grades"
+msgstr ""
+
+#: app/templates/review_grades.html:10
+msgid "Review student grades across tests and make adjustments as needed."
+msgstr ""
+
+#: app/templates/review_grades.html:19
+msgid "Filters"
+msgstr ""
+
+#: app/templates/review_grades.html:26
+msgid "Class:"
+msgstr ""
+
+#: app/templates/review_grades.html:39 app/templates/review_grades.html:85
+msgid "Semester:"
+msgstr ""
+
+#: app/templates/review_grades.html:50 app/templates/review_grades.html:96
+msgid "Competency:"
+msgstr ""
+
+#: app/templates/review_grades.html:61
+msgid "Grade:"
+msgstr ""
+
+#: app/templates/review_grades.html:74
+msgid "Subject:"
+msgstr ""
+
+#: app/templates/review_grades.html:116
+msgid "Grade Matrix"
+msgstr ""
+
+#: app/templates/review_grades.html:119
+msgid "Export CSV"
+msgstr ""
+
+#: app/templates/review_grades.html:140
+msgid "No Data Found"
+msgstr ""
+
+#: app/templates/review_grades.html:141
+msgid ""
+"No tests or grades found for the selected filters. Please adjust your "
+"filters or ensure tests have been created and grades have been entered."
+msgstr ""
+
+#: app/templates/review_grades.html:152
+msgid "Weight:"
+msgstr ""
+
+#: app/templates/review_grades.html:153
+msgid "Total"
+msgstr ""
+
+#: app/templates/review_grades.html:154
+msgid "Grand Total"
+msgstr ""
+
+#: app/templates/review_grades.html:155
+msgid "weighted"
+msgstr ""
+
+#: app/templates/review_grades.html:157
+msgid "Class Average"
+msgstr ""
+
+#: app/templates/review_grades.html:158
+msgid "No data to export."
+msgstr ""
+
+#: app/templates/setup_wizard.html:2 app/templates/setup_wizard.html:9
+msgid "Setup Schools and Classes"
+msgstr ""
+
+#: app/templates/setup_wizard.html:19
+msgid "Step 1: Which describes you ?"
+msgstr ""
+
+#: app/templates/setup_wizard.html:20
+msgid "Please indicate what type of teacher you are"
+msgstr ""
+
+#: app/templates/setup_wizard.html:28 app/templates/setup_wizard.html:230
+msgid "Homeroom Teacher"
+msgstr ""
+
+#: app/templates/setup_wizard.html:29
+msgid ""
+"I am a homeroom teacher responsible for a single classroom, where I teach"
+" a variety of subjects"
+msgstr ""
+
+#: app/templates/setup_wizard.html:39 app/templates/setup_wizard.html:231
+msgid "Specialist"
+msgstr ""
+
+#: app/templates/setup_wizard.html:40
+msgid ""
+"I am a specialist teacher responsible for teaching multiple classes, for "
+"a single subject"
+msgstr ""
+
+#: app/templates/setup_wizard.html:47 app/templates/setup_wizard.html:86
+#: app/templates/setup_wizard.html:116 app/templates/setup_wizard.html:127
+#: app/templates/setup_wizard.html:152 app/templates/setup_wizard.html:162
+#: app/templates/student_wizard.html:99 app/templates/student_wizard.html:201
+msgid "Back"
+msgstr ""
+
+#: app/templates/setup_wizard.html:48 app/templates/setup_wizard.html:87
+#: app/templates/setup_wizard.html:117 app/templates/setup_wizard.html:128
+#: app/templates/setup_wizard.html:154 app/templates/student_wizard.html:61
+#: app/templates/student_wizard.html:100
+msgid "Next"
+msgstr ""
+
+#: app/templates/setup_wizard.html:53
+msgid "Step 2: School info"
+msgstr ""
+
+#: app/templates/setup_wizard.html:54
+msgid "Please enter in information about your school and semesters"
+msgstr ""
+
+#: app/templates/setup_wizard.html:57
+msgid "School name"
+msgstr ""
+
+#: app/templates/setup_wizard.html:61
+msgid "Number of semesters"
+msgstr ""
+
+#: app/templates/setup_wizard.html:66
+msgid "Name of your grade/class (ex: Grade 4)"
+msgstr ""
+
+#: app/templates/setup_wizard.html:72
+msgid "Subject that you teach"
+msgstr ""
+
+#: app/templates/setup_wizard.html:76
+msgid "Competencies you must grade for"
+msgstr ""
+
+#: app/templates/setup_wizard.html:79
+msgid "Ex: Oral, Written"
+msgstr ""
+
+#: app/templates/setup_wizard.html:80
+msgid "Add Competency"
+msgstr ""
+
+#: app/templates/setup_wizard.html:94
+msgid "Step 3: Subjects"
+msgstr ""
+
+#: app/templates/setup_wizard.html:95
+msgid "Please provide a list of subjects that you will be grading for"
+msgstr ""
+
+#: app/templates/setup_wizard.html:99
+msgid "Add Subject"
+msgstr ""
+
+#: app/templates/setup_wizard.html:105
+msgid "Step 3: Grades"
+msgstr ""
+
+#: app/templates/setup_wizard.html:106
+msgid "Please provide a list of Grades you will be teaching"
+msgstr ""
+
+#: app/templates/setup_wizard.html:110
+msgid "Add Grade"
+msgstr ""
+
+#: app/templates/setup_wizard.html:138
+msgid "Classroom name"
+msgstr ""
+
+#: app/templates/setup_wizard.html:139
+msgid "Enter classroom name"
+msgstr ""
+
+#: app/templates/setup_wizard.html:144
+msgid "Select grade"
+msgstr ""
+
+#: app/templates/setup_wizard.html:147
+msgid "Add Classroom"
+msgstr ""
+
+#: app/templates/setup_wizard.html:153 app/templates/setup_wizard.html:163
+#: app/templates/student_wizard.html:204
+msgid "Done"
+msgstr ""
+
+#: app/templates/setup_wizard.html:206 app/templates/student_wizard.html:247
+msgid "Remove"
+msgstr ""
+
+#: app/templates/setup_wizard.html:207
+msgid "Step 4: Assign Weights"
+msgstr ""
+
+#: app/templates/setup_wizard.html:208
+msgid "Please assign weights for each competency in each subject"
+msgstr ""
+
+#: app/templates/setup_wizard.html:209
+msgid "Step 4: Assign Weights for each Grade"
+msgstr ""
+
+#: app/templates/setup_wizard.html:210
+msgid "Please assign weights for each competency in each grade"
+msgstr ""
+
+#: app/templates/setup_wizard.html:211
+msgid "Step 5: Review and Confirm"
+msgstr ""
+
+#: app/templates/setup_wizard.html:212
+msgid "Please review your setup and confirm to create your school and classroom"
+msgstr ""
+
+#: app/templates/setup_wizard.html:213
+msgid "Teacher Type"
+msgstr ""
+
+#: app/templates/setup_wizard.html:214
+msgid "School Name"
+msgstr ""
+
+#: app/templates/setup_wizard.html:215
+msgid "Number of Semesters"
+msgstr ""
+
+#: app/templates/setup_wizard.html:216
+msgid "Grade/Class Name"
+msgstr ""
+
+#: app/templates/setup_wizard.html:218
+msgid "Subjects"
+msgstr ""
+
+#: app/templates/setup_wizard.html:219
+msgid "Competencies"
+msgstr ""
+
+#: app/templates/setup_wizard.html:220
+msgid "Weights"
+msgstr ""
+
+#: app/templates/setup_wizard.html:221
+msgid "Step 5: Create Classes"
+msgstr ""
+
+#: app/templates/setup_wizard.html:222
+msgid "Please create classes for each grade you will be teaching"
+msgstr ""
+
+#: app/templates/setup_wizard.html:223
+msgid "Step 6: Review and Confirm"
+msgstr ""
+
+#: app/templates/setup_wizard.html:224
+msgid "Please review your setup and confirm to create your school and classes"
+msgstr ""
+
+#: app/templates/setup_wizard.html:225
+msgid "Grades"
+msgstr ""
+
+#: app/templates/setup_wizard.html:226
+msgid "Classes"
+msgstr ""
+
+#: app/templates/setup_wizard.html:227
+msgid "Name"
+msgstr ""
+
+#: app/templates/setup_wizard.html:232
+msgid "Please enter a competency name"
+msgstr ""
+
+#: app/templates/setup_wizard.html:233
+msgid "Please enter a subject name"
+msgstr ""
+
+#: app/templates/setup_wizard.html:234
+msgid "Please enter a grade name"
+msgstr ""
+
+#: app/templates/setup_wizard.html:235
+msgid "Please enter a classroom name"
+msgstr ""
+
+#: app/templates/setup_wizard.html:236
+msgid "Please select a grade"
+msgstr ""
+
+#: app/templates/setup_wizard.html:237
+msgid "Classroom already exists for this grade"
+msgstr ""
+
+#: app/templates/setup_wizard.html:238
+msgid "Error creating setup. Please try again."
+msgstr ""
+
+#: app/templates/setup_wizard.html:239
+msgid "Setup created successfully!"
+msgstr ""
+
+#: app/templates/setup_wizard.html:240
+msgid "Step 4: Associate Competencies to Subjects"
+msgstr ""
+
+#: app/templates/setup_wizard.html:241
+msgid "Step 4: Associate Competencies to Grades"
+msgstr ""
+
+#: app/templates/setup_wizard.html:242
+msgid "Step 5: Review"
+msgstr ""
+
+#: app/templates/setup_wizard.html:243 app/templates/setup_wizard.html:247
+msgid ""
+"Please review the setup that you have provided. If you need to adjust "
+"anything, please go backwards using the Back button. If everything looks "
+"good, finalize your selections by pressing the Done button."
+msgstr ""
+
+#: app/templates/setup_wizard.html:244
+msgid "Step 5: Classes"
+msgstr ""
+
+#: app/templates/setup_wizard.html:245
+msgid ""
+"Now, please enter the classes that you teach. For each class, provide a "
+"class name and select the grade. You can add multiple classes."
+msgstr ""
+
+#: app/templates/setup_wizard.html:246
+msgid "Step 6: Review"
+msgstr ""
+
+#: app/templates/student_tab.html:3 app/templates/student_tab.html:9
+msgid "Student Tab"
+msgstr ""
+
+#: app/templates/student_tab.html:14 app/templates/student_tab.html:50
+#: app/templates/student_tab.html:163
+msgid "Select Student"
+msgstr ""
+
+#: app/templates/student_tab.html:48
+msgid "Student"
+msgstr ""
+
+#: app/templates/student_tab.html:60
+msgid "Student Details"
+msgstr ""
+
+#: app/templates/student_tab.html:75
+msgid "Alert"
+msgstr ""
+
+#: app/templates/student_tab.html:75
+msgid "This student has"
+msgstr ""
+
+#: app/templates/student_tab.html:75
+#, python-format
+msgid "grade(s) below 80%%"
+msgstr ""
+
+#: app/templates/student_tab.html:83
+msgid "Total Tests"
+msgstr ""
+
+#: app/templates/student_tab.html:91 app/templates/student_tab.html:170
+msgid "Completed"
+msgstr ""
+
+#: app/templates/student_tab.html:99
+#, python-format
+msgid "Below 80%%"
+msgstr ""
+
+#: app/templates/student_tab.html:112
+msgid "Grade History (Chronological Order)"
+msgstr ""
+
+#: app/templates/student_tab.html:135
+msgid "No grades recorded for this student yet."
+msgstr ""
+
+#: app/templates/student_tab.html:143
+msgid "Teacher Notes"
+msgstr ""
+
+#: app/templates/student_tab.html:164
+msgid "Error loading students"
+msgstr ""
+
+#: app/templates/student_tab.html:165
+msgid "Error loading student data"
+msgstr ""
+
+#: app/templates/student_tab.html:166
+msgid "Details"
+msgstr ""
+
+#: app/templates/student_tab.html:168
+msgid "Not Graded"
+msgstr ""
+
+#: app/templates/student_tab.html:169
+msgid "Low Grade"
+msgstr ""
+
+#: app/templates/student_tab.html:171
+msgid "Unknown"
+msgstr ""
+
+#: app/templates/student_wizard.html:9
+msgid "Enter or Upload Students"
+msgstr ""
+
+#: app/templates/student_wizard.html:20
+msgid "Step 1: Choose Input Method"
+msgstr ""
+
+#: app/templates/student_wizard.html:21
+msgid "How would you like to add students to your classes?"
+msgstr ""
+
+#: app/templates/student_wizard.html:29
+msgid "Manual Entry"
+msgstr ""
+
+#: app/templates/student_wizard.html:30
+msgid "Add students one by one by typing their names"
+msgstr ""
+
+#: app/templates/student_wizard.html:40
+msgid "File Upload (single class)"
+msgstr ""
+
+#: app/templates/student_wizard.html:41
+msgid ""
+"Upload an Excel or CSV file containing first and last names for a single "
+"class"
+msgstr ""
+
+#: app/templates/student_wizard.html:51
+msgid "File Upload (multiple classes)"
+msgstr ""
+
+#: app/templates/student_wizard.html:52
+msgid ""
+"Upload an Excel or CSV file containing first names, last names, and "
+"classes for multiple classes"
+msgstr ""
+
+#: app/templates/student_wizard.html:70
+msgid "Step 2: Select Classes"
+msgstr ""
+
+#: app/templates/student_wizard.html:71
+msgid "Select the classes you want to add students to"
+msgstr ""
+
+#: app/templates/student_wizard.html:78
+msgid "School"
+msgstr ""
+
+#: app/templates/student_wizard.html:79
+msgid "Class Name"
+msgstr ""
+
+#: app/templates/student_wizard.html:80
+msgid "Student Names Entered"
+msgstr ""
+
+#: app/templates/student_wizard.html:93
+msgid "Step 2: Coming Soon (Homeroom)"
+msgstr ""
+
+#: app/templates/student_wizard.html:94
+msgid "This will show direct input/upload interface for Homeroom teachers"
+msgstr ""
+
+#: app/templates/student_wizard.html:109
+msgid "Step 3: Enter Student Names"
+msgstr ""
+
+#: app/templates/student_wizard.html:110
+msgid "Enter the first and last names of each student in the class"
+msgstr ""
+
+#: app/templates/student_wizard.html:112 app/templates/student_wizard.html:154
+msgid "Selected Class"
+msgstr ""
+
+#: app/templates/student_wizard.html:119
+msgid "Enter student name"
+msgstr ""
+
+#: app/templates/OLD/students.html:10 app/templates/student_wizard.html:122
+#: app/templates/student_wizard.html:136 app/templates/student_wizard.html:184
+msgid "Last Name"
+msgstr ""
+
+#: app/templates/OLD/students.html:11 app/templates/student_wizard.html:125
+msgid "Add Student"
+msgstr ""
+
+#: app/templates/OLD/students.html:9 app/templates/student_wizard.html:135
+#: app/templates/student_wizard.html:183
+msgid "First Name"
+msgstr ""
+
+#: app/templates/student_wizard.html:151
+msgid "Step 3: Upload Student Names"
+msgstr ""
+
+#: app/templates/student_wizard.html:152
+msgid "Upload an Excel or CSV file containing first and last names of students"
+msgstr ""
+
+#: app/templates/student_wizard.html:162
+msgid "Select File (CSV)"
+msgstr ""
+
+#: app/templates/student_wizard.html:169
+msgid "File contains header row"
+msgstr ""
+
+#: app/templates/student_wizard.html:173
+msgid "Upload"
+msgstr ""
+
+#: app/templates/student_wizard.html:194
+msgid "Switch First and Last Names"
+msgstr ""
+
+#: app/templates/student_wizard.html:203
+msgid "Add Another Class"
+msgstr ""
+
+#: app/templates/student_wizard.html:250
+msgid ""
+"No classes found. Please complete the Setup Wizard first to create "
+"classes."
+msgstr ""
+
+#: app/templates/student_wizard.html:251
+msgid "No students entered yet"
+msgstr ""
+
+#: app/templates/student_wizard.html:252
+msgid "Please enter a first name"
+msgstr ""
+
+#: app/templates/student_wizard.html:253
+msgid "Please enter a last name"
+msgstr ""
+
+#: app/templates/student_wizard.html:254
+msgid "Student added successfully"
+msgstr ""
+
+#: app/templates/student_wizard.html:255
+msgid "Error adding student"
+msgstr ""
+
+#: app/templates/student_wizard.html:256
+msgid "Please select a file"
+msgstr ""
+
+#: app/templates/student_wizard.html:257
+msgid "File uploaded successfully"
+msgstr ""
+
+#: app/templates/student_wizard.html:258
+msgid "Error uploading file"
+msgstr ""
+
+#: app/templates/student_wizard.html:259
+msgid "Students saved successfully"
+msgstr ""
+
+#: app/templates/student_wizard.html:260
+msgid "Error saving students"
+msgstr ""
+
+#: app/templates/OLD/students.html:4
+msgid "Students in"
+msgstr ""
+
+#: app/templates/OLD/students.html:5
+msgid ""
+"To add a student, please enter first name and last name, and then press "
+"\"Add Student\""
+msgstr ""
+
+#: app/templates/OLD/students.html:21
+msgid "Delete"
+msgstr ""
+
+#: app/templates/OLD/students.html:27
+msgid "No students yet."
+msgstr ""
+
+#: app/templates/OLD/students.html:32
+msgid "Delete this student?"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/_termui_impl.py:600
+#, python-brace-format
+msgid "{editor}: Editing failed"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/_termui_impl.py:604
+#, python-brace-format
+msgid "{editor}: Editing failed: {e}"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/core.py:1084
+#: venv/lib/python3.13/site-packages/click/core.py:1121
+#, python-brace-format
+msgid "{text} {deprecated_message}"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/core.py:1140
+msgid "Options"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/core.py:1202
+#, python-brace-format
+msgid "Got unexpected extra argument ({args})"
+msgid_plural "Got unexpected extra arguments ({args})"
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.13/site-packages/click/core.py:1221
+#, python-brace-format
+msgid "DeprecationWarning: The command {name!r} is deprecated.{extra_message}"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/core.py:1405
+msgid "Aborted!"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/core.py:1779
+msgid "Commands"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/core.py:1810
+msgid "Missing command."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/core.py:1888
+#, python-brace-format
+msgid "No such command {name!r}."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/core.py:2303
+msgid "Value must be an iterable."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/core.py:2324
+#, python-brace-format
+msgid "Takes {nargs} values but 1 was given."
+msgid_plural "Takes {nargs} values but {len} were given."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.13/site-packages/click/core.py:2404
+#, python-brace-format
+msgid ""
+"DeprecationWarning: The {param_type} {name!r} is "
+"deprecated.{extra_message}"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/core.py:2807
+#, python-brace-format
+msgid "env var: {var}"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/core.py:2810
+#, python-brace-format
+msgid "default: {default}"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/core.py:2814
+msgid "required"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/core.py:2870
+msgid "(dynamic)"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/decorators.py:465
+#, python-format
+msgid "%(prog)s, version %(version)s"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/decorators.py:522
+msgid "Show the version and exit."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/decorators.py:548
+msgid "Show this message and exit."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/exceptions.py:50
+#: venv/lib/python3.13/site-packages/click/exceptions.py:89
+#, python-brace-format
+msgid "Error: {message}"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/exceptions.py:81
+#, python-brace-format
+msgid "Try '{command} {option}' for help."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/exceptions.py:130
+#, python-brace-format
+msgid "Invalid value: {message}"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/exceptions.py:132
+#, python-brace-format
+msgid "Invalid value for {param_hint}: {message}"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/exceptions.py:190
+msgid "Missing argument"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/exceptions.py:192
+msgid "Missing option"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/exceptions.py:194
+msgid "Missing parameter"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/exceptions.py:196
+#, python-brace-format
+msgid "Missing {param_type}"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/exceptions.py:203
+#, python-brace-format
+msgid "Missing parameter: {param_name}"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/exceptions.py:223
+#, python-brace-format
+msgid "No such option: {name}"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/exceptions.py:235
+#, python-brace-format
+msgid "Did you mean {possibility}?"
+msgid_plural "(Possible options: {possibilities})"
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.13/site-packages/click/exceptions.py:282
+msgid "unknown error"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/exceptions.py:289
+#, python-brace-format
+msgid "Could not open file {filename!r}: {message}"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/formatting.py:156
+msgid "Usage:"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/parser.py:200
+#, python-brace-format
+msgid "Argument {name!r} takes {nargs} values."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/parser.py:383
+#, python-brace-format
+msgid "Option {name!r} does not take a value."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/parser.py:444
+#, python-brace-format
+msgid "Option {name!r} requires an argument."
+msgid_plural "Option {name!r} requires {nargs} arguments."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.13/site-packages/click/shell_completion.py:326
+msgid "Shell completion is not supported for Bash versions older than 4.4."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/shell_completion.py:333
+msgid "Couldn't detect Bash version, shell completion is not supported."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/termui.py:162
+msgid "Repeat for confirmation"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/termui.py:178
+msgid "Error: The value you entered was invalid."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/termui.py:180
+#, python-brace-format
+msgid "Error: {e.message}"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/termui.py:191
+msgid "Error: The two entered values do not match."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/termui.py:247
+msgid "Error: invalid input"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/termui.py:866
+msgid "Press any key to continue..."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/types.py:332
+#, python-brace-format
+msgid ""
+"Choose from:\n"
+"\t{choices}"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/types.py:369
+#, python-brace-format
+msgid "{value!r} is not {choice}."
+msgid_plural "{value!r} is not one of {choices}."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.13/site-packages/click/types.py:460
+#, python-brace-format
+msgid "{value!r} does not match the format {format}."
+msgid_plural "{value!r} does not match the formats {formats}."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.13/site-packages/click/types.py:482
+#, python-brace-format
+msgid "{value!r} is not a valid {number_type}."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/types.py:538
+#, python-brace-format
+msgid "{value} is not in the range {range}."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/types.py:679
+#, python-brace-format
+msgid "{value!r} is not a valid boolean."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/types.py:703
+#, python-brace-format
+msgid "{value!r} is not a valid UUID."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/types.py:893
+msgid "file"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/types.py:895
+msgid "directory"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/types.py:897
+msgid "path"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/types.py:944
+#, python-brace-format
+msgid "{name} {filename!r} does not exist."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/types.py:953
+#, python-brace-format
+msgid "{name} {filename!r} is a file."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/types.py:961
+#, python-brace-format
+msgid "{name} {filename!r} is a directory."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/types.py:970
+#, python-brace-format
+msgid "{name} {filename!r} is not readable."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/types.py:979
+#, python-brace-format
+msgid "{name} {filename!r} is not writable."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/types.py:988
+#, python-brace-format
+msgid "{name} {filename!r} is not executable."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/click/types.py:1055
+#, python-brace-format
+msgid "{len_type} values are required, but {len_value} was given."
+msgid_plural "{len_type} values are required, but {len_value} were given."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.13/site-packages/flask_wtf/file.py:55
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:293
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:323
+msgid "This field is required."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/flask_wtf/file.py:94
+#, python-brace-format
+msgid "File does not have an approved extension: {extensions}"
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/flask_wtf/file.py:101
+msgid "File does not have an approved extension."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:86
+#, python-format
+msgid "Invalid field name '%s'."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:99
+#, python-format
+msgid "Field must be equal to %(other_name)s."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:146
+#, python-format
+msgid "Field must be at least %(min)d character long."
+msgid_plural "Field must be at least %(min)d characters long."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:152
+#, python-format
+msgid "Field cannot be longer than %(max)d character."
+msgid_plural "Field cannot be longer than %(max)d characters."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:158
+#, python-format
+msgid "Field must be exactly %(max)d character long."
+msgid_plural "Field must be exactly %(max)d characters long."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:164
+#, python-format
+msgid "Field must be between %(min)d and %(max)d characters long."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:216
+#, python-format
+msgid "Number must be at least %(min)s."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:219
+#, python-format
+msgid "Number must be at most %(max)s."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:222
+#, python-format
+msgid "Number must be between %(min)s and %(max)s."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:358
+msgid "Invalid input."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:422
+msgid "Invalid email address."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:460
+msgid "Invalid IP address."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:503
+msgid "Invalid Mac address."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:540
+msgid "Invalid URL."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:561
+msgid "Invalid UUID."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:595
+#, python-format
+msgid "Invalid value, must be one of: %(values)s."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:631
+#, python-format
+msgid "Invalid value, can't be any of: %(values)s."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:700
+msgid "This field cannot be edited."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/validators.py:716
+msgid "This field is disabled and cannot have a value."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/csrf/core.py:96
+msgid "Invalid CSRF Token."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/csrf/session.py:64
+msgid "CSRF token missing."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/csrf/session.py:72
+msgid "CSRF failed."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/csrf/session.py:77
+msgid "CSRF token expired."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/fields/choices.py:142
+msgid "Invalid Choice: could not coerce."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/fields/choices.py:149
+#: venv/lib/python3.13/site-packages/wtforms/fields/choices.py:203
+msgid "Choices cannot be None."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/fields/choices.py:155
+msgid "Not a valid choice."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/fields/choices.py:194
+msgid "Invalid choice(s): one or more data inputs could not be coerced."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/fields/choices.py:212
+#, python-format
+msgid "'%(value)s' is not a valid choice for this field."
+msgid_plural "'%(value)s' are not valid choices for this field."
+msgstr[0] ""
+msgstr[1] ""
+
+#: venv/lib/python3.13/site-packages/wtforms/fields/datetime.py:52
+msgid "Not a valid datetime value."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/fields/datetime.py:78
+msgid "Not a valid date value."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/fields/datetime.py:104
+msgid "Not a valid time value."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/fields/datetime.py:149
+msgid "Not a valid week value."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/fields/numeric.py:82
+#: venv/lib/python3.13/site-packages/wtforms/fields/numeric.py:92
+msgid "Not a valid integer value."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/fields/numeric.py:168
+msgid "Not a valid decimal value."
+msgstr ""
+
+#: venv/lib/python3.13/site-packages/wtforms/fields/numeric.py:197
+msgid "Not a valid float value."
+msgstr ""
+

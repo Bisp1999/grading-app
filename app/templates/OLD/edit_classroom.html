@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Edit Classroom | Grading App{% endblock %}
+{% block content %}
+<h2>Edit Classroom</h2>
+<form method="post">
+    {{ form.hidden_tag() }}
+    <div class="mb-3">
+        {{ form.name.label }}
+        {{ form.name(class="form-control") }}
+    </div>
+    <div class="mb-3">
+        {{ form.school.label }}
+        {{ form.school(class="form-select") }}
+    </div>
+    <button type="submit" class="btn btn-primary">Update Classroom</button>
+    <a href="{{ url_for('main.manage_classrooms') }}" class="btn btn-secondary ms-2">Cancel</a>
+</form>
+{% endblock %}

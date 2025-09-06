@@ -1,0 +1,785 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Input Grades') }}{% endblock %}
+
+{% block content %}
+<style>
+#gradeInputSection {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: flex-start;
+}
+
+#gradeInputSection > div:first-child {
+    flex: 0 0 70%;
+    max-width: 70%;
+    padding-right: 15px;
+}
+
+#statisticsPanel {
+    flex: 0 0 30%;
+    max-width: 30%;
+    min-width: 300px;
+}
+
+#statisticsPanel .card-body {
+    font-size: 0.875rem;
+    font-weight: 400;
+}
+
+#statisticsPanel .card-body strong {
+    font-weight: 600;
+}
+
+@media (max-width: 991px) {
+    #gradeInputSection {
+        flex-wrap: wrap !important;
+    }
+    
+    #gradeInputSection > div:first-child {
+        flex: 0 0 100%;
+        max-width: 100%;
+        padding-right: 0;
+        margin-bottom: 20px;
+    }
+    
+    #statisticsPanel {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+</style>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>{{ _('Input Grades') }}</h2>
+            <p class="text-muted">{{ _('Select a test and input grades for your students.') }}</p>
+        </div>
+    </div>
+
+    <!-- Test Selection Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>{{ _('Select Test') }}</h5>
+                </div>
+                <div class="card-body">
+                    <form id="testSelectionForm">
+                        <div class="row">
+                            {% if teacher_type == 'specialist' %}
+                            <!-- Filter by Class (Specialist only) - First -->
+                            <div class="col-md-3 mb-2">
+                                <label for="filter_class" class="form-label">{{ _('Class') }}:</label>
+                                <select class="form-select" id="filter_class" name="filter_class" onchange="filterTests()">
+                                    <option value="">{{ _('All Classes') }}</option>
+                                    {% for grade in grades %}
+                                        {% for class_name in classrooms_by_grade[grade] %}
+                                            <option value="{{ class_name }}" data-grade="{{ grade }}">{{ class_name }} ({{ grade }})</option>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Filter by Semester -->
+                            <div class="col-md-3 mb-2">
+                                <label for="filter_semester" class="form-label">{{ _('Semester') }}:</label>
+                                <select class="form-select" id="filter_semester" name="filter_semester" onchange="filterTests()">
+                                    <option value="">{{ _('All Semesters') }}</option>
+                                    {% for semester in semesters %}
+                                        <option value="{{ semester }}">{{ semester }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Filter by Competency -->
+                            <div class="col-md-3 mb-2">
+                                <label for="filter_competency" class="form-label">{{ _('Competency') }}:</label>
+                                <select class="form-select" id="filter_competency" name="filter_competency" onchange="filterTests()">
+                                    <option value="">{{ _('All Competencies') }}</option>
+                                    {% for competency in competencies %}
+                                        <option value="{{ competency }}">{{ competency }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Filter by Grade (Specialist only) - Last -->
+                            <div class="col-md-3 mb-2">
+                                <label for="filter_grade" class="form-label">{{ _('Grade') }}:</label>
+                                <select class="form-select" id="filter_grade" name="filter_grade" onchange="updateFilterClassOptions(); filterTests();">
+                                    <option value="">{{ _('All Grades') }}</option>
+                                    {% for grade in grades %}
+                                        <option value="{{ grade }}">{{ grade }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% endif %}
+
+                            {% if teacher_type == 'homeroom' %}
+                            <!-- Filter by Subject (Homeroom only) - First -->
+                            <div class="col-md-4 mb-2">
+                                <label for="filter_subject" class="form-label">{{ _('Subject') }}:</label>
+                                <select class="form-select" id="filter_subject" name="filter_subject" onchange="filterTests()">
+                                    <option value="">{{ _('All Subjects') }}</option>
+                                    {% for subject in subjects %}
+                                        <option value="{{ subject }}">{{ subject }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Filter by Semester -->
+                            <div class="col-md-4 mb-2">
+                                <label for="filter_semester" class="form-label">{{ _('Semester') }}:</label>
+                                <select class="form-select" id="filter_semester" name="filter_semester" onchange="filterTests()">
+                                    <option value="">{{ _('All Semesters') }}</option>
+                                    {% for semester in semesters %}
+                                        <option value="{{ semester }}">{{ semester }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Filter by Competency -->
+                            <div class="col-md-4 mb-2">
+                                <label for="filter_competency" class="form-label">{{ _('Competency') }}:</label>
+                                <select class="form-select" id="filter_competency" name="filter_competency" onchange="filterTests()">
+                                    <option value="">{{ _('All Competencies') }}</option>
+                                    {% for competency in competencies %}
+                                        <option value="{{ competency }}">{{ competency }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </form>
+
+                    <!-- Tests Table -->
+                    <div class="table-responsive mt-3">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('Test Name') }}</th>
+                                    <th>{{ _('Date') }}</th>
+                                    <th>{{ _('Subject/Class') }}</th>
+                                    <th>{{ _('Competency') }}</th>
+                                    <th>{{ _('Grading Completed') }}</th>
+                                    <th>{{ _('Absent Students') }}</th>
+                                    <th>{{ _('Action') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="testsTableBody">
+                                {% for test in tests %}
+                                <tr class="test-row" 
+                                    data-semester="{{ test.semester }}"
+                                    data-grade="{{ test.grade or '' }}"
+                                    data-class="{{ test.class_name or '' }}"
+                                    data-subject="{{ test.subject or '' }}"
+                                    data-competency="{{ test.competency }}">
+                                    <td>{{ test.test_name }}</td>
+                                    <td>{{ test.test_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ test.subject or test.class_name }}</td>
+                                    <td>{{ test.competency }}</td>
+                                    <td>
+                                        {% if test.grades_complete %}
+                                            <span class="badge bg-success">{{ _('Yes') }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ _('No') }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if test.has_absent_students %}
+                                            <span class="badge bg-warning">{{ _('Yes') }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ _('No') }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-success" onclick="selectTest({{ test.id }})">{{ _('Select') }}</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grade Input Section (Initially Hidden) -->
+    <div id="gradeInputSection" style="display: none;">
+        <div>
+            <div class="card">
+                <div class="card-header" style="height: 50px; display: flex; align-items: center;">
+                    <h5 class="mb-0">{{ _('Input Grades') }}</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Test Details -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="alert alert-info" id="testDetails">
+                                <!-- Test details will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Students Grade Input Table -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('Student Name') }}</th>
+                                    <th>{{ _('Grade') }} ({{ _('out of') }} <span id="maxPoints">0</span>)</th>
+                                    <th>{{ _('Percentage') }}</th>
+                                    <th>{{ _('Status') }}</th>
+                                    <th>{{ _('Absent?') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentsGradeTable">
+                                <!-- Student grade rows will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Save Grades Button -->
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <button class="btn btn-primary" id="saveGradesBtn" onclick="saveGrades()" disabled>
+                                {{ _('Save All Grades') }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistics Panel (Right Side) -->
+        <div id="statisticsPanel" style="display: none;">
+            <div class="card h-100">
+                <div class="card-header" style="height: 50px; display: flex; align-items: center;">
+                    <h5 class="mb-0">{{ _('Test Stats') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ _('Average') }}:</strong>
+                            <span id="avgGrade">-</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ _('Highest') }}:</strong>
+                            <span id="maxGrade">-</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ _('Lowest') }}:</strong>
+                            <span id="minGrade">-</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ _('Passing (≥60%%)') }}:</strong>
+                            <span id="passingCount">-</span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ _('Failing (<60%%)') }}:</strong>
+                            <span id="failingCount">-</span>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="small text-muted">
+                        {{ _('Statistics update automatically as you enter grades.') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript translations -->
+<script type="application/json" id="js-translations">
+{
+    "All Classes": "{{ _('All Classes') }}",
+    "Test": "{{ _('Test') }}",
+    "Date": "{{ _('Date') }}",
+    "Subject": "{{ _('Subject') }}",
+    "Competency": "{{ _('Competency') }}",
+    "Enter grade": "{{ _('Enter grade') }}",
+    "Not graded": "{{ _('Not graded') }}",
+    "Passing": "{{ _('Passing') }}",
+    "Failing": "{{ _('Failing') }}",
+    "Absent": "{{ _('Absent') }}",
+    "There is a grade already entered for this student. Marking as absent will remove the grade. Continue?": "{{ _('There is a grade already entered for this student. Marking as absent will remove the grade. Continue?') }}",
+    "No test selected or no student data available": "{{ _('No test selected or no student data available') }}",
+    "Grades saved successfully!": "{{ _('Grades saved successfully!') }}",
+    "Error saving grades": "{{ _('Error saving grades') }}",
+    "Error loading test": "{{ _('Error loading test') }}",
+    "Error loading test data": "{{ _('Error loading test data') }}"
+}
+</script>
+
+<script>
+// Load translations
+const translations = JSON.parse(document.getElementById('js-translations').textContent);
+// Store data for dynamic updates
+const classroomsByGrade = {{ classrooms_by_grade|tojson|safe }};
+const teacherType = "{{ teacher_type }}";
+let selectedTestId = null;
+let selectedTestData = null;
+let studentsData = [];
+
+// Filter tests based on selected criteria
+function filterTests() {
+    const semesterEl = document.getElementById('filter_semester');
+    const gradeEl = document.getElementById('filter_grade');
+    const classEl = document.getElementById('filter_class');
+    const subjectEl = document.getElementById('filter_subject');
+    const competencyEl = document.getElementById('filter_competency');
+    
+    const semester = semesterEl ? semesterEl.value : '';
+    const grade = (teacherType === 'specialist' && gradeEl) ? gradeEl.value : '';
+    const className = (teacherType === 'specialist' && classEl) ? classEl.value : '';
+    const subject = (teacherType === 'homeroom' && subjectEl) ? subjectEl.value : '';
+    const competency = competencyEl ? competencyEl.value : '';
+    
+    const rows = document.querySelectorAll('.test-row');
+    
+    rows.forEach(row => {
+        let show = true;
+        
+        if (semester && row.dataset.semester !== semester) show = false;
+        if (grade && row.dataset.grade !== grade) show = false;
+        if (className && row.dataset.class !== className) show = false;
+        if (subject && row.dataset.subject !== subject) show = false;
+        if (competency && row.dataset.competency !== competency) show = false;
+        
+        row.style.display = show ? '' : 'none';
+    });
+}
+
+// Update filter class options based on selected grade (for specialist)
+function updateFilterClassOptions() {
+    if (teacherType !== 'specialist') return;
+    
+    const gradeSelect = document.getElementById('filter_grade');
+    const classSelect = document.getElementById('filter_class');
+    
+    if (!gradeSelect || !classSelect) return;
+    
+    const selectedGrade = gradeSelect.value;
+    
+    // Store current selection
+    const currentSelection = classSelect.value;
+    
+    // Clear existing options
+    classSelect.innerHTML = `<option value="">${translations['All Classes']}</option>`;
+    
+    if (selectedGrade && classroomsByGrade[selectedGrade]) {
+        // Only show classes for the selected grade
+        classroomsByGrade[selectedGrade].forEach(className => {
+            const option = document.createElement('option');
+            option.value = className;
+            option.textContent = `${className} (${selectedGrade})`;
+            option.setAttribute('data-grade', selectedGrade);
+            classSelect.appendChild(option);
+        });
+    } else {
+        // Show all classes if no grade is selected
+        Object.keys(classroomsByGrade).forEach(grade => {
+            classroomsByGrade[grade].forEach(className => {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = `${className} (${grade})`;
+                option.setAttribute('data-grade', grade);
+                classSelect.appendChild(option);
+            });
+        });
+    }
+    
+    // Restore selection if it's still available
+    if (currentSelection) {
+        const optionExists = Array.from(classSelect.options).some(option => option.value === currentSelection);
+        if (optionExists) {
+            classSelect.value = currentSelection;
+        }
+    }
+}
+
+// Select a test for grade input
+function selectTest(testId) {
+    selectedTestId = testId;
+    
+    // Fetch test details and students
+    fetch(`/api/get_test_for_grading/${testId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                alert('Error loading test: ' + data.error);
+                return;
+            }
+            
+            selectedTestData = data.test;
+            studentsData = data.students;
+            
+            // Update UI
+            displayTestDetails();
+            displayStudentsTable();
+            
+            // Show grade input section and statistics panel
+            document.getElementById('gradeInputSection').style.display = 'block';
+            document.getElementById('statisticsPanel').style.display = 'block';
+            calculateStatistics(); // Show initial statistics
+            document.getElementById('gradeInputSection').scrollIntoView({ behavior: 'smooth' });
+        })
+        .catch(error => {
+            console.error('Error loading test:', error);
+            alert('Error loading test data: ' + error.message);
+        });
+}
+
+// Display test details
+function displayTestDetails() {
+    const testDetails = document.getElementById('testDetails');
+    const maxPointsSpan = document.getElementById('maxPoints');
+    
+    if (!testDetails || !maxPointsSpan || !selectedTestData) return;
+    
+    maxPointsSpan.textContent = selectedTestData.max_points;
+    
+    testDetails.innerHTML = `
+        <strong>${translations['Test']}:</strong> ${selectedTestData.test_name} | 
+        <strong>${translations['Date']}:</strong> ${selectedTestData.test_date} | 
+        <strong>${translations['Subject']}:</strong> ${selectedTestData.subject || selectedTestData.class_name} | 
+        <strong>${translations['Competency']}:</strong> ${selectedTestData.competency}
+    `;
+}
+
+// Display students table for grade input
+function displayStudentsTable() {
+    const tableBody = document.getElementById('studentsGradeTable');
+    tableBody.innerHTML = '';
+    
+    studentsData.forEach((student, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${student.first_name} ${student.last_name}</td>
+            <td>
+                <input type="number" 
+                       class="form-control grade-input" 
+                       id="grade_${student.id}" 
+                       min="0" 
+                       max="${selectedTestData.max_points}" 
+                       step="0.5"
+                       value="${student.grade || ''}"
+                       onchange="updateGradeDisplay(${student.id})"
+                       placeholder="${translations['Enter grade']}">
+            </td>
+            <td id="percentage_${student.id}" class="text-muted">-</td>
+            <td id="status_${student.id}" class="text-muted">${translations['Not graded']}</td>
+            <td>
+                <input type="checkbox" 
+                       class="form-check-input" 
+                       id="absent_${student.id}" 
+                       ${student.absent ? 'checked' : ''}>
+            </td>
+        `;
+        tableBody.appendChild(row);
+        
+        // Attach event listener to absent checkbox after DOM element is created
+        const absentCheckbox = document.getElementById(`absent_${student.id}`);
+        if (absentCheckbox) {
+            absentCheckbox.addEventListener('change', function() {
+                updateAbsentStatus(student.id);
+            });
+        }
+        
+        // Update initial status and display based on absent status and grade
+        if (student.absent) {
+            // Student is marked absent - apply absent styling and status
+            const gradeInput = document.getElementById(`grade_${student.id}`);
+            const statusCell = document.getElementById(`status_${student.id}`);
+            const percentageCell = document.getElementById(`percentage_${student.id}`);
+            
+            if (gradeInput && statusCell && percentageCell) {
+                gradeInput.disabled = true;
+                gradeInput.style.backgroundColor = '#e9ecef';
+                statusCell.textContent = 'Absent';
+                statusCell.className = 'text-warning';
+                percentageCell.textContent = '-';
+            }
+        } else if (student.grade !== null) {
+            // Student has grade and not absent
+            updateGradeDisplay(student.id);
+        } else {
+            // No grade and not absent - show default status
+            const statusCell = document.getElementById(`status_${student.id}`);
+            if (statusCell) {
+                statusCell.textContent = 'Not graded';
+                statusCell.className = 'text-muted';
+            }
+        }
+    });
+    
+    // Enable save button
+    document.getElementById('saveGradesBtn').disabled = false;
+}
+
+// Update absent status and grey out grade input if needed
+function updateAbsentStatus(studentId) {
+    console.log('=== updateAbsentStatus called for student', studentId, '===');
+    
+    const absentCheckbox = document.getElementById(`absent_${studentId}`);
+    const gradeInput = document.getElementById(`grade_${studentId}`);
+    const percentageCell = document.getElementById(`percentage_${studentId}`);
+    const statusCell = document.getElementById(`status_${studentId}`);
+    
+    console.log('Elements found:', {
+        absentCheckbox: !!absentCheckbox,
+        gradeInput: !!gradeInput,
+        percentageCell: !!percentageCell,
+        statusCell: !!statusCell
+    });
+    
+    if (!absentCheckbox || !gradeInput || !percentageCell || !statusCell) {
+        console.error('Could not find elements for student', studentId);
+        return;
+    }
+    
+    console.log('Checkbox checked:', absentCheckbox.checked);
+    
+    if (absentCheckbox.checked) {
+        // Check if there's already a grade entered
+        const currentGrade = gradeInput.value;
+        console.log('Current grade value:', currentGrade, 'type:', typeof currentGrade);
+        
+        if (currentGrade && currentGrade.toString().trim() !== '') {
+            // Show confirmation popup
+            console.log('About to show confirmation popup');
+            const confirmed = confirm('There is a grade already entered for this student. Marking as absent will remove the grade. Continue?');
+            console.log('User confirmed:', confirmed);
+            
+            if (!confirmed) {
+                // User cancelled, uncheck the absent checkbox
+                console.log('User cancelled, unchecking checkbox');
+                absentCheckbox.checked = false;
+                return;
+            }
+        }
+        
+        // Student is absent - grey out grade input and clear values
+        console.log('Applying absent styling and clearing grade');
+        gradeInput.disabled = true;
+        gradeInput.style.backgroundColor = '#e9ecef';
+        gradeInput.value = '';
+        percentageCell.textContent = '-';
+        statusCell.textContent = 'Absent';
+        statusCell.className = 'text-warning';
+    } else {
+        // Student is not absent - enable grade input
+        console.log('Removing absent styling');
+        gradeInput.disabled = false;
+        gradeInput.style.backgroundColor = '';
+        updateGradeDisplay(studentId);
+    }
+    
+    // Auto-update statistics when absence status changes
+    calculateStatistics();
+    console.log('=== updateAbsentStatus completed ===');
+}
+
+// Update grade status and percentage
+function updateGradeDisplay(studentId) {
+    const gradeInput = document.getElementById(`grade_${studentId}`);
+    const percentageCell = document.getElementById(`percentage_${studentId}`);
+    const statusCell = document.getElementById(`status_${studentId}`);
+    const absentCheckbox = document.getElementById(`absent_${studentId}`);
+    
+    if (!gradeInput || !percentageCell || !statusCell || !selectedTestData) return;
+    
+    // Don't update if student is marked absent
+    if (absentCheckbox && absentCheckbox.checked) {
+        return;
+    }
+    
+    const grade = parseFloat(gradeInput.value);
+    const maxPoints = selectedTestData.max_points;
+    
+    if (isNaN(grade) || grade === '') {
+        percentageCell.textContent = '-';
+        statusCell.textContent = 'Not graded';
+        statusCell.className = 'text-muted';
+    } else {
+        const percentage = Math.round((grade / maxPoints) * 100);
+        percentageCell.textContent = percentage + '%';
+        
+        if (percentage >= 60) {
+            statusCell.textContent = 'Passing';
+            statusCell.className = 'text-success';
+        } else {
+            statusCell.textContent = 'Failing';
+            statusCell.className = 'text-danger';
+        }
+    }
+    
+    // Auto-update statistics when grades change
+    calculateStatistics();
+}
+
+// Save all grades
+function saveGrades() {
+    if (!selectedTestId || !studentsData) {
+        alert('No test selected or no student data available');
+        return;
+    }
+    
+    const grades = [];
+    
+    studentsData.forEach(student => {
+        const gradeInput = document.getElementById(`grade_${student.id}`);
+        if (!gradeInput) return;
+        const grade = gradeInput.value ? parseFloat(gradeInput.value) : null;
+        
+        const absentCheckbox = document.getElementById(`absent_${student.id}`);
+        const absent = absentCheckbox ? absentCheckbox.checked : false;
+        
+        grades.push({
+            student_id: student.id,
+            grade: grade,
+            absent: absent
+        });
+    });
+    
+    // Send grades to backend
+    fetch(`/api/save_grades/${selectedTestId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ grades: grades })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Grades saved successfully!');
+            // Update the studentsData array and preserve display states
+            studentsData.forEach(student => {
+                const gradeInput = document.getElementById(`grade_${student.id}`);
+                const absentCheckbox = document.getElementById(`absent_${student.id}`);
+                const statusCell = document.getElementById(`status_${student.id}`);
+                
+                if (gradeInput && absentCheckbox && statusCell) {
+                    student.grade = gradeInput.value ? parseFloat(gradeInput.value) : null;
+                    student.absent = absentCheckbox.checked;
+                    
+                    // Ensure status display remains correct after save
+                    console.log('Preserving status for student', student.id, 'absent:', absentCheckbox.checked);
+                    
+                    if (absentCheckbox.checked) {
+                        console.log('Setting status to Absent for student', student.id);
+                        statusCell.textContent = 'Absent';
+                        statusCell.className = 'text-warning';
+                        // Also ensure grade input stays disabled and greyed out
+                        gradeInput.disabled = true;
+                        gradeInput.style.backgroundColor = '#e9ecef';
+                        const percentageCell = document.getElementById(`percentage_${student.id}`);
+                        if (percentageCell) percentageCell.textContent = '-';
+                    } else if (gradeInput.value && gradeInput.value.trim() !== '') {
+                        // Re-run grade display update for non-absent students with grades
+                        console.log('Updating grade display for student', student.id);
+                        updateGradeDisplay(student.id);
+                    } else {
+                        console.log('Setting status to Not graded for student', student.id);
+                        statusCell.textContent = 'Not graded';
+                        statusCell.className = 'text-muted';
+                    }
+                }
+            });
+        } else {
+            alert('Error saving grades: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error saving grades:', error);
+        alert('Error saving grades');
+    });
+}
+
+// Calculate and display statistics (excluding absent students)
+function calculateStatistics() {
+    if (!studentsData || studentsData.length === 0) return;
+    
+    const grades = [];
+    let totalStudents = 0;
+    
+    studentsData.forEach(student => {
+        const gradeInput = document.getElementById(`grade_${student.id}`);
+        const absentCheckbox = document.getElementById(`absent_${student.id}`);
+        
+        if (!gradeInput || !absentCheckbox) return;
+        
+        // Skip absent students in calculations
+        if (absentCheckbox.checked) {
+            return;
+        }
+        
+        totalStudents++;
+        const grade = gradeInput.value ? parseFloat(gradeInput.value) : null;
+        if (grade !== null) {
+            grades.push(grade);
+        }
+    });
+    
+    if (grades.length === 0) {
+        // Clear statistics display when no grades
+        document.getElementById('avgGrade').textContent = '-';
+        document.getElementById('maxGrade').textContent = '-';
+        document.getElementById('minGrade').textContent = '-';
+        document.getElementById('passingCount').textContent = '-';
+        document.getElementById('failingCount').textContent = '-';
+        return;
+    }
+    
+    const maxPoints = selectedTestData.max_points;
+    const percentages = grades.map(g => Math.round((g / maxPoints) * 100));
+    
+    const avg = Math.round(percentages.reduce((a, b) => a + b, 0) / percentages.length);
+    const max = Math.max(...percentages);
+    const min = Math.min(...percentages);
+    const passing = percentages.filter(p => p >= 60).length;
+    const failing = percentages.filter(p => p < 60).length;
+    
+    document.getElementById('avgGrade').textContent = avg + '%';
+    document.getElementById('maxGrade').textContent = max + '%';
+    document.getElementById('minGrade').textContent = min + '%';
+    document.getElementById('passingCount').textContent = `${passing}/${grades.length}`;
+    document.getElementById('failingCount').textContent = `${failing}/${grades.length}`;
+    
+    // Statistics are always visible in the side panel
+}
+
+// Clear test selection and return to test selection
+function clearTestSelection() {
+    selectedTestId = null;
+    selectedTestData = null;
+    studentsData = [];
+    document.getElementById('gradeInputSection').style.display = 'none';
+    document.getElementById('statisticsPanel').style.display = 'none';
+}
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    if (teacherType === 'specialist') {
+        updateFilterClassOptions();
+    }
+});
+</script>
+
+{% endblock %}

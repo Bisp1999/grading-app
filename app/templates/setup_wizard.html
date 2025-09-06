@@ -1,0 +1,1199 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Setup Schools and Classes') }}{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-10 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h2>{{ _('Setup Schools and Classes') }}</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Progress indicator -->
+                    <div class="progress mb-4">
+                        <div class="progress-bar" role="progressbar" style="width: 16.67%" aria-valuenow="1" aria-valuemin="0" aria-valuemax="6"></div>
+                    </div>
+    <!-- Step 1 -->
+    <div id="step1" class="wizard-step">
+        <div id="step1-header">
+            <h3>{{ _('Step 1: Which describes you ?') }}</h3>
+            <p>{{ _('Please indicate what type of teacher you are') }}</p>
+        </div>
+        
+        <div class="row mt-4">
+            <!-- Homeroom Teacher Option -->
+            <div class="col-md-6 mb-3">
+                <div class="card h-100 option-card" data-option="homeroom">
+                    <div class="card-body text-center d-flex flex-column">
+                        <h5 class="card-title">{{ _('Homeroom Teacher') }}</h5>
+                        <p class="card-text flex-grow-1">{{ _('I am a homeroom teacher responsible for a single classroom, where I teach a variety of subjects') }}</p>
+                        <button type="button" class="btn btn-outline-primary select-option-btn" data-option="homeroom">{{ _('Select') }}</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Specialist Option -->
+            <div class="col-md-6 mb-3">
+                <div class="card h-100 option-card" data-option="specialist">
+                    <div class="card-body text-center d-flex flex-column">
+                        <h5 class="card-title">{{ _('Specialist') }}</h5>
+                        <p class="card-text flex-grow-1">{{ _('I am a specialist teacher responsible for teaching multiple classes, for a single subject') }}</p>
+                        <button type="button" class="btn btn-outline-primary select-option-btn" data-option="specialist">{{ _('Select') }}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex justify-content-end mt-3 wizard-btn-row" style="margin-top:18px;">
+    <button id="back-step1" type="button" class="btn btn-outline-secondary me-2 d-none" disabled>{{ _('Back') }}</button>
+    <button id="next-step1" type="button" class="btn btn-secondary" disabled>{{ _('Next') }}</button>
+</div>
+    </div>
+    <!-- Step 2 -->
+    <div id="step2" class="wizard-step d-none">
+        <h3 class="mb-2">{{ _('Step 2: School info') }}</h3>
+        <p class="mb-4">{{ _('Please enter in information about your school and semesters') }}</p>
+        <form id="step2-form">
+            <div class="mb-3">
+                <label for="school-name" class="form-label">{{ _('School name') }}</label>
+                <input type="text" class="form-control" id="school-name" name="school_name" required>
+            </div>
+            <div class="mb-3">
+                <label for="num-semesters" class="form-label">{{ _('Number of semesters') }}</label>
+                <input type="number" class="form-control" id="num-semesters" name="num_semesters" min="1" required>
+            </div>
+            <div id="homeroom-fields" class="d-none">
+    <div class="mb-3">
+        <label for="grade-name" class="form-label">{{ _('Name of your grade/class (ex: Grade 4)') }}</label>
+        <input type="text" class="form-control" id="grade-name" name="grade_name">
+    </div>
+</div>
+<div id="specialist-fields" class="d-none">
+    <div class="mb-3">
+        <label for="subject-name" class="form-label">{{ _('Subject that you teach') }}</label>
+        <input type="text" class="form-control" id="subject-name" name="subject_name">
+    </div>
+</div>
+<label class="form-label">{{ _('Competencies you must grade for') }}</label>
+<div id="competency-list">
+    <div class="input-group mb-2" id="add-competency-row">
+        <input type="text" class="form-control" id="competency-input" placeholder="{{ _('Ex: Oral, Written') }}">
+        <button type="button" class="btn btn-outline-secondary" id="add-competency-btn" disabled>{{ _('Add Competency') }}</button>
+    </div>
+    <div id="competencies-table" style="margin-top: 30px;"></div>
+</div>
+        </form>
+        <div class="d-flex justify-content-end mt-3 wizard-btn-row" style="padding-top: 36px">
+    <button id="back-step2" type="button" class="btn btn-outline-secondary me-2">{{ _('Back') }}</button>
+    <button id="next-step2" type="button" class="btn btn-secondary" disabled>{{ _('Next') }}</button>
+</div>
+    </div>
+    <!-- Step 3 -->
+    <div id="step3" class="wizard-step d-none">
+        <div id="step3-content"></div>
+        <div id="step3-homeroom" class="d-none">
+            <h3>{{ _('Step 3: Subjects') }}</h3>
+            <p>{{ _('Please provide a list of subjects that you will be grading for') }}</p>
+            <div id="subjects-list">
+                <div class="input-group mb-2" id="add-subject-row">
+                    <input type="text" class="form-control" id="subject-input" placeholder="{{ _('Subject') }}">
+                    <button type="button" class="btn btn-outline-secondary" id="add-subject-btn" disabled>{{ _('Add Subject') }}</button>
+                </div>
+                <div id="subjects-table" style="margin-top: 30px;"></div>
+            </div>
+        </div>
+        <div id="step3-specialist" class="d-none">
+            <h3>{{ _('Step 3: Grades') }}</h3>
+            <p>{{ _('Please provide a list of Grades you will be teaching') }}</p>
+            <div id="grades-list">
+                <div class="input-group mb-2" id="add-grade-row">
+                    <input type="text" class="form-control" id="grade-input" placeholder="{{ _('Grade') }}">
+                    <button type="button" class="btn btn-outline-secondary" id="add-grade-btn" disabled>{{ _('Add Grade') }}</button>
+                </div>
+                <div id="grades-table" style="margin-top: 30px;"></div>
+            </div>
+        </div>
+        <div class="d-flex justify-content-end mt-3 wizard-btn-row" style="margin-top:18px;">
+            <button id="back-step3" type="button" class="btn btn-outline-secondary me-2">{{ _('Back') }}</button>
+            <button id="next-step3" type="button" class="btn btn-secondary" disabled>{{ _('Next') }}</button>
+        </div>
+    </div>
+    <!-- Step 4 -->
+    <div id="step4" class="wizard-step d-none">
+        <div id="step4-header"></div>
+<div id="step4-content">
+    <!-- Dynamic tables will be rendered here by JS -->
+</div>
+        <div class="d-flex justify-content-end mt-3 wizard-btn-row" style="margin-top:18px;">
+            <button id="back-step4" type="button" class="btn btn-outline-secondary me-2">{{ _('Back') }}</button>
+            <button id="next-step4" type="button" class="btn btn-secondary" disabled>{{ _('Next') }}</button>
+        </div>
+    </div>
+    <!-- Step 5: Review or Classes -->
+    <div id="step5" class="wizard-step d-none">
+        <div id="step5-header"></div>
+        <div id="step5-summary"></div>
+        <div id="step5-specialist-classes" class="d-none">
+            <form id="classrooms-form" autocomplete="off">
+                <div class="mb-3">
+                    <label for="classroom-name" class="form-label">{{ _('Classroom name') }}</label>
+                    <input type="text" class="form-control" id="classroom-name" placeholder="{{ _('Enter classroom name') }}">
+                </div>
+                <div class="mb-3">
+                    <label for="classroom-grade" class="form-label">{{ _('Grade') }}</label>
+                    <select class="form-select" id="classroom-grade">
+                        <option value="">{{ _('Select grade') }}</option>
+                    </select>
+                </div>
+                <button type="button" id="add-classroom" class="btn btn-outline-secondary mb-3" disabled>{{ _('Add Classroom') }}</button>
+            </form>
+            <div id="classrooms-list"></div>
+        </div>
+        <div class="d-flex justify-content-end mt-3 wizard-btn-row" style="margin-top:18px;">
+            <button id="back-step5" type="button" class="btn btn-outline-secondary me-2">{{ _('Back') }}</button>
+            <button id="done-step5" type="button" class="btn btn-success d-none">{{ _('Done') }}</button>
+            <button id="next-step5" type="button" class="btn btn-secondary d-none" disabled>{{ _('Next') }}</button>
+        </div>
+    </div>
+    <!-- Step 6: Review for Specialist -->
+    <div id="step6" class="wizard-step d-none">
+        <div id="step6-header"></div>
+        <div id="step6-summary"></div>
+        <div class="d-flex justify-content-end mt-3 wizard-btn-row" style="margin-top:18px;">
+            <button id="back-step6" type="button" class="btn btn-outline-secondary me-2">{{ _('Back') }}</button>
+            <button id="done-step6" type="button" class="btn btn-success">{{ _('Done') }}</button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Card-based selection styling */
+.option-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid #dee2e6;
+}
+
+.option-card:hover {
+    border-color: #0d6efd;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.option-card.selected {
+    border-color: #0d6efd;
+    background-color: #f8f9ff;
+    box-shadow: 0 0.25rem 0.5rem rgba(13, 110, 253, 0.15);
+}
+
+.option-card.selected .card-title {
+    color: #0d6efd;
+    font-weight: 600;
+}
+
+.option-card.selected .select-option-btn {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+}
+
+.option-card .select-option-btn {
+    transition: all 0.2s ease;
+}
+</style>
+
+<!-- JavaScript translations -->
+<script type="application/json" id="js-translations">
+{
+    "Remove": "{{ _('Remove') }}",
+    "Step 4: Assign Weights": "{{ _('Step 4: Assign Weights') }}",
+    "Please assign weights for each competency in each subject": "{{ _('Please assign weights for each competency in each subject') }}",
+    "Step 4: Assign Weights for each Grade": "{{ _('Step 4: Assign Weights for each Grade') }}",
+    "Please assign weights for each competency in each grade": "{{ _('Please assign weights for each competency in each grade') }}",
+    "Step 5: Review and Confirm": "{{ _('Step 5: Review and Confirm') }}",
+    "Please review your setup and confirm to create your school and classroom": "{{ _('Please review your setup and confirm to create your school and classroom') }}",
+    "Teacher Type": "{{ _('Teacher Type') }}",
+    "School Name": "{{ _('School Name') }}",
+    "Number of Semesters": "{{ _('Number of Semesters') }}",
+    "Grade/Class Name": "{{ _('Grade/Class Name') }}",
+    "Subject": "{{ _('Subject') }}",
+    "Subjects": "{{ _('Subjects') }}",
+    "Competencies": "{{ _('Competencies') }}",
+    "Weights": "{{ _('Weights') }}",
+    "Step 5: Create Classes": "{{ _('Step 5: Create Classes') }}",
+    "Please create classes for each grade you will be teaching": "{{ _('Please create classes for each grade you will be teaching') }}",
+    "Step 6: Review and Confirm": "{{ _('Step 6: Review and Confirm') }}",
+    "Please review your setup and confirm to create your school and classes": "{{ _('Please review your setup and confirm to create your school and classes') }}",
+    "Grades": "{{ _('Grades') }}",
+    "Classes": "{{ _('Classes') }}",
+    "Name": "{{ _('Name') }}",
+    "Grade": "{{ _('Grade') }}",
+    "Actions": "{{ _('Actions') }}",
+    "Homeroom Teacher": "{{ _('Homeroom Teacher') }}",
+    "Specialist": "{{ _('Specialist') }}",
+    "Please enter a competency name": "{{ _('Please enter a competency name') }}",
+    "Please enter a subject name": "{{ _('Please enter a subject name') }}",
+    "Please enter a grade name": "{{ _('Please enter a grade name') }}",
+    "Please enter a classroom name": "{{ _('Please enter a classroom name') }}",
+    "Please select a grade": "{{ _('Please select a grade') }}",
+    "Classroom already exists for this grade": "{{ _('Classroom already exists for this grade') }}",
+    "Error creating setup. Please try again.": "{{ _('Error creating setup. Please try again.') }}",
+    "Setup created successfully!": "{{ _('Setup created successfully!') }}",
+    "Step 4: Associate Competencies to Subjects": "{{ _('Step 4: Associate Competencies to Subjects') }}",
+    "Step 4: Associate Competencies to Grades": "{{ _('Step 4: Associate Competencies to Grades') }}",
+    "Step 5: Review": "{{ _('Step 5: Review') }}",
+    "Please review the setup that you have provided. If you need to adjust anything, please go backwards using the 'Back' button. If everything looks good, finalize your selections by pressing the 'Done' button.": "{{ _('Please review the setup that you have provided. If you need to adjust anything, please go backwards using the Back button. If everything looks good, finalize your selections by pressing the Done button.') }}",
+    "Step 5: Classes": "{{ _('Step 5: Classes') }}",
+    "Now, please enter the classes that you teach. For each class, provide a class name and select the grade. You can add multiple classes.": "{{ _('Now, please enter the classes that you teach. For each class, provide a class name and select the grade. You can add multiple classes.') }}",
+    "Step 6: Review": "{{ _('Step 6: Review') }}",
+    "Please review the setup that you have provided. If you need to adjust anything, please go backwards using the 'Back' button. If everything looks good, finalize your selections by pressing the 'Done' button.": "{{ _('Please review the setup that you have provided. If you need to adjust anything, please go backwards using the Back button. If everything looks good, finalize your selections by pressing the Done button.') }}"
+}
+</script>
+
+<script>
+// Load translations
+const translations = JSON.parse(document.getElementById('js-translations').textContent);
+
+// Add problematic translations with % characters directly (hardcoded to avoid Jinja2 format issues)
+if (document.documentElement.lang === 'fr') {
+    translations['Please provide the competency weighting for each subject, for each semester. Competency weights should equal 100% for each subject.'] = 'Veuillez fournir la pondération des compétences pour chaque matière, pour chaque semestre. Les poids des compétences doivent totaliser 100% pour chaque matière.';
+    translations['Please provide the competency weighting for each grade, for each semester. Competency weights should equal 100% for each subject.'] = 'Veuillez fournir la pondération des compétences pour chaque niveau, pour chaque semestre. Les poids des compétences doivent totaliser 100% pour chaque matière.';
+} else {
+    translations['Please provide the competency weighting for each subject, for each semester. Competency weights should equal 100% for each subject.'] = 'Please provide the competency weighting for each subject, for each semester. Competency weights should equal 100% for each subject.';
+    translations['Please provide the competency weighting for each grade, for each semester. Competency weights should equal 100% for each subject.'] = 'Please provide the competency weighting for each grade, for each semester. Competency weights should equal 100% for each subject.';
+}
+
+// Wizard state
+let teacherType = null;
+let previousWizardData = null;
+
+// Load previous wizard data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadPreviousWizardData();
+});
+
+function loadPreviousWizardData() {
+    console.log('Loading previous wizard data...');
+    fetch('/api/get_setup_wizard_data')
+        .then(response => {
+            console.log('API response status:', response.status);
+            if (response.status === 401 || response.status === 403) {
+                console.log('User not authenticated - skipping prepopulation');
+                return { success: true, has_previous_data: false };
+            }
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('API response data:', data);
+            if (data.success && data.has_previous_data) {
+                console.log('Previous data found, prepopulating wizard...');
+                previousWizardData = data.data;
+                prepopulateWizard(previousWizardData);
+            } else {
+                console.log('No previous data found or API call failed');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading previous wizard data:', error);
+        });
+}
+
+function prepopulateWizard(data) {
+    console.log('prepopulateWizard called with data:', data);
+    
+    // Step 1: Prepopulate teacher type selection
+    if (data.teacher_type) {
+        console.log('Prepopulating teacher type:', data.teacher_type);
+        selectTeacherType(data.teacher_type);
+    }
+    
+    // Step 2: Prepopulate school info and competencies
+    if (data.school_name) {
+        document.getElementById('school-name').value = data.school_name;
+    }
+    if (data.num_semesters) {
+        document.getElementById('num-semesters').value = data.num_semesters;
+    }
+    // Prepopulate specialist subject name
+    if (data.teacher_type === 'specialist' && data.subject_name) {
+        const subjectNameInput = document.getElementById('subject-name');
+        if (subjectNameInput) {
+            subjectNameInput.value = data.subject_name;
+        }
+    }
+    if (data.competencies && data.competencies.length > 0) {
+        competencies = [...data.competencies];
+        // Render competencies table when DOM is ready
+        setTimeout(() => {
+            if (typeof renderCompetenciesTable === 'function') {
+                renderCompetenciesTable();
+            }
+        }, 100);
+    }
+    
+    // Step 3: Prepopulate subjects (homeroom) or grades (specialist)
+    if (data.teacher_type === 'homeroom' && data.subjects && data.subjects.length > 0) {
+        homeroomSubjects = [...data.subjects];
+        // Render subjects table when navigating to Step 3
+    } else if (data.teacher_type === 'specialist' && data.grades && data.grades.length > 0) {
+        grades = [...data.grades];
+        // Render grades table when navigating to Step 3
+    }
+    
+    // Step 4: Prepopulate weights
+    if (data.weights && Object.keys(data.weights).length > 0) {
+        step4Weights = {...data.weights};
+    }
+    
+    // Step 5/6: Prepopulate classrooms (specialist) or grade name (homeroom)
+    if (data.teacher_type === 'specialist' && data.classrooms && data.classrooms.length > 0) {
+        specialistClassrooms = [...data.classrooms];
+        // Render classrooms table when navigating to Step 5
+    } else if (data.teacher_type === 'homeroom' && data.grade_name) {
+        // Set grade name when navigating to Step 5
+        setTimeout(() => {
+            const gradeNameInput = document.getElementById('grade-name');
+            if (gradeNameInput) {
+                gradeNameInput.value = data.grade_name;
+            }
+        }, 100);
+    }
+    
+    console.log('Wizard prepopulated with previous data:', data);
+}
+
+// Step 1 logic - Card-based selection
+const nextStep1 = document.getElementById('next-step1');
+
+// Option selection handling
+document.querySelectorAll('.select-option-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const option = this.getAttribute('data-option');
+        selectTeacherType(option);
+    });
+});
+
+// Also allow clicking on the card itself
+document.querySelectorAll('.option-card').forEach(card => {
+    card.addEventListener('click', function() {
+        const option = this.getAttribute('data-option');
+        selectTeacherType(option);
+    });
+});
+
+function selectTeacherType(option) {
+    teacherType = option;
+    
+    // Remove selected class from all cards
+    document.querySelectorAll('.option-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Add selected class to clicked card
+    document.querySelector(`.option-card[data-option="${option}"]`).classList.add('selected');
+    
+    // Enable next button
+    nextStep1.disabled = false;
+    nextStep1.classList.remove('btn-secondary');
+    nextStep1.classList.add('btn-primary');
+    
+    console.log('Selected teacher type:', teacherType);
+}
+
+nextStep1.onclick = () => {
+    document.getElementById('step1').classList.add('d-none');
+    document.getElementById('step2').classList.remove('d-none');
+    // Show relevant fields
+    if (teacherType === 'homeroom') {
+        document.getElementById('homeroom-fields').classList.remove('d-none');
+        document.getElementById('specialist-fields').classList.add('d-none');
+    } else {
+        document.getElementById('homeroom-fields').classList.add('d-none');
+        document.getElementById('specialist-fields').classList.remove('d-none');
+    }
+};
+
+
+// Step 3 (Homeroom): Add Subject functionality
+let homeroomSubjects = [];
+// DOM elements will be accessed when Step 3 is shown
+let subjectInput, addSubjectBtn, subjectsTableDiv;
+
+function initializeHomeroomStep3() {
+    // Initialize DOM elements
+    subjectInput = document.getElementById('subject-input');
+    addSubjectBtn = document.getElementById('add-subject-btn');
+    subjectsTableDiv = document.getElementById('subjects-table');
+    
+    // Set up event listeners
+    subjectInput.addEventListener('input', () => {
+        addSubjectBtn.disabled = !subjectInput.value.trim();
+    });
+    
+    addSubjectBtn.onclick = () => {
+        const val = subjectInput.value.trim();
+        if (val && !homeroomSubjects.includes(val)) {
+            homeroomSubjects.push(val);
+            renderSubjectsTable();
+            subjectInput.value = '';
+            addSubjectBtn.disabled = true;
+        }
+    };
+    
+    subjectsTableDiv.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-subject')) {
+            const idx = parseInt(e.target.getAttribute('data-idx'));
+            homeroomSubjects.splice(idx, 1);
+            renderSubjectsTable();
+        }
+    });
+    
+    // Initialize subjects table
+    renderSubjectsTable();
+}
+
+function renderSubjectsTable() {
+    if (homeroomSubjects.length === 0) {
+        subjectsTableDiv.innerHTML = '<div class="text-muted">No subjects added yet.</div>';
+        nextStep3.disabled = true;
+        nextStep3.classList.remove('btn-success');
+        nextStep3.classList.add('btn-secondary');
+    } else {
+        // Sort subjects alphabetically A-Z
+        const sortedSubjects = [...homeroomSubjects].sort((a, b) => a.localeCompare(b));
+        
+        let html = '<ul class="list-group mb-2">';
+        sortedSubjects.forEach((subject, i) => {
+            html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>${subject}</span>
+                <button class="btn btn-sm btn-outline-danger" onclick="removeSubject(${i})">${translations['Remove']}</button>
+            </li>`;
+        });
+        html += '</ul>';
+        // Also keep hidden inputs for backend compatibility (use sorted order)
+        html += sortedSubjects.map(s => `<input type="hidden" class="subject-input" name="subject[]" value="${s}">`).join('');
+        subjectsTableDiv.innerHTML = html;
+        nextStep3.disabled = false;
+        nextStep3.classList.add('btn-success');
+        nextStep3.classList.remove('btn-secondary');
+    }
+}
+
+// Event handlers are now set up in initializeHomeroomStep3() when Step 3 is shown
+
+// Step 3 (Specialist): Add Grade functionality
+let specialistGrades = [];
+const gradeInput = document.getElementById('grade-input');
+const addGradeBtn = document.getElementById('add-grade-btn');
+const gradesTableDiv = document.getElementById('grades-table');
+const nextStep3 = document.getElementById('next-step3');
+
+function renderGradesTable() {
+    if (specialistGrades.length === 0) {
+        gradesTableDiv.innerHTML = '<div class="text-muted">No grades added yet.</div>';
+        nextStep3.disabled = true;
+        nextStep3.classList.remove('btn-success');
+        nextStep3.classList.add('btn-secondary');
+    } else {
+        // Sort grades alphabetically A-Z
+        const sortedGrades = [...specialistGrades].sort((a, b) => a.localeCompare(b));
+        
+        let html = '<ul class="list-group mb-2">';
+        sortedGrades.forEach((grade, i) => {
+            html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>${grade}</span>
+                <button class="btn btn-sm btn-outline-danger" onclick="removeGrade(${i})">${translations['Remove']}</button>
+            </li>`;
+        });
+        html += '</ul>';
+        // Also keep hidden inputs for backend compatibility (use sorted order)
+        html += sortedGrades.map(g => `<input type="hidden" class="grade-input" name="grade[]" value="${g}">`).join('');
+        gradesTableDiv.innerHTML = html;
+        nextStep3.disabled = false;
+        nextStep3.classList.add('btn-success');
+        nextStep3.classList.remove('btn-secondary');
+    }
+}
+gradeInput.addEventListener('input', () => {
+    addGradeBtn.disabled = !gradeInput.value.trim();
+});
+addGradeBtn.onclick = () => {
+    const val = gradeInput.value.trim();
+    if (val && !specialistGrades.includes(val)) {
+        specialistGrades.push(val);
+        renderGradesTable();
+        gradeInput.value = '';
+        addGradeBtn.disabled = true;
+    }
+};
+gradesTableDiv.addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-grade')) {
+        const idx = parseInt(e.target.getAttribute('data-idx'));
+        specialistGrades.splice(idx, 1);
+        renderGradesTable();
+    }
+});
+// On wizard step change, sync .grade-inputs for backend and JS
+function syncSpecialistGradesFromInputs() {
+    specialistGrades = [];
+    document.querySelectorAll('.grade-input').forEach(input => {
+        if (input.value.trim()) specialistGrades.push(input.value.trim());
+    });
+    renderGradesTable();
+}
+// If user navigates back and forth, re-render grades
+if (document.getElementById('step3-specialist')) {
+    syncSpecialistGradesFromInputs();
+}
+
+
+
+
+// Step 2 logic
+const nextStep2 = document.getElementById('next-step2');
+const step2Form = document.getElementById('step2-form');
+const schoolName = document.getElementById('school-name');
+const numSemesters = document.getElementById('num-semesters');
+const gradeName = document.getElementById('grade-name');
+const subjectName = document.getElementById('subject-name');
+
+function validateStep2() {
+    let valid = schoolName.value.trim() && numSemesters.value;
+    if (teacherType === 'homeroom') {
+        valid = valid && gradeName.value.trim();
+        // At least one competency must be added
+        valid = valid && competencies.length > 0;
+    } else {
+        valid = valid && subjectName.value.trim();
+        // At least one competency must be added
+        valid = valid && competencies.length > 0;
+    }
+    nextStep2.disabled = !valid;
+    nextStep2.classList.toggle('btn-success', valid);
+    nextStep2.classList.toggle('btn-secondary', !valid);
+}
+
+schoolName.addEventListener('input', validateStep2);
+numSemesters.addEventListener('input', validateStep2);
+if (gradeName) gradeName.addEventListener('input', validateStep2);
+if (subjectName) subjectName.addEventListener('input', validateStep2);
+document.getElementById('competency-list').addEventListener('input', validateStep2);
+
+// Step 2: Competency functionality (similar to Step 3 grades)
+let competencies = [];
+const competencyInput = document.getElementById('competency-input');
+const addCompetencyBtn = document.getElementById('add-competency-btn');
+const competenciesTableDiv = document.getElementById('competencies-table');
+
+function renderCompetenciesTable() {
+    if (competencies.length === 0) {
+        competenciesTableDiv.innerHTML = '<div class="text-muted">No competencies added yet.</div>';
+    } else {
+        // Sort competencies alphabetically A-Z
+        const sortedCompetencies = [...competencies].sort((a, b) => a.localeCompare(b));
+        
+        let html = '<ul class="list-group mb-2">';
+        sortedCompetencies.forEach((competency, i) => {
+            html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                <span>${competency}</span>
+                <button class="btn btn-sm btn-outline-danger" onclick="removeCompetency(${i})">${translations['Remove']}</button>
+            </li>`;
+        });
+        html += '</ul>';
+        // Also keep hidden inputs for backend compatibility (use sorted order)
+        html += sortedCompetencies.map(c => `<input type="hidden" class="competency-input" name="competency[]" value="${c}">`).join('');
+        competenciesTableDiv.innerHTML = html;
+    }
+    validateStep2();
+}
+
+competencyInput.addEventListener('input', () => {
+    addCompetencyBtn.disabled = !competencyInput.value.trim();
+});
+
+addCompetencyBtn.onclick = () => {
+    const val = competencyInput.value.trim();
+    if (val && !competencies.includes(val)) {
+        competencies.push(val);
+        renderCompetenciesTable();
+        competencyInput.value = '';
+        addCompetencyBtn.disabled = true;
+    }
+};
+
+competenciesTableDiv.addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-competency')) {
+        const idx = parseInt(e.target.getAttribute('data-idx'));
+        competencies.splice(idx, 1);
+        renderCompetenciesTable();
+    }
+});
+
+// Initialize competencies table
+renderCompetenciesTable();
+
+// Step 2 -> Step 3
+nextStep2.onclick = () => {
+    document.getElementById('step2').classList.add('d-none');
+    document.getElementById('step3').classList.remove('d-none');
+    // Show correct UI for Step 3
+    document.getElementById('step3-content').innerHTML = '';
+    if (teacherType === 'homeroom') {
+        document.getElementById('step3-homeroom').classList.remove('d-none');
+        document.getElementById('step3-specialist').classList.add('d-none');
+        // Initialize DOM elements for homeroom subjects functionality
+        initializeHomeroomStep3();
+        // Render prepopulated subjects if available
+        if (homeroomSubjects.length > 0) {
+            setTimeout(() => renderSubjectsTable(), 50);
+        }
+    } else {
+        document.getElementById('step3-homeroom').classList.add('d-none');
+        document.getElementById('step3-specialist').classList.remove('d-none');
+        // Update specialist grades from prepopulated data
+        if (grades.length > 0) {
+            specialistGrades = [...grades];
+            renderGradesTable();
+        }
+    }
+    validateStep3();
+};
+
+// Step 3 logic
+function validateStep3() {
+    let valid = false;
+    if (teacherType === 'homeroom') {
+        valid = homeroomSubjects.length > 0;
+    } else {
+        valid = specialistGrades.length > 0;
+    }
+    nextStep3.disabled = !valid;
+    nextStep3.classList.toggle('btn-success', valid);
+    nextStep3.classList.toggle('btn-secondary', !valid);
+}
+
+
+
+
+function addGradeBox() {
+    const row = document.createElement('div');
+    row.className = 'input-group mb-2 grade-row';
+    row.innerHTML = `<input type="text" class="form-control grade-input" name="grade[]" placeholder="Grade">
+        <button type="button" class="btn btn-outline-secondary remove-grade">Remove</button>`;
+    document.getElementById('grades-list').appendChild(row);
+    row.querySelector('.grade-input').addEventListener('input', validateStep3);
+    row.querySelector('.remove-grade').onclick = function() {
+        row.remove();
+        validateStep3();
+    };
+}
+document.getElementById('grades-list').addEventListener('click', function(e) {
+    if (e.target.classList.contains('add-grade')) {
+        addGradeBox();
+    }
+});
+document.getElementById('grades-list').addEventListener('input', validateStep3);
+
+// Step 3 -> Step 4
+nextStep3.onclick = () => {
+    document.getElementById('step3').classList.add('d-none');
+    document.getElementById('step4').classList.remove('d-none');
+    renderStep4Tables();
+};
+
+// Step 4 -> Step 5
+const nextStep4 = document.getElementById('next-step4');
+nextStep4.onclick = () => {
+    document.getElementById('step4').classList.add('d-none');
+    document.getElementById('step5').classList.remove('d-none');
+    renderStep5();
+};
+
+// Step 5 logic
+let specialistClassrooms = [];
+function submitWizardData(type) {
+    // Gather all wizard data
+    const schoolName = document.getElementById('school-name').value;
+    const numSemesters = parseInt(document.getElementById('num-semesters').value) || 1;
+    let competencies = [];
+    document.querySelectorAll('.competency-input').forEach(input => {
+        if (input.value.trim()) competencies.push(input.value.trim());
+    });
+    // Use homeroomSubjects array instead of querying DOM elements
+    let subjects = homeroomSubjects || [];
+    let grades = [];
+    document.querySelectorAll('.grade-input').forEach(input => {
+        if (input.value.trim()) grades.push(input.value.trim());
+    });
+    
+    // Get specialist subject name
+    const subjectNameInput = document.getElementById('subject-name');
+    const subjectName = subjectNameInput ? subjectNameInput.value.trim() : null;
+    
+    // Get homeroom grade name
+    const gradeNameInput = document.getElementById('grade-name');
+    const gradeName = gradeNameInput ? gradeNameInput.value.trim() : null;
+    
+    // Prepare data object
+    const data = {
+        teacher_type: type,
+        school_name: schoolName,
+        num_semesters: numSemesters,
+        competencies,
+        subjects,
+        grades,
+        weights: step4Weights,
+        classrooms: specialistClassrooms,
+        subject_name: subjectName,
+        grade_name: gradeName
+    };
+    // POST to backend and redirect
+    fetch('/setup_wizard/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).then(res => {
+        if (res.redirected) {
+            window.location.href = res.url;
+        } else {
+            window.location.href = '/dashboard';
+        }
+    }).catch(() => {
+        window.location.href = '/dashboard';
+    });
+}
+function renderStep5() {
+    const step5Header = document.getElementById('step5-header');
+    const step5Summary = document.getElementById('step5-summary');
+    const specialistClassesDiv = document.getElementById('step5-specialist-classes');
+    const doneBtn = document.getElementById('done-step5');
+    const nextBtn = document.getElementById('next-step5');
+    // Homeroom: review summary
+    if (teacherType === 'homeroom') {
+        step5Header.innerHTML = `<h3>${translations['Step 5: Review']}</h3><p>${translations['Please review the setup that you have provided. If you need to adjust anything, please go backwards using the Back button. If everything looks good, finalize your selections by pressing the Done button.']}</p>`;
+        specialistClassesDiv.classList.add('d-none');
+        step5Summary.classList.remove('d-none');
+        doneBtn.classList.remove('d-none');
+        nextBtn.classList.add('d-none');
+        // Render summary table (same as before)
+        const schoolName = document.getElementById('school-name').value;
+        const numSemesters = parseInt(document.getElementById('num-semesters').value) || 1;
+        let competencies = [];
+        document.querySelectorAll('.competency-input').forEach(input => {
+            if (input.value.trim()) competencies.push(input.value.trim());
+        });
+        let rows = [];
+        let rowLabel = 'Subject';
+        document.querySelectorAll('.subject-input').forEach(input => {
+            if (input.value.trim()) rows.push(input.value.trim());
+        });
+        // Get grade/class name from Step 2
+        const gradeName = document.getElementById('grade-name');
+        const gradeNameValue = gradeName ? gradeName.value.trim() : '';
+        
+        let html = `<div class='mb-3'><strong>School:</strong> ${schoolName || '(none)'}</div>`;
+        html += `<div class='mb-3'><strong>Semesters:</strong> ${numSemesters}</div>`;
+        html += `<div class='mb-3'><strong>Grade/Class:</strong> ${gradeNameValue || '(none)'}</div>`;
+        html += `<div class='mb-3'><strong>Competencies:</strong> ${competencies.join(', ')}</div>`;
+        html += `<div class='mb-3'><strong>Subjects:</strong> ${rows.join(', ')}</div>`;
+        for (let s = 1; s <= numSemesters; s++) {
+            html += `<div class='mb-2'><strong>Semester ${s}:</strong></div>`;
+            html += `<div class='table-responsive'><table class='table table-bordered align-middle text-center mb-3 step5-table'>`;
+            html += `<thead class='table-light'><tr><th>Subject</th>`;
+            competencies.forEach(c => {
+                html += `<th>${c}</th>`;
+            });
+            html += `<th>Total</th></tr></thead><tbody>`;
+            rows.forEach((row, i) => {
+                let total = 0;
+                html += `<tr><td>${row}</td>`;
+                competencies.forEach((c, j) => {
+                    let val = '';
+                    if (
+                        step4Weights[s] &&
+                        step4Weights[s][i] &&
+                        typeof step4Weights[s][i][j] !== 'undefined'
+                    ) {
+                        val = step4Weights[s][i][j];
+                    }
+                    total += parseInt(val) || 0;
+                    html += `<td>${val}%</td>`;
+                });
+                html += `<td>${total}%</td></tr>`;
+            });
+            html += `</tbody></table></div>`;
+        }
+        step5Summary.innerHTML = html;
+    } else {
+        // Specialist: classes entry
+        step5Header.innerHTML = `<h3>${translations['Step 5: Classes']}</h3><p>${translations['Now, please enter the classes that you teach. For each class, provide a class name and select the grade. You can add multiple classes.']}</p>`;
+        specialistClassesDiv.classList.remove('d-none');
+        step5Summary.classList.add('d-none');
+        doneBtn.classList.add('d-none');
+        nextBtn.classList.remove('d-none');
+        renderClassroomsUI();
+        // Render prepopulated classrooms if available
+        if (specialistClassrooms.length > 0) {
+            updateClassroomsList();
+        }
+    }
+}
+
+// Specialist classes UI logic
+function renderClassroomsUI() {
+    // Populate grades dropdown
+    const gradeSelect = document.getElementById('classroom-grade');
+    gradeSelect.innerHTML = '<option value="">Select grade</option>';
+    document.querySelectorAll('.grade-input').forEach(input => {
+        if (input.value.trim()) {
+            const opt = document.createElement('option');
+            opt.value = input.value.trim();
+            opt.textContent = input.value.trim();
+            gradeSelect.appendChild(opt);
+        }
+    });
+    // Reset form fields
+    document.getElementById('classroom-name').value = '';
+    gradeSelect.value = '';
+    document.getElementById('add-classroom').disabled = true;
+    // Render classroom list
+    updateClassroomsList();
+}
+function updateClassroomsList() {
+    const listDiv = document.getElementById('classrooms-list');
+    if (specialistClassrooms.length === 0) {
+        listDiv.innerHTML = '<div class="text-muted">No classrooms added yet.</div>';
+        document.getElementById('next-step5').disabled = true;
+        document.getElementById('next-step5').classList.remove('btn-success');
+        document.getElementById('next-step5').classList.add('btn-secondary');
+    } else {
+        // Sort alphabetically by classroom name
+        let sorted = [...specialistClassrooms].sort((a, b) => a.name.localeCompare(b.name, undefined, {sensitivity: 'base'}));
+        let html = '<ul class="list-group mb-2">';
+        sorted.forEach((cls, idx) => {
+            html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                <span><strong>${cls.name}</strong> <span class="text-muted">(${cls.grade})</span></span>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-classroom" data-idx="${specialistClassrooms.findIndex(c=>c.name===cls.name&&c.grade===cls.grade)}">${translations['Remove']}</button>
+            </li>`;
+        });
+        html += '</ul>';
+        listDiv.innerHTML = html;
+        document.getElementById('next-step5').disabled = false;
+        document.getElementById('next-step5').classList.add('btn-success');
+        document.getElementById('next-step5').classList.remove('btn-secondary');
+    }
+}
+// Enable Add More button only if both fields filled
+const classroomNameInput = document.getElementById('classroom-name');
+const classroomGradeSelect = document.getElementById('classroom-grade');
+const addClassroomBtn = document.getElementById('add-classroom');
+classroomNameInput.addEventListener('input', toggleAddClassroomBtn);
+classroomGradeSelect.addEventListener('change', toggleAddClassroomBtn);
+function toggleAddClassroomBtn() {
+    addClassroomBtn.disabled = !(classroomNameInput.value.trim() && classroomGradeSelect.value);
+}
+addClassroomBtn.onclick = function() {
+    if (classroomNameInput.value.trim() && classroomGradeSelect.value) {
+        specialistClassrooms.push({ name: classroomNameInput.value.trim(), grade: classroomGradeSelect.value });
+        renderClassroomsUI();
+    }
+};
+document.getElementById('classrooms-list').addEventListener('click', function(e) {
+    if (e.target.classList.contains('remove-classroom')) {
+        const idx = parseInt(e.target.getAttribute('data-idx'));
+        specialistClassrooms.splice(idx, 1);
+        renderClassroomsUI();
+    }
+});
+// Step 5 navigation
+const backStep5 = document.getElementById('back-step5');
+backStep5.onclick = () => {
+    document.getElementById('step5').classList.add('d-none');
+    document.getElementById('step4').classList.remove('d-none');
+};
+const doneStep5 = document.getElementById('done-step5');
+doneStep5.onclick = () => {
+    // Homeroom: save and redirect
+    submitWizardData('homeroom');
+};
+const nextStep5 = document.getElementById('next-step5');
+nextStep5.onclick = () => {
+    // Force hide Step 5
+    const step5 = document.getElementById('step5');
+    const step6 = document.getElementById('step6');
+    
+    step5.classList.add('d-none');
+    step5.style.display = 'none';
+    
+    // Force show Step 6
+    step6.classList.remove('d-none');
+    step6.style.display = 'block';
+    
+    // Render Step 6 content
+    renderStep6();
+};
+
+// Step 6 navigation
+const backStep6 = document.getElementById('back-step6');
+backStep6.onclick = () => {
+    // Force hide Step 6
+    const step5 = document.getElementById('step5');
+    const step6 = document.getElementById('step6');
+    
+    step6.classList.add('d-none');
+    step6.style.display = 'none';
+    
+    // Force show Step 5
+    step5.classList.remove('d-none');
+    step5.style.display = 'block';
+};
+
+// Step 6 logic (Specialist)
+function renderStep6() {
+    const step6Header = document.getElementById('step6-header');
+    const step6Summary = document.getElementById('step6-summary');
+    
+    step6Header.innerHTML = `<h3>${translations['Step 6: Review']}</h3><p>${translations['Please review the setup that you have provided. If you need to adjust anything, please go backwards using the Back button. If everything looks good, finalize your selections by pressing the Done button.']}</p>`;
+    
+    // Show summary of all selections
+    const schoolName = document.getElementById('school-name').value;
+    const numSemesters = parseInt(document.getElementById('num-semesters').value) || 1;
+    let competencies = [];
+    document.querySelectorAll('.competency-input').forEach(input => {
+        if (input.value.trim()) competencies.push(input.value.trim());
+    });
+    let grades = [];
+    document.querySelectorAll('.grade-input').forEach(input => {
+        if (input.value.trim()) grades.push(input.value.trim());
+    });
+    // Get subjects based on teacher type
+    let subjects = [];
+    if (teacherType === 'homeroom') {
+        subjects = homeroomSubjects || [];
+    } else {
+        // For Specialist teachers, get subject from Step 2 form field
+        const subjectName = document.getElementById('subject-name');
+        if (subjectName && subjectName.value.trim()) {
+            subjects = [subjectName.value.trim()];
+        }
+    }
+    
+    let html = `<div class='mb-3'><strong>School:</strong> ${schoolName || '(none)'}</div>`;
+    html += `<div class='mb-3'><strong>Semesters:</strong> ${numSemesters}</div>`;
+    html += `<div class='mb-3'><strong>Subject that you teach:</strong> ${subjects.length > 0 ? subjects.join(', ') : '(none)'}</div>`;
+    html += `<div class='mb-3'><strong>Competencies:</strong> ${competencies.join(', ')}</div>`;
+    html += `<div class='mb-3'><strong>Grades:</strong> ${grades.join(', ')}</div>`;
+    html += `<div class='mb-3'><strong>Classrooms:</strong> `;
+    if (specialistClassrooms.length === 0) {
+        html += '<span class="text-muted">None</span>';
+    } else {
+        html += '<ul class="list-group mb-2">';
+        let sorted = [...specialistClassrooms].sort((a, b) => a.name.localeCompare(b.name, undefined, {sensitivity: 'base'}));
+        sorted.forEach(cls => {
+            html += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                <span><strong>${cls.name}</strong> <span class="text-muted">(${cls.grade})</span></span>
+            </li>`;
+        });
+        html += '</ul>';
+    }
+    html += '</div>';
+    
+    // Add competency weighting tables organized by semester (like Homeroom Step 5)
+    html += `<div class='mb-3'><strong>Competency Weighting:</strong></div>`;
+    
+    // Group by semester, show multiple grades per table (like Homeroom shows multiple subjects)
+    for (let sem = 1; sem <= numSemesters; sem++) {
+        html += `<div class='mb-2'><strong>Semester ${sem}:</strong></div>`;
+        html += `<div class='table-responsive'><table class='table table-bordered align-middle text-center mb-3 step6-table'>`;
+        html += `<thead class='table-light'><tr><th>Grade</th>`;
+        competencies.forEach(c => {
+            html += `<th>${c}</th>`;
+        });
+        html += `<th>Total</th></tr></thead><tbody>`;
+        
+        grades.forEach((grade, gradeIndex) => {
+            let total = 0;
+            html += `<tr><td>${grade}</td>`;
+            competencies.forEach((comp, compIndex) => {
+                // Use numeric indices to match Step 4 storage: step4Weights[semester][gradeIndex][compIndex]
+                const weight = (step4Weights[sem] && step4Weights[sem][gradeIndex] && step4Weights[sem][gradeIndex][compIndex]) ? step4Weights[sem][gradeIndex][compIndex] : 0;
+                total += parseInt(weight) || 0;
+                html += `<td>${weight}%</td>`;
+            });
+            html += `<td>${total}%</td></tr>`;
+        });
+        html += `</tbody></table></div>`;
+    }
+    
+    // Actually display the HTML content
+    step6Summary.innerHTML = html;
+};
+const doneStep6 = document.getElementById('done-step6');
+doneStep6.onclick = () => {
+    // Specialist: save and redirect
+    submitWizardData('specialist');
+};
+
+// Step 4 data persistence
+let step4Weights = {};
+
+// Step 4 logic
+function renderStep4Tables() {
+    // Render header
+    const step4Header = document.getElementById('step4-header');
+    if (teacherType === 'homeroom') {
+        step4Header.innerHTML = `<h3>${translations['Step 4: Associate Competencies to Subjects']}</h3><p>${translations['Please provide the competency weighting for each subject, for each semester. Competency weights should equal 100% for each subject.']}</p>`;
+    } else {
+        step4Header.innerHTML = `<h3>${translations['Step 4: Associate Competencies to Grades']}</h3><p>${translations['Please provide the competency weighting for each grade, for each semester. Competency weights should equal 100% for each subject.']}</p>`;
+    }
+    const step4Content = document.getElementById('step4-content');
+    // Gather previous step data
+    const numSemesters = parseInt(document.getElementById('num-semesters').value) || 1;
+    let competencies = [];
+    document.querySelectorAll('.competency-input').forEach(input => {
+        if (input.value.trim()) competencies.push(input.value.trim());
+    });
+    let rows = [];
+    let rowLabel = '';
+    if (teacherType === 'homeroom') {
+        rowLabel = 'Subject';
+        document.querySelectorAll('.subject-input').forEach(input => {
+            if (input.value.trim()) rows.push(input.value.trim());
+        });
+    } else {
+        rowLabel = 'Grade';
+        document.querySelectorAll('.grade-input').forEach(input => {
+            if (input.value.trim()) rows.push(input.value.trim());
+        });
+    }
+    // Render tables
+    let html = '';
+    // Add style for last column (remove border and header shading)
+    html += `<style>
+        .step4-table th:last-child, .step4-table td:last-child {
+    border: none !important;
+    background: transparent !important;
+    position: relative;
+}
+.step4-table th:last-child::before,
+.step4-table th:last-child::after,
+.step4-table td:last-child::before,
+.step4-table td:last-child::after {
+    border: none !important;
+    background: transparent !important;
+    content: '';
+    position: absolute;
+}
+.step4-table th:last-child {
+    box-shadow: none !important;
+}
+    </style>`;
+    for (let s = 1; s <= numSemesters; s++) {
+        if (!step4Weights[s]) step4Weights[s] = {};
+        html += `<div class='mb-4'>
+            <h5>Semester ${s}</h5>
+            <div class='table-responsive'>
+            <table class='table table-bordered align-middle text-center mb-0 step4-table'>
+                <thead class='table-light'>
+                    <tr>
+                        <th>${rowLabel}</th>`;
+        competencies.forEach(c => {
+            html += `<th>Competency Weight (%):<br>${c}</th>`;
+        });
+        html += `<th>Total</th><th></th></tr>
+                </thead>
+                <tbody>`;
+        rows.forEach((row, i) => {
+            html += `<tr data-row="${i}" data-semester="${s}">
+                <td>${row}</td>`;
+            competencies.forEach((c, j) => {
+                // Pre-fill value if exists
+                let val = '';
+                if (
+                    step4Weights[s] &&
+                    step4Weights[s][i] &&
+                    typeof step4Weights[s][i][j] !== 'undefined'
+                ) {
+                    val = step4Weights[s][i][j];
+                }
+                html += `<td><input type='number' min='0' max='100' class='form-control form-control-sm weight-input' data-row="${i}" data-semester="${s}" data-competency="${j}" style='max-width:70px;margin:auto;' value="${val}"></td>`;
+            });
+            html += `<td class='total-cell'>0</td><td class='check-cell'></td></tr>`;
+        });
+        html += `</tbody></table></div></div>`;
+    }
+    step4Content.innerHTML = html;
+    // Attach listeners
+    document.querySelectorAll('.weight-input').forEach(input => {
+        input.addEventListener('input', function() {
+            // Save value to step4Weights
+            const s = this.getAttribute('data-semester');
+            const i = this.getAttribute('data-row');
+            const j = this.getAttribute('data-competency');
+            if (!step4Weights[s]) step4Weights[s] = {};
+            if (!step4Weights[s][i]) step4Weights[s][i] = {};
+            step4Weights[s][i][j] = this.value;
+            validateStep4();
+        });
+    });
+    validateStep4();
+}
+
+function validateStep4() {
+    let allValid = true;
+    // For each table row, sum weights and check if total==100
+    document.querySelectorAll('tr[data-row][data-semester]').forEach(row => {
+        let total = 0;
+        row.querySelectorAll('.weight-input').forEach(inp => {
+            total += parseInt(inp.value) || 0;
+        });
+        row.querySelector('.total-cell').textContent = total;
+        const checkCell = row.querySelector('.check-cell');
+        if (total === 100) {
+            checkCell.innerHTML = '<span class="text-success fw-bold">&#10003;</span>';
+        } else {
+            checkCell.innerHTML = '';
+            allValid = false;
+        }
+    });
+    const nextStep4 = document.getElementById('next-step4');
+    nextStep4.disabled = !allValid;
+    nextStep4.classList.toggle('btn-success', allValid);
+    nextStep4.classList.toggle('btn-secondary', !allValid);
+}
+// Back button logic - consolidated in one place
+const backStep1 = document.getElementById('back-step1');
+const backStep2 = document.getElementById('back-step2');
+const backStep3 = document.getElementById('back-step3');
+const backStep4 = document.getElementById('back-step4');
+
+// Step 1: Back is disabled and hidden
+backStep1.style.display = 'none';
+
+// Step 2: Back returns to Step 1
+backStep2.onclick = function() {
+    console.log('Step 2 back button clicked'); // Debug log
+    document.getElementById('step2').classList.add('d-none');
+    document.getElementById('step1').classList.remove('d-none');
+};
+
+// Step 3: Back returns to Step 2
+backStep3.onclick = function() {
+    document.getElementById('step3').classList.add('d-none');
+    document.getElementById('step2').classList.remove('d-none');
+};
+
+// Step 4: Back returns to Step 3
+backStep4.onclick = function() {
+    document.getElementById('step4').classList.add('d-none');
+    document.getElementById('step3').classList.remove('d-none');
+};
+</script>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

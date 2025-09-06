@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Home | Grading App{% endblock %}
+{% block content %}
+<div class="text-center">
+    <h1>Grading App for Teachers</h1>
+    <p class="lead">A simple platform for teachers to manage grading for their classes and students.</p>
+    {% if not current_user.is_authenticated %}
+        <a href="{{ url_for('main.register') }}" class="btn btn-success">Get Started</a>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Dashboard') }}{% endblock %}
+{% block content %}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">{{ _('Dashboard') }}</h1>
+            
+            <!-- Notifications and Tasks Box -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="mb-0">{{ _('Notifications and Tasks') }}</h3>
+                </div>
+                <div class="card-body">
+                    {% if not setup_completed %}
+                        <div class="alert alert-info d-flex justify-content-between align-items-center" role="alert">
+                            <span>{{ _('Your first task is to complete the Schools and Classes wizard') }}</span>
+                            <a href="{{ url_for('main.setup_wizard') }}" class="btn btn-primary btn-sm">{{ _('Let\'s do it!') }}</a>
+                        </div>
+                    {% else %}
+                        {% if notifications %}
+                            {% for notification in notifications %}
+                                <div class="alert alert-warning d-flex justify-content-between align-items-center mb-3" role="alert">
+                                    <span>{{ notification.message }}</span>
+                                    <a href="{{ notification.button_url }}" class="btn btn-primary btn-sm">{{ notification.button_text }}</a>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted">{{ _('No new notifications or tasks at this time.') }}</p>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Makeup Tests Box -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="mb-0">{{ _('Makeup Tests') }}</h3>
+                </div>
+                <div class="card-body">
+                    {% if not setup_completed %}
+                        <p class="text-muted">{{ _('Complete the Setup Wizard to view makeup test information.') }}</p>
+                    {% else %}
+                        {% if makeup_tests %}
+                            <p>{{ _('The following students need to write make-up exams because they were absent:') }}</p>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>{{ _('Class') }}</th>
+                                            <th>{{ _('Student Name') }}</th>
+                                            <th>{{ _('Test') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for makeup in makeup_tests %}
+                                            <tr>
+                                                <td>{{ makeup.class_name }}</td>
+                                                <td>{{ makeup.student_name }}</td>
+                                                <td>{{ makeup.test_name }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted">{{ _('No students currently need makeup tests.') }}</p>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- My tests and grades Box -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="mb-0">{{ _('My tests and grades') }}</h3>
+                </div>
+                <div class="card-body">
+                    {% if not setup_completed %}
+                        <p class="text-muted">{{ _('Complete the Setup Wizard to start creating tests and entering grades.') }}</p>
+                    {% else %}
+                        <div class="row">
+                            <!-- Test Statistics -->
+                            <div class="col-md-6">
+                                <h5>{{ _('Test Overview') }}</h5>
+                                <p><strong>{{ _('Total tests created') }}:</strong> {{ total_tests }}</p>
+                                <p><strong>{{ _('Tests with grades') }}:</strong> {{ tests_with_grades }} {{ _('of') }} {{ total_tests }}</p>
+                                
+                                {% if total_tests == 0 %}
+                                    <div class="alert alert-info">
+                                        <small>{{ _('You haven\'t created any tests yet.') }} <a href="{{ url_for('main.create_tests') }}">{{ _('Create your first test') }}</a></small>
+                                    </div>
+                                {% elif tests_with_grades == 0 %}
+                                    <div class="alert alert-warning">
+                                        <small>{{ _('You have tests but no grades entered yet.') }} <a href="{{ url_for('main.input_grades') }}">{{ _('Start entering grades') }}</a></small>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Grade Statistics -->
+                            <div class="col-md-6">
+                                <h5>{{ _('Grade Statistics') }}</h5>
+                                {% if grade_stats %}
+                                    <p><strong>{{ _('Total grades entered') }}:</strong> {{ grade_stats.total_grades_entered }}</p>
+                                    <p><strong>{{ _('Class average') }}:</strong> {{ grade_stats.average_grade }}%</p>
+                                    <p><strong>{{ _('Highest grade') }}:</strong> {{ grade_stats.highest_grade }}%</p>
+                                    <p><strong>{{ _('Lowest grade') }}:</strong> {{ grade_stats.lowest_grade }}%</p>
+                                {% else %}
+                                    <p class="text-muted">{{ _('No grades entered yet.') }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Tests -->
+                        {% if recent_tests %}
+                            <hr>
+                            <h5>{{ _('Recent Tests') }}</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>{{ _('Test Name') }}</th>
+                                            <th>{{ _('Date') }}</th>
+                                            <th>{{ _('Competency') }}</th>
+                                            <th>{{ _('Weight') }}</th>
+                                            {% if teacher_type == 'specialist' %}
+                                                <th>{{ _('Class') }}</th>
+                                            {% else %}
+                                                <th>{{ _('Subject') }}</th>
+                                            {% endif %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for test in recent_tests %}
+                                            <tr>
+                                                <td>{{ test.test_name }}</td>
+                                                <td>{{ test.test_date.strftime('%m/%d') }}</td>
+                                                <td>{{ test.competency }}</td>
+                                                <td>{{ test.test_weight }}%</td>
+                                                {% if teacher_type == 'specialist' %}
+                                                    <td>{{ test.class_name }}</td>
+                                                {% else %}
+                                                    <td>{{ test.subject }}</td>
+                                                {% endif %}
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- My classes and students Box -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="mb-0">{{ _('My classes and students') }}</h3>
+                </div>
+                <div class="card-body">
+                    {% if not setup_completed %}
+                        <div class="alert alert-info d-flex justify-content-between align-items-center" role="alert">
+                            <span>{{ _('Your first task is to complete the Schools and Classes wizard') }}</span>
+                            <a href="{{ url_for('main.setup_wizard') }}" class="btn btn-primary btn-sm">{{ _('Let\'s do it!') }}</a>
+                        </div>
+                    {% else %}
+                        <!-- Combined Teacher Type and School Information -->
+                        <p>{{ _('I am a') }} <strong>{{ _(teacher_type|title) }}</strong> {{ _('teacher, and I work at') }} 
+                        {% for school in schools %}
+                            <strong>{{ school.name }}</strong>{% if not loop.last %}, {% endif %}
+                        {% endfor %}{% if teacher_type == 'homeroom' %}. {{ _('My class is') }} <strong>{{ grade }}</strong>{% elif teacher_type == 'specialist' and specialist_subject %}. {{ _('I teach') }} <strong>{{ specialist_subject }}</strong>{% endif %}.
+                        </p>
+                        
+                        <!-- Grades and Classes/Subjects Information -->
+                        {% if teacher_type == 'homeroom' %}
+                            <p><strong>{{ _('My subjects') }}:</strong> 
+                            {% for subject in subjects %}{{ subject }}{% if not loop.last %}, {% endif %}{% endfor %}
+                            </p>
+                        {% elif teacher_type == 'specialist' and classrooms_by_grade %}
+                            <p><strong>{{ _('My grades and classes') }}:</strong></p>
+                            {% for grade, classroom_names in classrooms_by_grade.items()|sort %}
+                                <p class="mb-1">- <strong>{{ grade }}</strong>: {% for name in classroom_names %}{{ name }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+                            {% endfor %}
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

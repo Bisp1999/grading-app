@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Setup Schools and Classes{% endblock %}
+{% block content %}
+<div id="wizard-container" class="mx-auto" style="max-width:600px;">
+    <!-- Step 1 -->
+    <div id="step1" class="wizard-step">
+        <h3 class="mb-4">Step 1: Which describes you ?</h3>
+        <p class="mb-4">Please indicate what type of teacher you are</p>
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <button id="btn-homeroom" type="button" class="btn btn-outline-primary w-100 py-3 mb-2">
+    Homeroom teacher
+</button>
+                <div class="small text-muted mb-3">I am a homeroom teacher responsible for a single classroom, where I teach a variety of subjects</div>
+            </div>
+            <div class="col-md-6">
+                <button id="btn-specialist" type="button" class="btn btn-outline-primary w-100 py-3 mb-2">
+    Specialist
+</button>
+                <div class="small text-muted mb-3">I am a specialist teacher responsible for teaching multiple classes, for a single subject</div>
+            </div>
+        </div>
+        <div class="d-flex justify-content-end mt-3 wizard-btn-row" style="margin-top:18px;">
+    <button id="back-step1" type="button" class="btn btn-outline-secondary me-2 d-none" disabled>Back</button>
+    <button id="next-step1" type="button" class="btn btn-secondary"
+</div>
+
+<script>
+// Wizard state
+let teacherType = null;
+
+// Step 1 logic
+const btnHomeroom = document.getElementById('btn-homeroom');
+const btnSpecialist = document.getElementById('btn-specialist');
+// btnHomeroom.disabled = false;
+// btnSpecialist.disabled = false;
+const nextStep1 = document.getElementById('next-step1');
+
+btnHomeroom.onclick = () => {
+    teacherType = 'homeroom';
+    nextStep1.disabled = false;
+};
+
+btnSpecialist.onclick = () => {
+    teacherType = 'specialist';
+    nextStep1.disabled = false;
+};
+
+nextStep1.onclick = () => {
+    document.getElementById('step1').classList.add('d-none');
+    document.getElementById('step2').classList.remove('d-none');
+    // Show relevant fields
+    if (teacherType === 'homeroom') {
+        document.getElementById('homeroom-fields').classList.remove('d-none');
+        document.getElementById('specialist-fields').classList.add('d-none');
+    } else {
+        document.getElementById('homeroom-fields').classList.add('d-none');
+        document.getElementById('specialist-fields').classList.remove('d-none');
+    }
+};
+
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}{{ school.name }}{% endblock %}
+{% block content %}
+<h2>{{ school.name }}</h2>
+<a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary mb-3">Back to Schools</a>
+<h4>Classrooms</h4>
+<ul class="list-group mb-3">
+    {% for classroom in classrooms %}
+        <li class="list-group-item">
+            <div class="row align-items-center">
+                <div class="col-12 col-md-8 mb-2 mb-md-0">{{ classroom.name }}</div>
+                <div class="col-12 col-md-4 text-md-end">
+                    <a href="{{ url_for('main.manage_students', classroom_id=classroom.id) }}" class="btn btn-sm btn-primary w-100 w-md-auto">Select</a>
+                </div>
+            </div>
+        </li>
+    {% else %}
+        <li class="list-group-item">No classrooms yet.</li>
+    {% endfor %}
+</ul>
+<a href="{{ url_for('main.manage_classrooms') }}?school_id={{ school.id }}" class="btn btn-primary">Manage Classroom</a>
+<script>
+function confirmDeleteClassroom(classroomId) {
+    if (confirm('Delete this classroom?')) {
+        document.getElementById('delete-classroom-form-' + classroomId).submit();
+    }
+}
+</script>
+{% endblock %}

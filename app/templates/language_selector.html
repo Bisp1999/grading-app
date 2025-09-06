@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Selection - Grading App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .language-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .language-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-color: #0d6efd;
+        }
+        .flag-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            padding-top: 10vh;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="text-center mb-5">
+                    <h1 class="text-white mb-3">Welcome to Grading App</h1>
+                    <h2 class="text-white-50">Please select your preferred language</h2>
+                    <p class="text-white-50">Veuillez sélectionner votre langue préférée</p>
+                </div>
+                
+                <div class="row g-4">
+                    <!-- English Option -->
+                    <div class="col-md-6">
+                        <div class="card language-card h-100 text-center p-4">
+                            <div class="card-body">
+                                <div class="flag-icon">🇺🇸</div>
+                                <h3 class="card-title">English</h3>
+                                <p class="card-text text-muted">Hello, I prefer English</p>
+                                <div class="mt-3">
+                                    <span class="badge bg-primary mb-3">Default</span>
+                                </div>
+                                <div class="mt-3">
+                                    <a href="/set_language/en" class="btn btn-primary btn-lg">Go</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- French Option -->
+                    <div class="col-md-6">
+                        <div class="card language-card h-100 text-center p-4">
+                            <div class="card-body">
+                                <div class="flag-icon">🇫🇷</div>
+                                <h3 class="card-title">Français</h3>
+                                <p class="card-text text-muted">Bonjour, je préfère le français</p>
+                                <div class="mt-3">
+                                    <span class="badge bg-info mb-3">Français</span>
+                                </div>
+                                <div class="mt-3">
+                                    <a href="/set_language/fr" class="btn btn-primary btn-lg">Procéder</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-5">
+                    <p class="text-white-50 small">
+                        You can change your language preference anytime in your profile settings.<br>
+                        Vous pouvez changer votre préférence de langue à tout moment dans les paramètres de votre profil.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

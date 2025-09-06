@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Students') }} | {{ _('Grading App') }}{% endblock %}
+{% block content %}
+<h2>{{ _('Students in') }} {{ classroom.name }}</h2>
+<p class="mb-2">{{ _('To add a student, please enter first name and last name, and then press "Add Student"') }}</p>
+<form method="post" class="mb-4">
+    {{ form.hidden_tag() }}
+    <div class="row g-2">
+        <div class="col-md-5">{{ form.first_name(class="form-control", placeholder=_('First Name')) }}</div>
+        <div class="col-md-5">{{ form.last_name(class="form-control", placeholder=_('Last Name')) }}</div>
+        <div class="col-md-2"><button id="add-student-btn" type="submit" class="btn btn-secondary w-100" disabled>{{ _('Add Student') }}</button></div>
+    </div>
+</form>
+<ul class="list-group mb-3">
+    {% for student in students %}
+        <li class="list-group-item">
+            <div class="row align-items-center">
+                <div class="col-12 col-md-8 mb-2 mb-md-0">{{ student.first_name }} {{ student.last_name }}</div>
+                <div class="col-12 col-md-4 text-md-end">
+                    <form id="delete-student-form-{{ student.id }}" action="{{ url_for('main.delete_student', student_id=student.id) }}" method="post" style="display:inline;">
+                        <button type="button" class="btn btn-sm btn-danger w-100 w-md-auto" onclick="confirmDeleteStudent({{ student.id }})">{{ _('Delete') }}</button>
+                    </form>
+                </div>
+            </div>
+        </li>
+    {% else %}
+        <li class="list-group-item">{{ _('No students yet.') }}</li>
+    {% endfor %}
+</ul>
+<script>
+const translations = {
+    deleteConfirm: '{{ _('Delete this student?') }}'
+};
+
+function confirmDeleteStudent(studentId) {
+    if (confirm(translations.deleteConfirm)) {
+        document.getElementById('delete-student-form-' + studentId).submit();
+    }
+}
+// Enable Add Student button only if both fields are filled
+const firstNameInput = document.querySelector('input[name="first_name"]');
+const lastNameInput = document.querySelector('input[name="last_name"]');
+const addBtn = document.getElementById('add-student-btn');
+function validateStudentForm() {
+    if (firstNameInput.value.trim() && lastNameInput.value.trim()) {
+        addBtn.disabled = false;
+        addBtn.classList.remove('btn-secondary');
+        addBtn.classList.add('btn-success');
+    } else {
+        addBtn.disabled = true;
+        addBtn.classList.remove('btn-success');
+        addBtn.classList.add('btn-secondary');
+    }
+}
+firstNameInput.addEventListener('input', validateStudentForm);
+lastNameInput.addEventListener('input', validateStudentForm);
+</script>
+{% endblock %}

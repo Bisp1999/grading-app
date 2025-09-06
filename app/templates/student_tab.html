@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Student Tab') }} - {{ _('Grading App') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">{{ _('Student Tab') }}</h2>
+            
+            <!-- Filter Section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ _('Select Student') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% if teacher_type == 'specialist' %}
+                        <!-- Specialist Teacher Filters -->
+                        <div class="col-md-4">
+                            <label for="gradeSelect" class="form-label">{{ _('Grade') }}:</label>
+                            <select id="gradeSelect" class="form-select">
+                                <option value="">{{ _('Select Grade') }}</option>
+                                {% for grade in grades %}
+                                <option value="{{ grade }}">{{ grade }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="classSelect" class="form-label">{{ _('Class') }}:</label>
+                            <select id="classSelect" class="form-select" disabled>
+                                <option value="">{{ _('Select Class') }}</option>
+                            </select>
+                        </div>
+                        {% else %}
+                        <!-- Homeroom Teacher Filters -->
+                        <div class="col-md-4">
+                            <label for="classSelect" class="form-label">{{ _('Class') }}:</label>
+                            <select id="classSelect" class="form-select">
+                                <option value="">{{ _('Select Class') }}</option>
+                                {% for classroom in all_classrooms %}
+                                <option value="{{ classroom.id }}">{{ classroom.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+                        <div class="col-md-4">
+                            <label for="studentSelect" class="form-label">{{ _('Student') }}:</label>
+                            <select id="studentSelect" class="form-select" disabled>
+                                <option value="">{{ _('Select Student') }}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Details Section -->
+            <div id="studentDetailsSection" class="card mb-4" style="display: none;">
+                <div class="card-header">
+                    <h5 class="mb-0" id="studentName">{{ _('Student Details') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Student Photo and Basic Info -->
+                        <div class="col-md-3 text-center">
+                            <img id="studentPhoto" src="" alt="Student Photo" class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                            <h4 id="studentFullName"></h4>
+                            <p class="text-muted" id="studentClass"></p>
+                        </div>
+                        
+                        <!-- Alerts and Stats -->
+                        <div class="col-md-9">
+                            <div id="lowGradeAlert" class="alert alert-warning" style="display: none;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong>{{ _('Alert') }}:</strong> {{ _('This student has') }} <span id="lowGradeCount"></span> {{ _('grade(s) below 80%%') }}.
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="card bg-primary text-white">
+                                        <div class="card-body text-center">
+                                            <h3 id="totalTests">0</h3>
+                                            <p class="mb-0">{{ _('Total Tests') }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card bg-success text-white">
+                                        <div class="card-body text-center">
+                                            <h3 id="completedTests">0</h3>
+                                            <p class="mb-0">{{ _('Completed') }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card bg-warning text-white">
+                                        <div class="card-body text-center">
+                                            <h3 id="lowGrades">0</h3>
+                                            <p class="mb-0">{{ _('Below 80%%') }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grades History Section -->
+            <div id="gradesSection" class="card mb-4" style="display: none;">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ _('Grade History (Chronological Order)') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>{{ _('Date') }}</th>
+                                    <th>{{ _('Test Name') }}</th>
+                                    <th>{{ _('Subject') }}</th>
+                                    <th>{{ _('Competency') }}</th>
+                                    <th>{{ _('Semester') }}</th>
+                                    <th>{{ _('Grade') }}</th>
+                                    <th>{{ _('Percentage') }}</th>
+                                    <th>{{ _('Status') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gradesTableBody">
+                                <!-- Grades will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="noGradesMessage" class="text-center text-muted py-4" style="display: none;">
+                        <p>{{ _('No grades recorded for this student yet.') }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Teacher Notes Section -->
+            <div id="notesSection" class="card" style="display: none;">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ _('Teacher Notes') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div id="teacherNotes">
+                        <!-- Notes will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Store classroom data for dynamic filtering
+const classroomsByGrade = {{ classrooms_by_grade | tojson }};
+const teacherType = "{{ teacher_type }}";
+
+// Translation strings
+const translations = {
+    selectClass: {{ _('Select Class') | tojson }},
+    selectStudent: {{ _('Select Student') | tojson }},
+    errorLoadingStudents: {{ _('Error loading students') | tojson }},
+    errorLoadingStudentData: {{ _('Error loading student data') | tojson }},
+    details: {{ _('Details') | tojson }},
+    absent: {{ _('Absent') | tojson }},
+    notGraded: {{ _('Not Graded') | tojson }},
+    lowGrade: {{ _('Low Grade') | tojson }},
+    completed: {{ _('Completed') | tojson }},
+    unknown: {{ _('Unknown') | tojson }}
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    const gradeSelect = document.getElementById('gradeSelect');
+    const classSelect = document.getElementById('classSelect');
+    const studentSelect = document.getElementById('studentSelect');
+
+    // Handle grade selection for specialist teachers
+    if (teacherType === 'specialist' && gradeSelect) {
+        console.log('Setting up grade selection listener');
+        console.log('Available grades in classroomsByGrade:', Object.keys(classroomsByGrade));
+        
+        gradeSelect.addEventListener('change', function() {
+            const selectedGrade = this.value;
+            console.log('Grade selected:', selectedGrade);
+            console.log('Classrooms for grade:', classroomsByGrade[selectedGrade]);
+            
+            classSelect.innerHTML = `<option value="">${translations.selectClass}</option>`;
+            studentSelect.innerHTML = `<option value="">${translations.selectStudent}</option>`;
+            
+            if (selectedGrade && classroomsByGrade[selectedGrade]) {
+                console.log('Enabling class select and populating options');
+                classSelect.disabled = false;
+                classroomsByGrade[selectedGrade].forEach(classroom => {
+                    const option = document.createElement('option');
+                    option.value = classroom.id;
+                    option.textContent = classroom.name;
+                    classSelect.appendChild(option);
+                });
+            } else {
+                console.log('No classrooms found for grade, disabling class select');
+                classSelect.disabled = true;
+            }
+            studentSelect.disabled = true;
+            hideStudentDetails();
+        });
+    }
+
+    // Handle class selection
+    classSelect.addEventListener('change', function() {
+        const classroomId = this.value;
+        studentSelect.innerHTML = `<option value="">${translations.selectStudent}</option>`;
+        
+        if (classroomId) {
+            loadStudents(classroomId);
+        } else {
+            studentSelect.disabled = true;
+            hideStudentDetails();
+        }
+    });
+
+    // Handle student selection
+    studentSelect.addEventListener('change', function() {
+        const studentId = this.value;
+        
+        if (studentId) {
+            loadStudentData(studentId);
+        } else {
+            hideStudentDetails();
+        }
+    });
+});
+
+function loadStudents(classroomId) {
+    fetch(`/api/get_classroom_students/${classroomId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const studentSelect = document.getElementById('studentSelect');
+                studentSelect.disabled = false;
+                
+                data.students.forEach(student => {
+                    const option = document.createElement('option');
+                    option.value = student.id;
+                    option.textContent = `${student.firstName} ${student.lastName}`;
+                    studentSelect.appendChild(option);
+                });
+            } else {
+                alert(translations.errorLoadingStudents + ': ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading students:', error);
+            alert(translations.errorLoadingStudents);
+        });
+}
+
+function loadStudentData(studentId) {
+    fetch(`/api/get_student_data/${studentId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayStudentData(data);
+            } else {
+                alert(translations.errorLoadingStudentData + ': ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading student data:', error);
+            alert(translations.errorLoadingStudentData);
+        });
+}
+
+function displayStudentData(data) {
+    const student = data.student;
+    const grades = data.grades;
+    const stats = data.stats;
+    const notes = data.teacher_notes;
+
+    // Show student details section
+    document.getElementById('studentDetailsSection').style.display = 'block';
+    document.getElementById('gradesSection').style.display = 'block';
+    document.getElementById('notesSection').style.display = 'block';
+
+    // Update student info
+    document.getElementById('studentName').textContent = `${student.full_name} - ${translations.details}`;
+    document.getElementById('studentFullName').textContent = student.full_name;
+    document.getElementById('studentClass').textContent = student.classroom;
+    document.getElementById('studentPhoto').src = student.avatar_url;
+
+    // Update stats
+    document.getElementById('totalTests').textContent = stats.total_tests;
+    document.getElementById('completedTests').textContent = grades.filter(g => g.status === 'Completed').length;
+    document.getElementById('lowGrades').textContent = stats.low_grades_count;
+
+    // Show/hide low grade alert
+    const lowGradeAlert = document.getElementById('lowGradeAlert');
+    if (stats.has_low_grades) {
+        document.getElementById('lowGradeCount').textContent = stats.low_grades_count;
+        lowGradeAlert.style.display = 'block';
+    } else {
+        lowGradeAlert.style.display = 'none';
+    }
+
+    // Populate grades table
+    const gradesTableBody = document.getElementById('gradesTableBody');
+    const noGradesMessage = document.getElementById('noGradesMessage');
+    
+    gradesTableBody.innerHTML = '';
+    
+    if (grades.length === 0) {
+        noGradesMessage.style.display = 'block';
+    } else {
+        noGradesMessage.style.display = 'none';
+        
+        grades.forEach(grade => {
+            const row = document.createElement('tr');
+            
+            // Add warning class for low grades
+            if (grade.percentage && grade.percentage < 80) {
+                row.classList.add('table-warning');
+            }
+            
+            const statusBadge = getStatusBadge(grade.status, grade.percentage);
+            const gradeDisplay = grade.absent ? translations.absent : 
+                                 grade.grade !== null ? `${grade.grade}/${grade.max_points}` : translations.notGraded;
+            const percentageDisplay = grade.percentage !== null ? `${grade.percentage}%` : '-';
+            
+            row.innerHTML = `
+                <td>${formatDate(grade.test_date)}</td>
+                <td>${grade.test_name}</td>
+                <td>${grade.subject}</td>
+                <td>${grade.competency}</td>
+                <td>${grade.semester}</td>
+                <td>${gradeDisplay}</td>
+                <td>${percentageDisplay}</td>
+                <td>${statusBadge}</td>
+            `;
+            
+            gradesTableBody.appendChild(row);
+        });
+    }
+
+    // Populate teacher notes
+    const teacherNotesDiv = document.getElementById('teacherNotes');
+    teacherNotesDiv.innerHTML = '';
+    
+    notes.forEach(note => {
+        const noteElement = document.createElement('div');
+        noteElement.className = 'alert alert-info';
+        noteElement.innerHTML = `<i class="fas fa-sticky-note"></i> ${note}`;
+        teacherNotesDiv.appendChild(noteElement);
+    });
+}
+
+function getStatusBadge(status, percentage) {
+    switch (status) {
+        case 'Completed':
+            if (percentage < 80) {
+                return `<span class="badge bg-warning">${translations.lowGrade}</span>`;
+            }
+            return `<span class="badge bg-success">${translations.completed}</span>`;
+        case 'Absent':
+            return `<span class="badge bg-secondary">${translations.absent}</span>`;
+        case 'Not Graded':
+            return `<span class="badge bg-danger">${translations.notGraded}</span>`;
+        default:
+            return `<span class="badge bg-secondary">${translations.unknown}</span>`;
+    }
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+    });
+}
+
+function hideStudentDetails() {
+    document.getElementById('studentDetailsSection').style.display = 'none';
+    document.getElementById('gradesSection').style.display = 'none';
+    document.getElementById('notesSection').style.display = 'none';
+}
+</script>
+
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+{% endblock %}

@@ -1,0 +1,930 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-10 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h2>{{ _('Enter or Upload Students') }}</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Progress indicator -->
+                    <div class="progress mb-4">
+                        <div class="progress-bar" role="progressbar" style="width: 25%" aria-valuenow="1" aria-valuemin="0" aria-valuemax="4"></div>
+                    </div>
+
+                    <!-- Step 1: Input Method Selection -->
+                    <div id="step1" class="wizard-step">
+                        <div id="step1-header">
+                            <h3>{{ _('Step 1: Choose Input Method') }}</h3>
+                            <p>{{ _('How would you like to add students to your classes?') }}</p>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <!-- Manual Input Option -->
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100 option-card" data-option="manual">
+                                    <div class="card-body text-center d-flex flex-column">
+                                        <h5 class="card-title">{{ _('Manual Entry') }}</h5>
+                                        <p class="card-text flex-grow-1">{{ _('Add students one by one by typing their names') }}</p>
+                                        <button type="button" class="btn btn-outline-primary select-option-btn" data-option="manual">{{ _('Select') }}</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Single Class Upload Option -->
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100 option-card" data-option="single-upload">
+                                    <div class="card-body text-center d-flex flex-column">
+                                        <h5 class="card-title">{{ _('File Upload (single class)') }}</h5>
+                                        <p class="card-text flex-grow-1">{{ _('Upload an Excel or CSV file containing first and last names for a single class') }}</p>
+                                        <button type="button" class="btn btn-outline-primary select-option-btn" data-option="single-upload">{{ _('Select') }}</button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Multiple Classes Upload Option -->
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100 option-card" data-option="multiple-upload">
+                                    <div class="card-body text-center d-flex flex-column">
+                                        <h5 class="card-title">{{ _('File Upload (multiple classes)') }}</h5>
+                                        <p class="card-text flex-grow-1">{{ _('Upload an Excel or CSV file containing first names, last names, and classes for multiple classes') }}</p>
+                                        <button type="button" class="btn btn-outline-primary select-option-btn" data-option="multiple-upload">{{ _('Select') }}</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Navigation buttons -->
+                        <div class="d-flex justify-content-end mt-4">
+                            <button id="next-step1" type="button" class="btn btn-secondary" disabled>{{ _('Next') }}</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Class Selection (Specialist) or Direct Input/Upload (Homeroom) -->
+                    <div id="step2" class="wizard-step d-none">
+                        <!-- Step 2 for Specialist: Class Selection -->
+                        <div id="step2-specialist" class="d-none">
+                            <div id="step2-specialist-header">
+                                <h3>{{ _('Step 2: Select Classes') }}</h3>
+                                <p>{{ _('Select the classes you want to add students to') }}</p>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-bordered" id="classes-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>{{ _('School') }}</th>
+                                            <th>{{ _('Class Name') }}</th>
+                                            <th>{{ _('Student Names Entered') }}</th>
+                                            <th>{{ _('Action') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="classes-tbody">
+                                        <!-- Populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 2 for Homeroom: Direct to input/upload -->
+                        <div id="step2-homeroom" class="d-none">
+                            <h3>{{ _('Step 2: Coming Soon (Homeroom)') }}</h3>
+                            <p>{{ _('This will show direct input/upload interface for Homeroom teachers') }}</p>
+                        </div>
+                        
+                        <!-- Navigation buttons -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <button id="back-step2" type="button" class="btn btn-outline-secondary me-2" disabled>{{ _('Back') }}</button>
+                            <button id="next-step2" type="button" class="btn btn-secondary" disabled>{{ _('Next') }}</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Student Input/Upload Interface -->
+                    <div id="step3" class="wizard-step d-none">
+                        <!-- Step 3 for Manual Entry -->
+                        <div id="step3-manual" class="d-none">
+                            <div id="step3-manual-header">
+                                <h3>{{ _('Step 3: Enter Student Names') }}</h3>
+                                <p>{{ _('Enter the first and last names of each student in the class') }}</p>
+                                <div class="mb-3">
+                                    <strong>{{ _('Selected Class') }}:</strong> <span id="selected-class-display-manual"></span>
+                                </div>
+                            </div>
+                            
+                            <!-- Student input form -->
+                            <div class="row mb-4">
+                                <div class="col-md-4">
+                                    <input type="text" class="form-control" id="student-name-input" placeholder="{{ _('Enter student name') }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" class="form-control" id="last-name-input" placeholder="{{ _('Last Name') }}">
+                                </div>
+                                <div class="col-md-4">
+                                    <button type="button" class="btn btn-outline-secondary" id="add-student-btn" disabled>{{ _('Add Student') }}</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Students table -->
+                            <div style="margin-top: 30px;">
+                                <div class="table-responsive" id="students-table-div">
+                                    <table class="table table-bordered" id="students-table">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>{{ _('First Name') }}</th>
+                                                <th>{{ _('Last Name') }}</th>
+                                                <th>{{ _('Action') }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="students-tbody">
+                                            <!-- Populated by JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 3 for File Upload -->
+                        <div id="step3-upload" class="d-none">
+                            <div id="step3-upload-header">
+                                <h3>{{ _('Step 3: Upload Student Names') }}</h3>
+                                <p>{{ _('Upload an Excel or CSV file containing first and last names of students') }}</p>
+                                <div class="mb-3">
+                                    <strong>{{ _('Selected Class') }}:</strong> <span id="selected-class-display-upload"></span>
+                                </div>
+                            </div>
+                            
+                            <!-- File upload form -->
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="file-input" class="form-label">{{ _('Select File (CSV)') }}</label>
+                                        <input type="file" class="form-control" id="file-input" accept=".csv">
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="has-header-checkbox" checked>
+                                            <label class="form-check-label" for="has-header-checkbox">
+                                                {{ _('File contains header row') }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-primary" id="upload-btn" disabled>{{ _('Upload') }}</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Uploaded students table -->
+                            <div id="uploaded-students-section" class="d-none">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" id="uploaded-students-table">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>{{ _('First Name') }}</th>
+                                                <th>{{ _('Last Name') }}</th>
+                                                <th>{{ _('Actions') }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="uploaded-students-tbody">
+                                            <!-- Populated by JavaScript -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-3">
+                                    <button type="button" class="btn btn-outline-secondary" id="switch-names-btn">{{ _('Switch First and Last Names') }}</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Navigation buttons -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <button id="back-step3" type="button" class="btn btn-outline-secondary me-2" disabled>{{ _('Back') }}</button>
+                            <div>
+                                <button type="button" class="btn btn-outline-primary me-2" id="add-another-class-btn" disabled>{{ _('Add Another Class') }}</button>
+                                <button type="button" class="btn btn-success" id="done-btn" disabled>{{ _('Done') }}</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Card-based selection styling */
+.option-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid #dee2e6;
+}
+
+.option-card:hover {
+    border-color: #0d6efd;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.option-card.selected {
+    border-color: #0d6efd;
+    background-color: #e7f3ff;
+    box-shadow: 0 0.25rem 0.5rem rgba(13, 110, 253, 0.15);
+}
+
+.option-card.selected .btn-outline-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+}
+
+.option-card .select-option-btn {
+    transition: all 0.2s ease;
+}
+</style>
+
+<!-- JavaScript translations -->
+<script type="application/json" id="js-translations">
+{
+    "Remove": "{{ _('Remove') }}",
+    "Select": "{{ _('Select') }}",
+    "Edit": "{{ _('Edit') }}",
+    "No classes found. Please complete the Setup Wizard first to create classes.": "{{ _('No classes found. Please complete the Setup Wizard first to create classes.') }}",
+    "No students entered yet": "{{ _('No students entered yet') }}",
+    "Please enter a first name": "{{ _('Please enter a first name') }}",
+    "Please enter a last name": "{{ _('Please enter a last name') }}",
+    "Student added successfully": "{{ _('Student added successfully') }}",
+    "Error adding student": "{{ _('Error adding student') }}",
+    "Please select a file": "{{ _('Please select a file') }}",
+    "File uploaded successfully": "{{ _('File uploaded successfully') }}",
+    "Error uploading file": "{{ _('Error uploading file') }}",
+    "Students saved successfully": "{{ _('Students saved successfully') }}",
+    "Error saving students": "{{ _('Error saving students') }}"
+}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load translations from JSON script tag
+    const translations = JSON.parse(document.getElementById('js-translations').textContent);
+    
+    let selectedInputMethod = '';
+    let selectedClass = null;
+    let teacherType = 'specialist'; // Will be loaded from API
+    let students = []; // Array to store students for current class
+    let uploadedStudents = []; // Array to store uploaded students
+    
+    // Real classroom data from database
+    let teacherClassrooms = [];
+    let classStudentCounts = {};
+    
+    // Get DOM elements
+    const nextStep1Btn = document.getElementById('next-step1');
+    const backStep2Btn = document.getElementById('back-step2');
+    const backStep3Btn = document.getElementById('back-step3');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    
+    // Load teacher type and initialize Step 1
+    loadTeacherType().then(() => {
+        initializeStep1UI();
+    });
+    
+    function loadTeacherType() {
+        return fetch('/api/get_teacher_type')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    teacherType = data.teacher_type;
+                    console.log('Teacher type loaded:', teacherType);
+                } else {
+                    console.error('Error loading teacher type:', data.error);
+                    // Default to specialist if error
+                    teacherType = 'specialist';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching teacher type:', error);
+                // Default to specialist if error
+                teacherType = 'specialist';
+            });
+    }
+    
+    function initializeStep1UI() {
+        // Hide multiple classes upload option for Homeroom teachers
+        if (teacherType === 'homeroom') {
+            const multipleUploadCard = document.querySelector('.option-card[data-option="multiple-upload"]');
+            if (multipleUploadCard) {
+                multipleUploadCard.parentElement.style.display = 'none';
+            }
+        }
+    }
+    
+    // Option selection handling
+    document.querySelectorAll('.select-option-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const option = this.getAttribute('data-option');
+            selectInputMethod(option);
+        });
+    });
+    
+    // Also allow clicking on the card itself
+    document.querySelectorAll('.option-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const option = this.getAttribute('data-option');
+            selectInputMethod(option);
+        });
+    });
+    
+    function selectInputMethod(option) {
+        selectedInputMethod = option;
+        
+        // Remove selected class from all cards
+        document.querySelectorAll('.option-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked card
+        document.querySelector(`.option-card[data-option="${option}"]`).classList.add('selected');
+        
+        // Enable next button
+        nextStep1Btn.disabled = false;
+        
+        console.log('Selected input method:', selectedInputMethod);
+    }
+    
+    // Navigation handlers
+    nextStep1Btn.addEventListener('click', function() {
+        if (selectedInputMethod) {
+            initializeStep2();
+            showStep(2);
+        }
+    });
+    
+    function initializeStep2() {
+        if (teacherType === 'specialist') {
+            // Show specialist class selection interface
+            document.getElementById('step2-specialist').classList.remove('d-none');
+            document.getElementById('step2-homeroom').classList.add('d-none');
+            loadTeacherClassrooms();
+        } else {
+            // Show homeroom direct interface
+            document.getElementById('step2-specialist').classList.add('d-none');
+            document.getElementById('step2-homeroom').classList.remove('d-none');
+        }
+    }
+    
+    function loadTeacherClassrooms() {
+        return fetch('/api/get_teacher_classrooms')
+            .then(response => response.json())
+            .then(data => {
+                if (data.classrooms) {
+                    teacherClassrooms = data.classrooms;
+                    // Build student counts object
+                    classStudentCounts = {};
+                    teacherClassrooms.forEach(classroom => {
+                        const classKey = `${classroom.name}_${classroom.id}`;
+                        classStudentCounts[classKey] = classroom.student_count;
+                    });
+                    renderClassTables();
+                } else {
+                    console.error('Error loading classrooms:', data.error);
+                    // Fallback to empty state
+                    teacherClassrooms = [];
+                    renderClassTables();
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching classrooms:', error);
+                // Fallback to empty state
+                teacherClassrooms = [];
+                renderClassTables();
+            });
+    }
+    
+    function renderClassTables() {
+        const classesTableBody = document.getElementById('classes-tbody');
+        
+        // Clear existing content
+        classesTableBody.innerHTML = '';
+        
+        if (teacherClassrooms.length === 0) {
+            // Show message if no classrooms found
+            const noClassroomsRow = document.createElement('tr');
+            noClassroomsRow.innerHTML = `
+                <td colspan="4" class="text-center text-muted">
+                    ${translations['No classes found. Please complete the Setup Wizard first to create classes.']}
+                </td>
+            `;
+            classesTableBody.appendChild(noClassroomsRow);
+            return;
+        }
+        
+        teacherClassrooms.forEach(classroom => {
+            const classKey = `${classroom.name}_${classroom.id}`;
+            const studentCount = classroom.student_count || 0;
+            
+            const row = document.createElement('tr');
+            
+            // Determine student names entered text and button styling
+            const studentNamesText = studentCount === 0 ? 
+                translations['No students entered yet'] : 
+                studentCount.toString();
+            
+            const buttonClass = studentCount === 0 ? 
+                'btn btn-primary btn-sm select-class-btn' : 
+                'btn btn-outline-secondary btn-sm select-class-btn';
+            
+            row.innerHTML = `
+                <td>${classroom.school_name}</td>
+                <td>${classroom.name}</td>
+                <td>${studentNamesText}</td>
+                <td><button type="button" class="${buttonClass}" data-class="${classKey}">${translations['Select']}</button></td>
+            `;
+            classesTableBody.appendChild(row);
+        });
+        
+        // Add event listeners to select buttons
+        document.querySelectorAll('.select-class-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const classKey = this.getAttribute('data-class');
+                selectClass(classKey);
+            });
+        });
+    }
+    
+    function selectClass(classKey) {
+        // Check if this is a file upload and class has existing students
+        const hasExistingStudents = classStudentCounts[classKey] > 0;
+        const isFileUpload = selectedInputMethod === 'single-upload' || selectedInputMethod === 'multiple-upload';
+        
+        if (isFileUpload && hasExistingStudents) {
+            // Show overwrite warning for file uploads to classes with existing names
+            const classInfo = getClassInfo(classKey);
+            const confirmMessage = `There are names already entered for this class (${classInfo.name}). If you proceed, your file upload will overwrite the existing names. Do you want to continue?`;
+            
+            if (!confirm(confirmMessage)) {
+                // User cancelled, don't select the class
+                return;
+            }
+        }
+        
+        selectedClass = classKey;
+        
+        // Remove selected state from all buttons
+        document.querySelectorAll('.select-class-btn').forEach(btn => {
+            btn.classList.remove('btn-success');
+            btn.style.color = ''; // Reset inline color style
+            // Restore original button class based on student count
+            const classKey = btn.getAttribute('data-class');
+            const classroom = teacherClassrooms.find(c => `${c.name}_${c.id}` === classKey);
+            const studentCount = classroom ? classroom.student_count || 0 : 0;
+            
+            if (studentCount === 0) {
+                btn.classList.add('btn-primary');
+            } else {
+                btn.classList.add('btn-outline-secondary');
+            }
+            btn.textContent = translations['Select'];
+        });
+        
+        // Add selected state to clicked button
+        const selectedBtn = document.querySelector(`[data-class="${classKey}"]`);
+        selectedBtn.classList.remove('btn-primary', 'btn-outline-secondary');
+        selectedBtn.classList.add('btn-success');
+        selectedBtn.textContent = 'Selected';
+        selectedBtn.style.color = 'white'; // Ensure text is visible on success background
+        
+        // Enable next button
+        document.getElementById('next-step2').disabled = false;
+        
+        console.log('Selected class:', selectedClass);
+    }
+    
+    backStep2Btn.addEventListener('click', function() {
+        // Reset Step 2 state
+        selectedClass = null;
+        document.getElementById('next-step2').disabled = true;
+        // Enable back button for step 2
+        backStep2Btn.disabled = false;
+        showStep(1);
+    });
+    
+    // Back button for Step 3
+    backStep3Btn.addEventListener('click', function() {
+        // Reset Step 3 state
+        students = [];
+        uploadedStudents = [];
+        document.getElementById('back-step3').disabled = true;
+        document.getElementById('add-another-class-btn').disabled = true;
+        document.getElementById('done-btn').disabled = true;
+        showStep(2);
+    });
+    
+    document.getElementById('next-step2').addEventListener('click', function() {
+        if (selectedClass) {
+            initializeStep3();
+            showStep(3);
+        }
+    });
+    
+    function initializeStep3() {
+        if (selectedInputMethod === 'manual') {
+            // Show manual entry interface
+            document.getElementById('step3-manual').classList.remove('d-none');
+            document.getElementById('step3-upload').classList.add('d-none');
+            setupManualEntry();
+        } else {
+            // Show upload interface
+            document.getElementById('step3-manual').classList.add('d-none');
+            document.getElementById('step3-upload').classList.remove('d-none');
+            setupFileUpload();
+        }
+        
+        // Display selected class
+        const classInfo = getClassInfo(selectedClass);
+        document.getElementById('selected-class-display-manual').textContent = `${classInfo.name} (${classInfo.school_name})`;
+        document.getElementById('selected-class-display-upload').textContent = `${classInfo.name} (${classInfo.school_name})`;
+        
+        // Reset students array for new class
+        students = [];
+        uploadedStudents = [];
+        updateNavigationButtons();
+    }
+    
+    function getClassInfo(classKey) {
+        const [name, id] = classKey.split('_');
+        const classroom = teacherClassrooms.find(c => c.id.toString() === id);
+        return {
+            name: classroom ? classroom.name : name,
+            school_name: classroom ? classroom.school_name : '',
+            id: id
+        };
+    }
+    
+    function setupManualEntry() {
+        const firstNameInput = document.getElementById('first-name-input');
+        const lastNameInput = document.getElementById('last-name-input');
+        const addStudentBtn = document.getElementById('add-student-btn');
+        
+        // Clear previous data
+        firstNameInput.value = '';
+        lastNameInput.value = '';
+        students = []; // Reset students array
+        
+        // Load existing students for this classroom
+        const classInfo = getClassInfo(selectedClass);
+        loadExistingStudents(classInfo.id);
+        
+        // Input validation
+        function validateInputs() {
+            const firstName = firstNameInput.value.trim();
+            const lastName = lastNameInput.value.trim();
+            addStudentBtn.disabled = !(firstName && lastName);
+        }
+        
+        firstNameInput.addEventListener('input', validateInputs);
+        lastNameInput.addEventListener('input', validateInputs);
+        
+        // Add student handler
+        addStudentBtn.onclick = function() {
+            const firstName = firstNameInput.value.trim();
+            const lastName = lastNameInput.value.trim();
+            
+            if (firstName && lastName) {
+                students.push({ firstName, lastName });
+                students.sort((a, b) => a.lastName.localeCompare(b.lastName, undefined, {sensitivity: 'base'}));
+                renderStudentsTable();
+                
+                // Clear inputs
+                firstNameInput.value = '';
+                lastNameInput.value = '';
+                addStudentBtn.disabled = true;
+                
+                updateNavigationButtons();
+            }
+        };
+        
+        // Allow Enter key to add student
+        [firstNameInput, lastNameInput].forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !addStudentBtn.disabled) {
+                    addStudentBtn.click();
+                }
+            });
+        });
+    }
+    
+    function loadExistingStudents(classroomId) {
+        fetch(`/api/get_classroom_students/${classroomId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Pre-populate students array with existing students
+                    students = data.students || [];
+                    renderStudentsTable();
+                    updateNavigationButtons();
+                    console.log(`Loaded ${students.length} existing students for classroom`);
+                } else {
+                    console.error('Error loading existing students:', data.error);
+                    // Continue with empty array if error
+                    students = [];
+                    renderStudentsTable();
+                    updateNavigationButtons();
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching existing students:', error);
+                // Continue with empty array if error
+                students = [];
+                renderStudentsTable();
+                updateNavigationButtons();
+            });
+    }
+    
+    function renderStudentsTable() {
+        const tbody = document.getElementById('students-tbody');
+        tbody.innerHTML = '';
+        
+        // Sort students by last name ascending, then first name ascending
+        students.sort((a, b) => {
+            const lastNameCompare = a.lastName.localeCompare(b.lastName, undefined, {sensitivity: 'base'});
+            if (lastNameCompare !== 0) {
+                return lastNameCompare;
+            }
+            return a.firstName.localeCompare(b.firstName, undefined, {sensitivity: 'base'});
+        });
+        
+        students.forEach((student, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${student.firstName}</td>
+                <td>${student.lastName}</td>
+                <td><button type="button" class="btn btn-sm btn-outline-danger remove-student-btn" data-index="${index}">${translations['Remove']}</button></td>
+            `;
+            tbody.appendChild(row);
+        });
+        
+        // Add event listeners to remove buttons
+        document.querySelectorAll('.remove-student-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-index'));
+                students.splice(index, 1);
+                renderStudentsTable();
+                updateNavigationButtons();
+            });
+        });
+    }
+    
+    function setupFileUpload() {
+        const fileInput = document.getElementById('file-input');
+        const uploadBtn = document.getElementById('upload-btn');
+        const uploadedSection = document.getElementById('uploaded-students-section');
+        
+        // Reset upload state
+        fileInput.value = '';
+        uploadedSection.classList.add('d-none');
+        uploadedStudents = [];
+        
+        // File selection validation
+        fileInput.addEventListener('change', function() {
+            uploadBtn.disabled = !this.files.length;
+        });
+        
+        // Upload button handler
+        uploadBtn.onclick = function() {
+            const file = fileInput.files[0];
+            if (file) {
+                // Process the uploaded file - the save operation will handle overwriting existing students
+                processUploadedFile(file);
+            }
+        };
+        
+        // Switch names button
+        document.getElementById('switch-names-btn').onclick = function() {
+            uploadedStudents.forEach(student => {
+                const temp = student.firstName;
+                student.firstName = student.lastName;
+                student.lastName = temp;
+            });
+            // Resort by last name after switching
+            uploadedStudents.sort((a, b) => a.lastName.localeCompare(b.lastName, undefined, {sensitivity: 'base'}));
+            renderUploadedStudentsTable();
+        };
+    }
+    
+    function processUploadedFile(file) {
+        const hasHeader = document.getElementById('has-header-checkbox').checked;
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const text = e.target.result;
+            const lines = text.split('\n').filter(line => line.trim());
+            
+            uploadedStudents = [];
+            const startIndex = hasHeader ? 1 : 0;
+            
+            for (let i = startIndex; i < lines.length; i++) {
+                const columns = lines[i].split(',').map(col => col.trim().replace(/"/g, ''));
+                if (columns.length >= 2 && columns[0] && columns[1]) {
+                    uploadedStudents.push({
+                        firstName: columns[0],
+                        lastName: columns[1]
+                    });
+                }
+            }
+            
+            // Sort by last name
+            uploadedStudents.sort((a, b) => a.lastName.localeCompare(b.lastName, undefined, {sensitivity: 'base'}));
+            
+            renderUploadedStudentsTable();
+            document.getElementById('uploaded-students-section').classList.remove('d-none');
+            updateNavigationButtons();
+        };
+        
+        reader.readAsText(file);
+    }
+    
+    function renderUploadedStudentsTable() {
+        const tbody = document.getElementById('uploaded-students-tbody');
+        tbody.innerHTML = '';
+        
+        uploadedStudents.forEach((student, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><input type="text" class="form-control form-control-sm" value="${student.firstName}" data-index="${index}" data-field="firstName"></td>
+                <td><input type="text" class="form-control form-control-sm" value="${student.lastName}" data-index="${index}" data-field="lastName"></td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-uploaded-student-btn" data-index="${index}">${translations['Remove']}</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+        
+        // Add event listeners for editing
+        tbody.querySelectorAll('input').forEach(input => {
+            input.addEventListener('change', function() {
+                const index = parseInt(this.getAttribute('data-index'));
+                const field = this.getAttribute('data-field');
+                uploadedStudents[index][field] = this.value.trim();
+            });
+        });
+        
+        // Add event listeners to remove buttons
+        document.querySelectorAll('.remove-uploaded-student-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-index'));
+                uploadedStudents.splice(index, 1);
+                renderUploadedStudentsTable();
+                updateNavigationButtons();
+            });
+        });
+    }
+    
+    function updateNavigationButtons() {
+        const hasStudents = (selectedInputMethod === 'manual' && students.length > 0) || 
+                           (selectedInputMethod !== 'manual' && uploadedStudents.length > 0);
+        
+        document.getElementById('add-another-class-btn').disabled = !hasStudents;
+        document.getElementById('done-btn').disabled = !hasStudents;
+    }
+    
+    document.getElementById('backStep3').addEventListener('click', function() {
+        showStep(2);
+    });
+    
+    // Done button handler
+    document.getElementById('done-btn').addEventListener('click', function() {
+        if (hasStudentsToSave()) {
+            saveStudentsToDatabase();
+            // Redirect to dashboard
+            window.location.href = '{{ url_for("main.dashboard") }}';
+        }
+    });
+    
+    // Add Another Class button handler
+    document.getElementById('add-another-class-btn').addEventListener('click', function() {
+        if (hasStudentsToSave()) {
+            saveStudentsToDatabase(function() {
+                // After successful save, refresh classroom data and return to Step 2
+                loadTeacherClassrooms().then(() => {
+                    // Reset for next class selection
+                    selectedClass = null;
+                    students = [];
+                    uploadedStudents = [];
+                    document.getElementById('nextStep2').disabled = true;
+                    
+                    // Clear any visual selection in Step 2 tables
+                    clearClassSelection();
+                    
+                    // Force re-render of tables with updated student counts
+                    renderClassTables();
+                    
+                    showStep(2);
+                });
+            });
+        }
+    });
+    
+    function hasStudentsToSave() {
+        return (selectedInputMethod === 'manual' && students.length > 0) || 
+               (selectedInputMethod !== 'manual' && uploadedStudents.length > 0);
+    }
+    
+    function saveStudentsToDatabase(callback) {
+        const studentsToSave = selectedInputMethod === 'manual' ? students : uploadedStudents;
+        const classInfo = getClassInfo(selectedClass);
+        
+        // Save to database via API
+        fetch('/api/save_students', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                classroom_id: parseInt(classInfo.id),
+                students: studentsToSave
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log(`Successfully saved ${data.count} students to ${classInfo.name}`);
+                // Update student count for UI feedback
+                classStudentCounts[selectedClass] = data.count;
+                
+                // Call callback if provided (for Add Another Class flow)
+                if (callback && typeof callback === 'function') {
+                    callback();
+                }
+            } else {
+                console.error('Error saving students:', data.error);
+                alert('Error saving students: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error saving students:', error);
+            alert('Error saving students. Please try again.');
+        });
+    }
+    
+    function clearClassSelection() {
+        // Remove selected class styling from all rows in both tables
+        document.querySelectorAll('#no-students-tbody tr, #with-students-tbody tr').forEach(row => {
+            row.classList.remove('table-primary');
+        });
+        
+        // Reset all select buttons to show "Select" text
+        document.querySelectorAll('.select-class-btn').forEach(btn => {
+            btn.textContent = 'Select';
+            btn.classList.remove('btn-success');
+            btn.style.color = ''; // Reset inline color style
+            // Restore original button class based on student count
+            const classKey = btn.getAttribute('data-class');
+            const classroom = teacherClassrooms.find(c => `${c.name}_${c.id}` === classKey);
+            const studentCount = classroom ? classroom.student_count || 0 : 0;
+            
+            if (studentCount === 0) {
+                btn.classList.add('btn-primary');
+            } else {
+                btn.classList.add('btn-outline-secondary');
+            }
+        });
+    }
+    
+    // Cancel button handler
+    cancelBtn.addEventListener('click', function() {
+        window.location.href = '{{ url_for("main.dashboard") }}';
+    });
+    
+    function showStep(stepNumber) {
+        // Hide all steps
+        document.querySelectorAll('.wizard-step').forEach(step => {
+            step.classList.add('d-none');
+        });
+        
+        // Show target step
+        document.getElementById(`step${stepNumber}`).classList.remove('d-none');
+        
+        // Enable/disable back buttons based on step
+        if (stepNumber === 1) {
+            // Step 1: no back button needed
+            document.getElementById('back-step1').disabled = true;
+        } else if (stepNumber === 2) {
+            // Step 2: enable back to step 1
+            document.getElementById('back-step2').disabled = false;
+        } else if (stepNumber === 3) {
+            // Step 3: enable back to step 2
+            document.getElementById('back-step3').disabled = false;
+        }
+        
+        // Update progress bar
+        const progressBar = document.querySelector('.progress-bar');
+        const totalSteps = 3; // 3 steps total (Step 1, Step 2, Step 3)
+        const progressPercent = (stepNumber / (totalSteps + 1)) * 100; // Step # / (Total steps + 1)
+        progressBar.style.width = progressPercent + '%';
+        progressBar.setAttribute('aria-valuenow', stepNumber);
+        progressBar.setAttribute('aria-valuemax', totalSteps + 1);
+    }
+});
+</script>
+{% endblock %}

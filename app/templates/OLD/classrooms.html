@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Classrooms | Grading App{% endblock %}
+{% block content %}
+{% if school_id %}
+{% set selected_school = (schools|selectattr('id', 'equalto', school_id)|first) %}
+<h2>Classrooms for {{ selected_school.name }}</h2>
+<a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary mb-3">Back to Schools</a>
+{% endif %}
+<form method="post" class="mb-4">
+    {{ form.hidden_tag() }}
+    <div class="row g-2">
+        <div class="col-md-8">{{ form.name(class="form-control", placeholder="Enter classroom name") }}</div>
+        {% if not school_id %}
+        <div class="col-md-2">{{ form.school(class="form-select") }}</div>
+        {% endif %}
+        <div class="col-md-2"><button type="submit" class="btn btn-success w-100">Add Classroom</button></div>
+    </div>
+</form>
+<ul class="list-group">
+    {% for classroom in classrooms %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{ classroom.name }} <span class="text-muted">({{ classroom.school.name }})</span>
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('main.edit_classroom', classroom_id=classroom.id) }}" class="btn btn-sm btn-warning">Edit</a>
+            <form id="delete-classroom-form-{{ classroom.id }}" action="{{ url_for('main.delete_classroom', classroom_id=classroom.id) }}" method="post" style="display:inline;">
+                <button type="button" class="btn btn-sm btn-danger" onclick="confirmDeleteClassroom({{ classroom.id }})">Delete</button>
+            </form>
+        </div>
+    </li>
+    {% else %}
+    <li class="list-group-item">No classrooms yet.</li>
+    {% endfor %}
+</ul>
+<script>
+function confirmDeleteClassroom(classroomId) {
+    if (confirm('Delete this classroom?')) {
+        document.getElementById('delete-classroom-form-' + classroomId).submit();
+    }
+}
+</script>
+{% endblock %}

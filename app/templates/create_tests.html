@@ -1,0 +1,720 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Create Tests') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- My Tests Section -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4>{{ _('My Tests') }}</h4>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="createTestsBtn" disabled>
+                        <i class="fas fa-plus me-1"></i>{{ _('Create Tests') }}
+                    </button>
+                </div>
+
+                <div class="card-body" id="testsTableContainer">
+                    <!-- Filter Form -->
+                    <form id="filterForm" class="mb-3">
+                        <div class="row justify-content-center">
+                            {% if teacher_type == 'specialist' %}
+                            <!-- Filter Class (Specialist only) - First -->
+                            <div class="col-md-3 mb-2">
+                                <label for="filter_class" class="form-label">{{ _('Class') }}:</label>
+                                <select class="form-select" id="filter_class" name="filter_class" onchange="updateGradeFromClass(); filterTests()">
+                                    <option value="">{{ _('All Classes') }}</option>
+                                    {% for grade in grades %}
+                                        {% for class_name in classrooms_by_grade[grade] %}
+                                            <option value="{{ class_name }}" data-grade="{{ grade }}">{{ class_name }} ({{ grade }})</option>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Filter Semester -->
+                            <div class="col-md-3 mb-2">
+                                <label for="filter_semester" class="form-label">{{ _('Semester') }}:</label>
+                                <select class="form-select" id="filter_semester" name="filter_semester" onchange="filterTests()">
+                                    <option value="">{{ _('All Semesters') }}</option>
+                                    {% for semester in semesters %}
+                                        <option value="Semester {{ semester }}" 
+                                                {% if last_test and last_test.semester == 'Semester ' + semester|string %}selected{% endif %}>
+                                            {{ _('Semester') }} {{ semester }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Filter Grade (Specialist only) -->
+                            <div class="col-md-3 mb-2">
+                                <label for="filter_grade" class="form-label">{{ _('Grade') }}:</label>
+                                <select class="form-select" id="filter_grade" name="filter_grade" onchange="updateFilterClassOptions(); filterTests();">
+                                    <option value="">{{ _('All Grades') }}</option>
+                                    {% for grade in grades %}
+                                        <option value="{{ grade }}" 
+                                                {% if last_test and last_test.grade == grade %}selected{% endif %}>
+                                            {{ grade }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% else %}
+                            <!-- Filter Semester -->
+                            <div class="col-md-3 mb-2">
+                                <label for="filter_semester" class="form-label">{{ _('Semester') }}:</label>
+                                <select class="form-select" id="filter_semester" name="filter_semester" onchange="filterTests()">
+                                    <option value="">{{ _('All Semesters') }}</option>
+                                    {% for semester in semesters %}
+                                        <option value="Semester {{ semester }}" 
+                                                {% if last_test and last_test.semester == 'Semester ' + semester|string %}selected{% endif %}>
+                                            {{ _('Semester') }} {{ semester }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% endif %}
+
+                            {% if teacher_type == 'homeroom' %}
+                            <!-- Filter Subject (Homeroom only) -->
+                            <div class="col-md-3 mb-2">
+                                <label for="filter_subject" class="form-label">{{ _('Subject') }}:</label>
+                                <select class="form-select" id="filter_subject" name="filter_subject" onchange="filterTests()">
+                                    <option value="">{{ _('All Subjects') }}</option>
+                                    {% for subject in subjects %}
+                                        <option value="{{ subject }}" 
+                                                {% if last_test and last_test.subject == subject %}selected{% endif %}>
+                                            {{ subject }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </form>
+                    <div class="text-center py-4" id="noSelectionMessage">
+                        <p class="text-muted">{{ _('Please select a Class and Semester to view tests.') }}</p>
+                    </div>
+                    
+                    <!-- Tests Table -->
+                    <div class="table-responsive" id="testsTable" style="display: none;">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>{{ _('Test Name') }}</th>
+                                    <th>{{ _('Test Date') }}</th>
+                                    {% for competency in competencies %}
+                                        <th>{{ competency }}</th>
+                                    {% endfor %}
+                                    <th>{{ _('Actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="testsTableBody">
+                                {% for test in tests %}
+                                <tr class="test-row" 
+                                    data-semester="{{ test.semester }}"
+                                    data-grade="{{ test.grade or '' }}"
+                                    data-class="{{ test.class_name or '' }}"
+                                    data-subject="{{ test.subject or '' }}"
+                                    data-competency="{{ test.competency }}">
+                                    <td>{{ test.test_name }}</td>
+                                    <td>{{ test.test_date.strftime('%Y-%m-%d') }}</td>
+                                    {% for competency in competencies %}
+                                        <td class="competency-cell" data-competency="{{ competency }}">
+                                            {% if test.competency == competency %}
+                                                {{ test.test_weight }}%
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                    <td>
+                                        <button class="btn btn-sm btn-primary" onclick="editTest({{ test.id }})">{{ _('Edit') }}</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                
+                                <!-- Totals Row -->
+                                <tr class="table-info fw-bold" id="totalsRow">
+                                    <td colspan="2">{{ _('Totals') }}</td>
+                                    {% for competency in competencies %}
+                                        <td class="total-cell" data-competency="{{ competency }}">0%</td>
+                                    {% endfor %}
+                                    <td></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Define Tests Form Section -->
+            <div class="card mb-4" id="defineTestsCard" style="display: none;">
+                <div class="card-header">
+                    <h4>{{ _('Define Tests') }}</h4>
+                    <p class="mb-0">{{ _('Please input the following information to define a test:') }}</p>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('main.create_tests') }}">
+                        <!-- Hidden inputs to store inherited values -->
+                        <input type="hidden" id="class_name" name="class_name">
+                        <input type="hidden" id="semester" name="semester">
+                        <input type="hidden" id="grade" name="grade">
+                        
+                        <!-- Display inherited values -->
+                        <div class="row mb-3">
+                            {% if teacher_type == 'specialist' %}
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center">
+                                    <span class="form-label me-2 mb-0">{{ _('Class') }}:</span>
+                                    <span class="bg-light border rounded px-3 py-2 flex-grow-1" id="display_class_name">
+                                        <em class="text-muted">{{ _('Select from filters above') }}</em>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center">
+                                    <span class="form-label me-2 mb-0">{{ _('Semester') }}:</span>
+                                    <span class="bg-light border rounded px-3 py-2 flex-grow-1" id="display_semester">
+                                        <em class="text-muted">{{ _('Select from filters above') }}</em>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center">
+                                    <span class="form-label me-2 mb-0">{{ _('Grade') }}:</span>
+                                    <span class="bg-light border rounded px-3 py-2 flex-grow-1" id="display_grade">
+                                        <em class="text-muted">{{ _('Select from filters above') }}</em>
+                                    </span>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <!-- Competency -->
+                            <div class="col-md-4 mb-3">
+                                <label for="competency" class="form-label">{{ _('Competency') }}:</label>
+                                <select class="form-select" id="competency" name="competency" required>
+                                    <option value="">{{ _('Select Competency') }}</option>
+                                    {% for competency in competencies %}
+                                        <option value="{{ competency }}">{{ competency }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Test Name -->
+                            <div class="col-md-4 mb-3">
+                                <label for="test_name" class="form-label">{{ _('Test name') }}:</label>
+                                <input type="text" class="form-control" id="test_name" name="test_name" required>
+                            </div>
+
+                            <!-- Max Points -->
+                            <div class="col-md-4 mb-3">
+                                <label for="max_points" class="form-label">{{ _('Max points') }}:</label>
+                                <input type="number" class="form-control" id="max_points" name="max_points" min="1" required>
+                            </div>
+
+                            <!-- Test Date -->
+                            <div class="col-md-4 mb-3">
+                                <label for="test_date" class="form-label">{{ _('Test date') }}:</label>
+                                <input type="date" class="form-control" id="test_date" name="test_date" required>
+                            </div>
+
+                            <!-- Test Weight -->
+                            <div class="col-md-4 mb-3">
+                                <label for="test_weight" class="form-label">{{ _('Test weight') }}:</label>
+                                <input type="number" class="form-control" id="test_weight" name="test_weight" min="1" max="100" required>
+                            </div>
+
+                            {% if teacher_type == 'homeroom' %}
+                            <!-- Subject (Homeroom only) -->
+                            <div class="col-md-4 mb-3">
+                                <label for="subject" class="form-label">{{ _('Subject') }}:</label>
+                                <select class="form-select" id="subject" name="subject" required>
+                                    <option value="">{{ _('Select Subject') }}</option>
+                                    {% for subject in subjects %}
+                                        <option value="{{ subject }}">{{ subject }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 d-flex justify-content-between">
+                                <button type="submit" class="btn btn-primary" id="submitButton">{{ _('Save Test') }}</button>
+                                <button type="button" class="btn btn-danger" id="deleteButton" style="display: none;" onclick="confirmDeleteTest()">{{ _('Delete Test') }}</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Hidden field for edit mode -->
+                        <input type="hidden" id="editTestId" name="test_id" value="">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Store classrooms data for dynamic updates
+const classroomsByGrade = {{ classrooms_by_grade|tojson|safe }};
+const teacherType = "{{ teacher_type }}";
+
+// Update grade dropdown when class is selected (for form)
+function updateGradeFromClassForm() {
+    if (teacherType !== 'specialist') return;
+    
+    const classSelect = document.getElementById('class_name');
+    const gradeSelect = document.getElementById('grade');
+    const selectedClass = classSelect.value;
+    
+    if (selectedClass) {
+        // Get the grade from the selected class option's data-grade attribute
+        const selectedOption = classSelect.options[classSelect.selectedIndex];
+        const grade = selectedOption.getAttribute('data-grade');
+        
+        if (grade) {
+            gradeSelect.value = grade;
+        }
+    }
+}
+
+// Update class options based on selected grade (for form)
+function updateClassOptions() {
+    const gradeSelect = document.getElementById('grade');
+    const classSelect = document.getElementById('class_name');
+    const selectedGrade = gradeSelect.value;
+    
+    // Clear existing options
+    classSelect.innerHTML = '<option value="">Select Class</option>';
+    
+    if (selectedGrade && classroomsByGrade[selectedGrade]) {
+        classroomsByGrade[selectedGrade].forEach(className => {
+            const option = document.createElement('option');
+            option.value = className;
+            option.textContent = className;
+            classSelect.appendChild(option);
+        });
+    }
+}
+
+// Update grade dropdown when class is selected (for filter)
+function updateGradeFromClass() {
+    if (teacherType !== 'specialist') return;
+    
+    const classSelect = document.getElementById('filter_class');
+    const gradeSelect = document.getElementById('filter_grade');
+    const selectedClass = classSelect.value;
+    
+    if (selectedClass) {
+        // Get the grade from the selected class option's data-grade attribute
+        const selectedOption = classSelect.options[classSelect.selectedIndex];
+        const grade = selectedOption.getAttribute('data-grade');
+        
+        if (grade) {
+            gradeSelect.value = grade;
+        }
+    }
+}
+
+// Update filter class options based on selected grade (for filter)
+function updateFilterClassOptions() {
+    const gradeSelect = document.getElementById('filter_grade');
+    const classSelect = document.getElementById('filter_class');
+    const selectedGrade = gradeSelect.value;
+    const currentSelectedClass = classSelect.value; // Preserve current selection
+    
+    // Clear existing options
+    classSelect.innerHTML = '<option value="">{{ _("All Classes") }}</option>';
+    
+    if (selectedGrade && classroomsByGrade[selectedGrade]) {
+        // Show only classes for the selected grade
+        classroomsByGrade[selectedGrade].forEach(className => {
+            const option = document.createElement('option');
+            option.value = className;
+            option.textContent = className;
+            classSelect.appendChild(option);
+        });
+    } else {
+        // Show all classes when no grade is selected
+        Object.keys(classroomsByGrade).forEach(grade => {
+            classroomsByGrade[grade].forEach(className => {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = `${className} (${grade})`;
+                option.setAttribute('data-grade', grade);
+                classSelect.appendChild(option);
+            });
+        });
+    }
+    
+    // Restore the previously selected class if it's still available
+    if (currentSelectedClass) {
+        const optionExists = Array.from(classSelect.options).some(option => option.value === currentSelectedClass);
+        if (optionExists) {
+            classSelect.value = currentSelectedClass;
+        }
+    }
+}
+
+// Filter tests based on selected criteria
+function filterTests() {
+    const semester = document.getElementById('filter_semester').value;
+    const grade = teacherType === 'specialist' ? document.getElementById('filter_grade').value : '';
+    const className = teacherType === 'specialist' ? document.getElementById('filter_class').value : '';
+    const subject = teacherType === 'homeroom' ? document.getElementById('filter_subject').value : '';
+    
+    const rows = document.querySelectorAll('.test-row');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        let show = true;
+        
+        if (semester && row.dataset.semester !== semester) show = false;
+        if (grade && row.dataset.grade !== grade) show = false;
+        if (className && row.dataset.class !== className) show = false;
+        if (subject && row.dataset.subject !== subject) show = false;
+        
+        row.style.display = show ? '' : 'none';
+        if (show) visibleCount++;
+    });
+    
+    // Update filter display text and totals
+    updateFilterDisplay();
+    calculateTotals();
+}
+
+// Update the filter display text
+function updateFilterDisplay() {
+    // Since we removed the filterDisplay element, this function can be empty or removed
+    // But we'll keep it empty to avoid breaking existing calls
+}
+
+// Calculate totals for each competency column
+function calculateTotals() {
+    const competencies = {{ competencies | tojson }};
+    
+    competencies.forEach(competency => {
+        let total = 0;
+        const visibleRows = document.querySelectorAll('.test-row:not([style*="display: none"])');
+        
+        visibleRows.forEach(row => {
+            const cell = row.querySelector(`.competency-cell[data-competency="${competency}"]`);
+            if (cell && cell.textContent.trim()) {
+                const weight = parseFloat(cell.textContent.replace('%', ''));
+                if (!isNaN(weight)) {
+                    total += weight;
+                }
+            }
+        });
+        
+        const totalCell = document.querySelector(`#totalsRow [data-competency="${competency}"]`);
+        if (totalCell) {
+            totalCell.textContent = total + '%';
+        }
+    });
+}
+
+// Edit test function
+function editTest(testId) {
+    console.log('Edit button clicked for test ID:', testId);
+    fetch(`/api/get_test/${testId}`)
+        .then(response => {
+            console.log('API response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(test => {
+            console.log('Test data received:', test);
+            
+            // Check if test data contains an error
+            if (test.error) {
+                throw new Error(test.error);
+            }
+            
+            try {
+                // Populate form fields
+                document.getElementById('semester').value = test.semester;
+                document.getElementById('test_name').value = test.test_name;
+                document.getElementById('max_points').value = test.max_points;
+                document.getElementById('test_date').value = test.test_date;
+                document.getElementById('test_weight').value = test.test_weight;
+                document.getElementById('competency').value = test.competency;
+                
+                if (teacherType === 'specialist') {
+                    document.getElementById('grade').value = test.grade;
+                    // Update class options first, then set the class value
+                    updateClassOptions();
+                    setTimeout(() => {
+                        const classSelect = document.getElementById('class_name');
+                        if (classSelect && test.class_name) {
+                            classSelect.value = test.class_name;
+                        }
+                    }, 100);
+                } else {
+                    const subjectSelect = document.getElementById('subject');
+                    if (subjectSelect && test.subject) {
+                        subjectSelect.value = test.subject;
+                    }
+                }
+                
+                // Set edit mode
+                document.getElementById('editTestId').value = testId;
+                document.getElementById('submitButton').textContent = 'Update Test';
+                document.getElementById('deleteButton').style.display = 'block';
+                
+                // Scroll to form
+                document.getElementById('testForm').scrollIntoView({ behavior: 'smooth' });
+                
+                console.log('Test data successfully loaded into form');
+            } catch (formError) {
+                console.error('Error populating form fields:', formError);
+                // Don't show alert for form population errors, just log them
+                // The form will still be populated with most data
+            }
+        })
+        .catch(error => {
+            console.error('Error loading test:', error);
+            alert('Error loading test data: ' + error.message);
+        });
+}
+
+// Confirm delete test
+function confirmDeleteTest() {
+    if (confirm('Warning: Deleting this test will also delete any grades that have been entered for this test. Are you sure you want to proceed?')) {
+        const testId = document.getElementById('editTestId').value;
+        
+        fetch(`/api/delete_test/${testId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload(); // Refresh the page to show updated table
+            } else {
+                alert('Error deleting test: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting test:', error);
+            alert('Error deleting test');
+        });
+    }
+}
+
+// Reset form to create mode
+function resetForm() {
+    document.getElementById('editTestId').value = '';
+    document.getElementById('submitButton').textContent = 'Create Test';
+    document.getElementById('deleteButton').style.display = 'none';
+}
+
+// Function to check if Class and Semester are selected and update Create Tests button
+function checkCreateTestsButtonState() {
+    const classFilter = document.getElementById('filter_class');
+    const semesterFilter = document.getElementById('filter_semester');
+    const gradeFilter = document.getElementById('filter_grade');
+    const createTestsBtn = document.getElementById('createTestsBtn');
+    
+    let classSelected = false;
+    let semesterSelected = false;
+    
+    if (teacherType === 'specialist') {
+        classSelected = classFilter && classFilter.value !== '';
+    } else {
+        // For homeroom teachers, class is always selected (their own class)
+        classSelected = true;
+    }
+    
+    semesterSelected = semesterFilter && semesterFilter.value !== '';
+    
+    const shouldEnable = classSelected && semesterSelected;
+    
+    if (createTestsBtn) {
+        createTestsBtn.disabled = !shouldEnable;
+    }
+    
+    // Show/hide tests table based on selection
+    const testsTable = document.getElementById('testsTable');
+    const noSelectionMessage = document.getElementById('noSelectionMessage');
+    
+    if (shouldEnable) {
+        if (testsTable) testsTable.style.display = 'block';
+        if (noSelectionMessage) noSelectionMessage.style.display = 'none';
+    } else {
+        if (testsTable) testsTable.style.display = 'none';
+        if (noSelectionMessage) noSelectionMessage.style.display = 'block';
+    }
+    
+    // Update the display values in the Define Tests form
+    updateDefineTestsDisplay();
+}
+
+// Function to update the display values in Define Tests form
+function updateDefineTestsDisplay() {
+    const classFilter = document.getElementById('filter_class');
+    const semesterFilter = document.getElementById('filter_semester');
+    const gradeFilter = document.getElementById('filter_grade');
+    
+    const displayClass = document.getElementById('display_class_name');
+    const displaySemester = document.getElementById('display_semester');
+    const displayGrade = document.getElementById('display_grade');
+    
+    const hiddenClass = document.getElementById('class_name');
+    const hiddenSemester = document.getElementById('semester');
+    const hiddenGrade = document.getElementById('grade');
+    
+    if (teacherType === 'specialist') {
+        // Update Class display and hidden input
+        if (classFilter && classFilter.value !== '') {
+            const selectedOption = classFilter.options[classFilter.selectedIndex];
+            const displayText = selectedOption.textContent;
+            if (displayClass) displayClass.innerHTML = displayText;
+            if (hiddenClass) hiddenClass.value = classFilter.value;
+        } else {
+            if (displayClass) displayClass.innerHTML = '<em class="text-muted">{{ _("Select from filters above") }}</em>';
+            if (hiddenClass) hiddenClass.value = '';
+        }
+        
+        // Update Grade display and hidden input
+        if (gradeFilter && gradeFilter.value !== '') {
+            if (displayGrade) displayGrade.innerHTML = gradeFilter.value;
+            if (hiddenGrade) hiddenGrade.value = gradeFilter.value;
+        } else {
+            if (displayGrade) displayGrade.innerHTML = '<em class="text-muted">{{ _("Select from filters above") }}</em>';
+            if (hiddenGrade) hiddenGrade.value = '';
+        }
+    } else {
+        // For homeroom teachers, use the current user's class
+        if (hiddenClass) hiddenClass.value = '{{ current_user.class_name if current_user.class_name else "" }}';
+        if (hiddenGrade) hiddenGrade.value = '{{ current_user.grade if current_user.grade else "" }}';
+    }
+    
+    // Update Semester display and hidden input (for both teacher types)
+    if (semesterFilter && semesterFilter.value !== '') {
+        if (displaySemester) displaySemester.innerHTML = semesterFilter.value;
+        if (hiddenSemester) hiddenSemester.value = semesterFilter.value;
+    } else {
+        if (displaySemester) displaySemester.innerHTML = '<em class="text-muted">{{ _("Select from filters above") }}</em>';
+        if (hiddenSemester) hiddenSemester.value = '';
+    }
+}
+
+// Function to toggle Define Tests card visibility
+function toggleDefineTestsCard() {
+    const defineTestsCard = document.getElementById('defineTestsCard');
+    const createTestsBtn = document.getElementById('createTestsBtn');
+    
+    if (defineTestsCard.style.display === 'none' || defineTestsCard.style.display === '') {
+        defineTestsCard.style.display = 'block';
+        createTestsBtn.innerHTML = '<i class="fas fa-eye-slash me-1"></i>' + {{ _('Hide Form')|tojson }};
+    } else {
+        defineTestsCard.style.display = 'none';
+        createTestsBtn.innerHTML = '<i class="fas fa-plus me-1"></i>' + {{ _('Create Tests')|tojson }};
+        // Reset form when hiding
+        resetForm();
+    }
+}
+
+// Initialize the page
+document.addEventListener('DOMContentLoaded', function() {
+    calculateTotals();
+    
+    // Check initial button state
+    checkCreateTestsButtonState();
+    
+    // Add event listeners for filter changes
+    document.getElementById('filter_semester').addEventListener('change', function() {
+        filterTests();
+        checkCreateTestsButtonState();
+    });
+    
+    if (teacherType === 'specialist') {
+        document.getElementById('filter_grade').addEventListener('change', function() {
+            updateFilterClassOptions();
+            filterTests();
+            checkCreateTestsButtonState();
+        });
+        document.getElementById('filter_class').addEventListener('change', function() {
+            updateGradeFromClass();
+            filterTests();
+            checkCreateTestsButtonState();
+        });
+    } else {
+        document.getElementById('filter_semester').addEventListener('change', function() {
+            filterTests();
+            checkCreateTestsButtonState();
+        });
+    }
+    
+    // Add event listener for Create Tests button
+    const createTestsBtn = document.getElementById('createTestsBtn');
+    if (createTestsBtn) {
+        createTestsBtn.addEventListener('click', toggleDefineTestsCard);
+    }
+    
+    // Set today's date as default for test date
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('test_date').value = today;
+    
+    // Reset filter dropdowns to default "All" values
+    const filterSemesterSelect = document.getElementById('filter_semester');
+    if (filterSemesterSelect) {
+        filterSemesterSelect.value = '';
+    }
+    
+    if (teacherType === 'specialist') {
+        const filterGradeSelect = document.getElementById('filter_grade');
+        const filterClassSelect = document.getElementById('filter_class');
+        
+        if (filterGradeSelect) {
+            filterGradeSelect.value = '';
+        }
+        if (filterClassSelect) {
+            filterClassSelect.value = '';
+        }
+        
+        // Update class options to show all classes (call after clearing grade filter)
+        updateFilterClassOptions();
+    } else {
+        const filterSubjectSelect = document.getElementById('filter_subject');
+        if (filterSubjectSelect) {
+            filterSubjectSelect.value = '';
+        }
+    }
+    
+    // Auto-populate form fields if editing (but not filters)
+    if (teacherType === 'specialist') {
+        // Set last test's grade and class as selected if available (for form only)
+        const lastTestGrade = {% if last_test and last_test.grade %}"{{ last_test.grade }}"{% else %}null{% endif %};
+        const lastTestClassName = {% if last_test and last_test.class_name %}"{{ last_test.class_name }}"{% else %}null{% endif %};
+        
+        if (lastTestGrade) {
+            const gradeSelect = document.getElementById('grade');
+            if (gradeSelect) {
+                gradeSelect.value = lastTestGrade;
+            }
+            
+            // Update class options for form
+            updateClassOptions();
+        }
+        
+        if (lastTestClassName) {
+            const classSelect = document.getElementById('class_name');
+            if (classSelect) {
+                classSelect.value = lastTestClassName;
+            }
+        }
+    }
+    
+    // Initial filter and display update
+    filterTests();
+});
+</script>
+
+{% endblock %}
