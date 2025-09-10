@@ -950,6 +950,12 @@ def flush_database():
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@main.route('/classroom')
+@login_required
+def classroom():
+    """Classroom seating chart page"""
+    return render_template('classroom.html')
+
 @main.route('/preferences')
 @login_required
 def preferences():

@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Classroom') }} - {{ _('Grading App') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">{{ _('Classroom Seating Chart') }}</h1>
+            
+            <!-- Filter Controls -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <label for="filter_grade" class="form-label">{{ _('Grade') }}</label>
+                    <select class="form-select" id="filter_grade" onchange="loadClassrooms()">
+                        <option value="">{{ _('Select Grade') }}</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="filter_class" class="form-label">{{ _('Class') }}</label>
+                    <select class="form-select" id="filter_class" onchange="loadStudents()">
+                        <option value="">{{ _('Select Class') }}</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-success me-2" id="saveBtn" onclick="saveClassroomLayout()" disabled>
+                        <i class="bi bi-save"></i> {{ _('Save Layout') }}
+                    </button>
+                    <button class="btn btn-warning" id="editBtn" onclick="editClassroomLayout()" style="display: none;">
+                        <i class="bi bi-pencil"></i> {{ _('Edit Layout') }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Classroom Area -->
+            <div class="row">
+                <div class="col-12">
+                    <div id="classroom-container" style="position: relative; min-height: 500px; border: 3px solid #333; background-color: #f8f9fa; border-radius: 10px; margin-bottom: 30px; display: none;">
+                        <div class="classroom-header p-2 text-center bg-light border-bottom">
+                            <h5 class="mb-0">{{ _('Classroom') }}</h5>
+                        </div>
+                        
+                        <!-- Teacher's Desk (fixed position at bottom center) -->
+                        <div id="teacher-desk" class="desk teacher-desk" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 120px; height: 60px; background-color: #dc3545; color: white; border: 2px solid #333; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-weight: bold; z-index: 10;">
+                            {{ _('Teacher') }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Desks Pool -->
+            <div class="row" id="student-desks-section" style="display: none;">
+                <div class="col-12">
+                    <h5>{{ _('Student Desks') }} <small class="text-muted">({{ _('Drag desks into the classroom above') }})</small></h5>
+                    <div id="student-desks-pool" class="p-3 border rounded" style="min-height: 150px; background-color: #e9ecef;">
+                        <!-- Student desks will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="row mt-3" id="instructions" style="display: none;">
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <h6>{{ _('Instructions:') }}</h6>
+                        <ul class="mb-0">
+                            <li>{{ _('Select a grade and class to begin') }}</li>
+                            <li>{{ _('Drag student desks from the pool below into the classroom') }}</li>
+                            <li>{{ _('Arrange desks anywhere inside the classroom rectangle') }}</li>
+                            <li>{{ _('Click "Save Layout" to save the seating arrangement') }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.desk {
+    cursor: move;
+    user-select: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.desk:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.student-desk {
+    width: 80px;
+    height: 50px;
+    background-color: #007bff;
+    color: white;
+    border: 2px solid #333;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    margin: 5px;
+    position: relative;
+}
+
+.student-desk.in-classroom {
+    position: absolute;
+}
+
+.teacher-desk {
+    background-color: #dc3545 !important;
+}
+
+.classroom-dropzone {
+    position: relative;
+}
+
+.drag-over {
+    background-color: #d4edda !important;
+    border-color: #28a745 !important;
+}
+
+.frozen .desk {
+    cursor: default !important;
+}
+
+.frozen .student-desk:hover {
+    transform: none !important;
+}
+</style>
+
+<script>
+let teacherType = '';
+let currentStudents = [];
+let classroomLayout = {};
+let isFrozen = false;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadTeacherType();
+    loadGrades();
+});
+
+function loadTeacherType() {
+    fetch('/api/get_teacher_type')
+        .then(response => response.json())
+        .then(data => {
+            teacherType = data.teacher_type;
+            if (teacherType !== 'specialist') {
+                document.querySelector('.container-fluid').innerHTML = 
+                    '<div class="alert alert-warning">{{ _("Classroom seating charts are only available for specialist teachers.") }}</div>';
+            }
+        })
+        .catch(error => console.error('Error loading teacher type:', error));
+}
+
+function loadGrades() {
+    if (teacherType !== 'specialist') return;
+    
+    fetch('/api/get_setup_wizard_data')
+        .then(response => response.json())
+        .then(data => {
+            const gradeSelect = document.getElementById('filter_grade');
+            gradeSelect.innerHTML = '<option value="">{{ _("Select Grade") }}</option>';
+            
+            if (data.grades && data.grades.length > 0) {
+                data.grades.forEach(grade => {
+                    const option = document.createElement('option');
+                    option.value = grade;
+                    option.textContent = grade;
+                    gradeSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => console.error('Error loading grades:', error));
+}
+
+function loadClassrooms() {
+    const grade = document.getElementById('filter_grade').value;
+    const classSelect = document.getElementById('filter_class');
+    
+    if (!grade) {
+        classSelect.innerHTML = '<option value="">{{ _("Select Class") }}</option>';
+        return;
+    }
+    
+    fetch('/api/get_setup_wizard_data')
+        .then(response => response.json())
+        .then(data => {
+            classSelect.innerHTML = '<option value="">{{ _("Select Class") }}</option>';
+            
+            if (data.classes && data.classes.length > 0) {
+                data.classes.forEach(className => {
+                    const option = document.createElement('option');
+                    option.value = className;
+                    option.textContent = className;
+                    classSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => console.error('Error loading classes:', error));
+}
+
+function loadStudents() {
+    const grade = document.getElementById('filter_grade').value;
+    const className = document.getElementById('filter_class').value;
+    
+    if (!grade || !className) {
+        hideClassroom();
+        return;
+    }
+    
+    // Find the classroom and get students
+    fetch('/api/get_teacher_classrooms')
+        .then(response => response.json())
+        .then(data => {
+            const targetClassroomName = `${className} (${grade})`;
+            let classroom = null;
+            
+            for (let school of data.schools) {
+                classroom = school.classrooms.find(c => c.name === targetClassroomName);
+                if (classroom) break;
+            }
+            
+            if (classroom) {
+                return fetch(`/api/get_classroom_students/${classroom.id}`);
+            } else {
+                throw new Error('Classroom not found');
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            currentStudents = data.students || [];
+            showClassroom();
+            createStudentDesks();
+        })
+        .catch(error => {
+            console.error('Error loading students:', error);
+            hideClassroom();
+        });
+}
+
+function showClassroom() {
+    document.getElementById('classroom-container').style.display = 'block';
+    document.getElementById('student-desks-section').style.display = 'block';
+    document.getElementById('instructions').style.display = 'block';
+    document.getElementById('saveBtn').disabled = false;
+}
+
+function hideClassroom() {
+    document.getElementById('classroom-container').style.display = 'none';
+    document.getElementById('student-desks-section').style.display = 'none';
+    document.getElementById('instructions').style.display = 'none';
+    document.getElementById('saveBtn').disabled = true;
+}
+
+function createStudentDesks() {
+    const pool = document.getElementById('student-desks-pool');
+    pool.innerHTML = '';
+    
+    currentStudents.forEach(student => {
+        const desk = document.createElement('div');
+        desk.className = 'desk student-desk';
+        desk.textContent = student.first_name;
+        desk.dataset.studentId = student.id;
+        desk.draggable = true;
+        
+        // Add drag event listeners
+        desk.addEventListener('dragstart', handleDragStart);
+        desk.addEventListener('dragend', handleDragEnd);
+        
+        pool.appendChild(desk);
+    });
+    
+    setupDropZone();
+}
+
+function setupDropZone() {
+    const classroom = document.getElementById('classroom-container');
+    
+    classroom.addEventListener('dragover', handleDragOver);
+    classroom.addEventListener('drop', handleDrop);
+    classroom.addEventListener('dragenter', handleDragEnter);
+    classroom.addEventListener('dragleave', handleDragLeave);
+}
+
+function handleDragStart(e) {
+    if (isFrozen) {
+        e.preventDefault();
+        return;
+    }
+    
+    e.dataTransfer.setData('text/plain', e.target.dataset.studentId);
+    e.target.style.opacity = '0.5';
+}
+
+function handleDragEnd(e) {
+    e.target.style.opacity = '1';
+}
+
+function handleDragOver(e) {
+    if (isFrozen) return;
+    e.preventDefault();
+}
+
+function handleDragEnter(e) {
+    if (isFrozen) return;
+    e.preventDefault();
+    e.currentTarget.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+    if (isFrozen) return;
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+        e.currentTarget.classList.remove('drag-over');
+    }
+}
+
+function handleDrop(e) {
+    if (isFrozen) return;
+    
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    
+    const studentId = e.dataTransfer.getData('text/plain');
+    const desk = document.querySelector(`[data-student-id="${studentId}"]`);
+    
+    if (desk) {
+        // Calculate position relative to classroom container
+        const classroomRect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - classroomRect.left - 40; // Center the desk
+        const y = e.clientY - classroomRect.top - 25;
+        
+        // Ensure desk stays within bounds
+        const maxX = classroomRect.width - 80;
+        const maxY = classroomRect.height - 50;
+        
+        const finalX = Math.max(10, Math.min(x, maxX));
+        const finalY = Math.max(40, Math.min(y, maxY - 80)); // Leave space for teacher desk
+        
+        // Move desk to classroom
+        desk.classList.add('in-classroom');
+        desk.style.position = 'absolute';
+        desk.style.left = finalX + 'px';
+        desk.style.top = finalY + 'px';
+        desk.style.margin = '0';
+        
+        e.currentTarget.appendChild(desk);
+    }
+}
+
+function saveClassroomLayout() {
+    const desksInClassroom = document.querySelectorAll('#classroom-container .student-desk');
+    const layout = {};
+    
+    desksInClassroom.forEach(desk => {
+        layout[desk.dataset.studentId] = {
+            x: parseInt(desk.style.left),
+            y: parseInt(desk.style.top),
+            studentName: desk.textContent
+        };
+    });
+    
+    classroomLayout = layout;
+    isFrozen = true;
+    
+    // Update UI
+    document.getElementById('classroom-container').classList.add('frozen');
+    document.getElementById('saveBtn').style.display = 'none';
+    document.getElementById('editBtn').style.display = 'inline-block';
+    
+    // Hide the pool since layout is saved
+    document.getElementById('student-desks-section').style.display = 'none';
+    document.getElementById('instructions').style.display = 'none';
+    
+    alert('{{ _("Classroom layout saved successfully!") }}');
+}
+
+function editClassroomLayout() {
+    isFrozen = false;
+    
+    // Update UI
+    document.getElementById('classroom-container').classList.remove('frozen');
+    document.getElementById('saveBtn').style.display = 'inline-block';
+    document.getElementById('editBtn').style.display = 'none';
+    
+    // Show the pool and instructions again
+    document.getElementById('student-desks-section').style.display = 'block';
+    document.getElementById('instructions').style.display = 'block';
+    
+    // Move any remaining desks back to pool
+    const desksInClassroom = document.querySelectorAll('#classroom-container .student-desk');
+    const pool = document.getElementById('student-desks-pool');
+    
+    desksInClassroom.forEach(desk => {
+        desk.classList.remove('in-classroom');
+        desk.style.position = 'relative';
+        desk.style.left = 'auto';
+        desk.style.top = 'auto';
+        desk.style.margin = '5px';
+        pool.appendChild(desk);
+    });
+}
+</script>
+{% endblock %}
