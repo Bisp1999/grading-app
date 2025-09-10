@@ -177,6 +177,12 @@ function loadClasses() {
         })
         .then(data => {
             console.log('Setup wizard data received:', data);
+            console.log('Full data structure:', JSON.stringify(data, null, 2));
+            console.log('data.data exists?', !!data.data);
+            console.log('data.data content:', data.data);
+            console.log('data.data.classes exists?', !!(data.data && data.data.classes));
+            console.log('data.data.classes content:', data.data && data.data.classes);
+            
             const classSelect = document.getElementById('filter_class');
             classSelect.innerHTML = '<option value="">{{ _("Select Class") }}</option>';
             
