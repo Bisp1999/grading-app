@@ -140,7 +140,6 @@ let isFrozen = false;
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
     loadTeacherType();
-    loadClasses();
 });
 
 function loadTeacherType() {
@@ -151,6 +150,9 @@ function loadTeacherType() {
             if (teacherType !== 'specialist') {
                 document.querySelector('.container-fluid').innerHTML = 
                     '<div class="alert alert-warning">{{ _("Classroom seating charts are only available for specialist teachers.") }}</div>';
+            } else {
+                // Only load classes if teacher is specialist
+                loadClasses();
             }
         })
         .catch(error => console.error('Error loading teacher type:', error));
