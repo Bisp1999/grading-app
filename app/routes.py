@@ -950,6 +950,12 @@ def flush_database():
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@main.route('/preferences')
+@login_required
+def preferences():
+    """Preferences page for application settings"""
+    return render_template('preferences.html')
+
 @main.route('/dashboard')
 @login_required
 def dashboard():

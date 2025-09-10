@@ -37,14 +37,26 @@
     <nav class="flex-column bg-light p-3 sidebar" style="width:220px;min-width:220px;min-height:100vh;position:fixed;top:60px;left:0;z-index:1000;">
       <h5 class="mb-4">{{ _('Menu') }}</h5>
       <ul class="nav nav-pills flex-column">
+        <!-- Section 1: Core Navigation -->
         <li class="nav-item mb-2"><a class="nav-link" href="{{ url_for('main.dashboard') }}">{{ _('Dashboard') }}</a></li>
-        <li><a class="nav-link" href="{{ url_for('main.input_grades') }}">{{ _('Input Grades') }}</a></li>
+        <li class="nav-item mb-2"><a class="nav-link" href="{{ url_for('main.student_tab') }}">{{ _('Student Profiles') }}</a></li>
+        <li class="nav-item mb-2"><a class="nav-link" href="#" onclick="alert('Classroom feature coming soon!')">{{ _('Classroom') }}</a></li>
+        
+        <!-- Separator -->
+        <li class="nav-item mb-3"><hr class="my-2" style="border-color: #dee2e6;"></li>
+        
+        <!-- Section 2: Grading & Assessment -->
+        <li class="nav-item mb-2"><a class="nav-link" href="{{ url_for('main.review_grades') }}">{{ _('Review & Adjust Grades') }}</a></li>
+        <li class="nav-item mb-2"><a class="nav-link" href="{{ url_for('main.input_grades') }}">{{ _('Input Grades') }}</a></li>
         <li class="nav-item mb-2"><a class="nav-link" href="{{ url_for('main.create_tests') }}">{{ _('Create Tests') }}</a></li>
-        <li class="nav-item mb-2"><a class="nav-link" href="{{ url_for('main.review_grades') }}">{{ _('Review Grades') }}</a></li>
-        <li class="nav-item mb-2"><a class="nav-link" href="{{ url_for('main.student_tab') }}">{{ _('Students') }}</a></li>
-        <li class="nav-item mb-2"><a class="nav-link" href="{{ url_for('main.setup_wizard') }}">{{ _('Setup Wizard') }}</a></li>
-        <li class="nav-item mb-2"><a class="nav-link" href="{{ url_for('main.student_wizard') }}">{{ _('Student Management') }}</a></li>
-        <li class="nav-item mb-2"><a class="nav-link" href="#" onclick="confirmFlushDatabase()" style="color: #dc3545;">{{ _('Flush database') }}</a></li>
+        
+        <!-- Separator -->
+        <li class="nav-item mb-3"><hr class="my-2" style="border-color: #dee2e6;"></li>
+        
+        <!-- Section 3: Setup & Configuration -->
+        <li class="nav-item mb-2"><a class="nav-link" href="{{ url_for('main.student_wizard') }}">{{ _('Students Setup') }}</a></li>
+        <li class="nav-item mb-2"><a class="nav-link" href="{{ url_for('main.setup_wizard') }}">{{ _('Class Setup') }}</a></li>
+        <li class="nav-item mb-2"><a class="nav-link" href="{{ url_for('main.preferences') }}">{{ _('Preferences') }}</a></li>
       </ul>
     </nav>
     <div class="main-content" style="margin-left:220px;width:100%;">
@@ -85,33 +97,6 @@
 </div>
 </div>
 
-<script>
-function confirmFlushDatabase() {
-    if (confirm('This will flush the database. Do you want to continue?')) {
-        // Send POST request to flush database
-        fetch('/flush_database', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Database flushed successfully!');
-                // Redirect to dashboard to refresh the view
-                window.location.href = '/dashboard';
-            } else {
-                alert('Error flushing database: ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error flushing database: ' + error);
-        });
-    }
-}
-</script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 

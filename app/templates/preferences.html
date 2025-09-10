@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Preferences') }} - {{ _('Grading App') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">{{ _('Preferences') }}</h1>
+            
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">{{ _('Application Settings') }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">{{ _('Configure your application preferences and settings.') }}</p>
+                            
+                            <!-- Language Settings -->
+                            <div class="mb-4">
+                                <h6>{{ _('Language') }}</h6>
+                                <p class="small text-muted">{{ _('Current language setting can be changed using the language selector in the top navigation.') }}</p>
+                            </div>
+                            
+                            <!-- More preferences can be added here in the future -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card border-warning">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                {{ _('Danger Zone') }}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="text-danger">{{ _('Reset Database') }}</h6>
+                            <p class="small text-muted">{{ _('This will permanently delete all your data including students, tests, grades, and settings. This action cannot be undone.') }}</p>
+                            
+                            <button type="button" class="btn btn-danger btn-sm" onclick="confirmFlushDatabase()">
+                                <i class="bi bi-trash"></i>
+                                {{ _('Flush Database') }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmFlushDatabase() {
+    if (confirm('{{ _("This will flush the database and delete all your data. Do you want to continue?") }}')) {
+        // Send POST request to flush database
+        fetch('/flush_database', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('{{ _("Database flushed successfully!") }}');
+                // Redirect to dashboard to refresh the view
+                window.location.href = '/dashboard';
+            } else {
+                alert('{{ _("Error flushing database: ") }}' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('{{ _("Error flushing database: ") }}' + error);
+        });
+    }
+}
+</script>
+{% endblock %}
