@@ -34,16 +34,20 @@
 </header>
 <div style="margin-top:60px;">
   <div class="layout-wrapper d-flex">
-    <nav class="flex-column bg-light p-3 sidebar" style="width:220px;min-width:220px;min-height:100vh;position:fixed;top:60px;left:0;z-index:1000;">
-      <h5 class="mb-4">{{ _('Menu') }}</h5>
-      <ul class="nav nav-pills flex-column">
+    <nav class="flex-column bg-light p-0 sidebar" style="width:220px;min-width:220px;min-height:100vh;position:fixed;top:60px;left:0;z-index:1000;">
+      <div class="p-3 bg-primary text-white text-center">
+        <h5 class="mb-0">{{ _('Menu') }}</h5>
+      </div>
+      <ul class="nav nav-pills flex-column p-3">
         <!-- Section 1: Core Navigation -->
         <li class="nav-item mb-2"><a class="nav-link" href="{{ url_for('main.dashboard') }}">{{ _('Dashboard') }}</a></li>
         <li class="nav-item mb-2"><a class="nav-link" href="{{ url_for('main.student_tab') }}">{{ _('Student Profiles') }}</a></li>
         <li class="nav-item mb-2"><a class="nav-link" href="#" onclick="alert('Classroom feature coming soon!')">{{ _('Classroom') }}</a></li>
         
         <!-- Separator -->
-        <li class="nav-item mb-3"><hr class="my-2" style="border-color: #dee2e6;"></li>
+        <li class="nav-item mb-3">
+          <hr style="border: none; height: 2px; background-color: #6c757d; margin: 15px 0;">
+        </li>
         
         <!-- Section 2: Grading & Assessment -->
         <li class="nav-item mb-2"><a class="nav-link" href="{{ url_for('main.review_grades') }}">{{ _('Review & Adjust Grades') }}</a></li>
@@ -51,7 +55,9 @@
         <li class="nav-item mb-2"><a class="nav-link" href="{{ url_for('main.create_tests') }}">{{ _('Create Tests') }}</a></li>
         
         <!-- Separator -->
-        <li class="nav-item mb-3"><hr class="my-2" style="border-color: #dee2e6;"></li>
+        <li class="nav-item mb-3">
+          <hr style="border: none; height: 2px; background-color: #6c757d; margin: 15px 0;">
+        </li>
         
         <!-- Section 3: Setup & Configuration -->
         <li class="nav-item mb-2"><a class="nav-link" href="{{ url_for('main.student_wizard') }}">{{ _('Students Setup') }}</a></li>
