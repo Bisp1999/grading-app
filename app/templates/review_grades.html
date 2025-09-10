@@ -664,7 +664,8 @@ function buildTestAverageRow(testsByCompetency, competencies, students, grades, 
     avgLabel.style.backgroundColor = '#fff3cd';
     avgLabel.style.zIndex = '11';
     avgLabel.style.fontWeight = 'bold';
-    avgLabel.style.textAlign = 'center';
+    avgLabel.style.textAlign = 'left';
+    avgLabel.style.paddingLeft = '8px';
     avgRow.appendChild(avgLabel);
     
     // For each competency, calculate averages for test columns and competency total
