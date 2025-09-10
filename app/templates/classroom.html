@@ -186,8 +186,9 @@ function loadClasses() {
             const classSelect = document.getElementById('filter_class');
             classSelect.innerHTML = '<option value="">{{ _("Select Class") }}</option>';
             
-            // The classes are nested under data.data.classes
-            const classes = data.data && data.data.classes ? data.data.classes : [];
+            // The classes are in data.data.classrooms array - extract unique class names
+            const classrooms = data.data && data.data.classrooms ? data.data.classrooms : [];
+            const classes = [...new Set(classrooms.map(classroom => classroom.name))];
             console.log('Extracted classes:', classes);
             
             if (classes && classes.length > 0) {
@@ -222,11 +223,14 @@ function loadGrades() {
         .then(data => {
             gradeSelect.innerHTML = '<option value="">{{ _("Select Grade") }}</option>';
             
-            // The grades are nested under data.data.grades
-            const grades = data.data && data.data.grades ? data.data.grades : [];
+            // Filter grades based on selected class
+            const classrooms = data.data && data.data.classrooms ? data.data.classrooms : [];
+            const gradesForClass = [...new Set(classrooms
+                .filter(classroom => classroom.name === className)
+                .map(classroom => classroom.grade))];
             
-            if (grades && grades.length > 0) {
-                grades.forEach(grade => {
+            if (gradesForClass && gradesForClass.length > 0) {
+                gradesForClass.forEach(grade => {
                     const option = document.createElement('option');
                     option.value = grade;
                     option.textContent = grade;
