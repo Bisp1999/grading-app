@@ -392,7 +392,10 @@ function buildGradeMatrix(data) {
     }  
     header.appendChild(headerRow);
     
-    // Build student rows
+    // Build test average row
+    buildTestAverageRow(testsByCompetency, competencies, students, grades, header, showAllCompetencies, competency_weights);
+    
+    // Build body rows for each student
     students.forEach(student => {
         const row = document.createElement('tr');
         
@@ -644,6 +647,158 @@ function buildAverageRow(testsByCompetency, competencies, students, grades, foot
     }
     
     footer.appendChild(avgRow);
+}
+
+// Build test average row for header section
+function buildTestAverageRow(testsByCompetency, competencies, students, grades, header, showAllCompetencies, competency_weights) {
+    const avgRow = document.createElement('tr');
+    avgRow.style.backgroundColor = '#fff3cd';
+    avgRow.style.fontWeight = 'bold';
+    avgRow.style.borderBottom = '2px solid #dee2e6';
+    
+    // Test Average label
+    const avgLabel = document.createElement('td');
+    avgLabel.textContent = 'Test Average';
+    avgLabel.style.position = 'sticky';
+    avgLabel.style.left = '0';
+    avgLabel.style.backgroundColor = '#fff3cd';
+    avgLabel.style.zIndex = '11';
+    avgLabel.style.fontWeight = 'bold';
+    avgLabel.style.textAlign = 'center';
+    avgRow.appendChild(avgLabel);
+    
+    // For each competency, calculate averages for test columns and competency total
+    competencies.forEach(competency => {
+        const competencyTests = testsByCompetency[competency];
+        
+        // Individual test averages for this competency
+        competencyTests.forEach(test => {
+            const testAvgCell = document.createElement('td');
+            testAvgCell.style.backgroundColor = '#fff3cd';
+            testAvgCell.style.textAlign = 'center';
+            
+            // Calculate average for this test across all students
+            let totalScore = 0;
+            let validGradeCount = 0;
+            
+            students.forEach(student => {
+                const studentGrades = grades[student.id] || {};
+                const grade = studentGrades[test.id];
+                if (grade !== undefined && grade !== null) {
+                    const percentage = (grade / test.max_points) * 100;
+                    totalScore += percentage;
+                    validGradeCount++;
+                }
+            });
+            
+            if (validGradeCount > 0) {
+                const average = totalScore / validGradeCount;
+                testAvgCell.innerHTML = `<div>${average.toFixed(1)}%</div>`;
+            } else {
+                testAvgCell.innerHTML = '<div>--</div>';
+            }
+            
+            avgRow.appendChild(testAvgCell);
+        });
+        
+        // Competency average column
+        const competencyAvgCell = document.createElement('td');
+        competencyAvgCell.style.backgroundColor = '#e9ecef';
+        competencyAvgCell.style.textAlign = 'center';
+        competencyAvgCell.style.fontWeight = 'bold';
+        
+        // Calculate competency average across all students
+        let totalCompetencyScore = 0;
+        let validStudentCount = 0;
+        
+        students.forEach(student => {
+            let compTotalPoints = 0;
+            let compTotalMaxPoints = 0;
+            
+            competencyTests.forEach(test => {
+                const studentGrades = grades[student.id] || {};
+                const grade = studentGrades[test.id];
+                if (grade !== undefined && grade !== null) {
+                    compTotalPoints += grade;
+                    compTotalMaxPoints += test.max_points;
+                } else {
+                    compTotalMaxPoints += test.max_points;
+                }
+            });
+            
+            if (compTotalMaxPoints > 0) {
+                const competencyPercentage = (compTotalPoints / compTotalMaxPoints) * 100;
+                totalCompetencyScore += competencyPercentage;
+                validStudentCount++;
+            }
+        });
+        
+        if (validStudentCount > 0) {
+            const competencyAvg = totalCompetencyScore / validStudentCount;
+            competencyAvgCell.innerHTML = `<div>${competencyAvg.toFixed(1)}%</div>`;
+        } else {
+            competencyAvgCell.innerHTML = '<div>--</div>';
+        }
+        
+        avgRow.appendChild(competencyAvgCell);
+    });
+    
+    // Grand total average (only if showing all competencies)
+    if (showAllCompetencies && competencies.length > 1) {
+        const grandAvgCell = document.createElement('td');
+        grandAvgCell.style.backgroundColor = '#e7f3ff';
+        grandAvgCell.style.textAlign = 'center';
+        grandAvgCell.style.fontWeight = 'bold';
+        
+        // Calculate weighted average across all students
+        let totalWeightedScores = 0;
+        let validStudentCount = 0;
+        
+        students.forEach(student => {
+            let weightedTotal = 0;
+            let hasValidScores = false;
+            
+            competencies.forEach(competency => {
+                const competencyTests = testsByCompetency[competency];
+                let compTotalPoints = 0;
+                let compTotalMaxPoints = 0;
+                
+                competencyTests.forEach(test => {
+                    const studentGrades = grades[student.id] || {};
+                    const grade = studentGrades[test.id];
+                    if (grade !== undefined && grade !== null) {
+                        compTotalPoints += grade;
+                        compTotalMaxPoints += test.max_points;
+                    } else {
+                        compTotalMaxPoints += test.max_points;
+                    }
+                });
+                
+                if (compTotalMaxPoints > 0) {
+                    const competencyPercentage = (compTotalPoints / compTotalMaxPoints) * 100;
+                    const competencyWeight = competency_weights[competency] || 0;
+                    weightedTotal += (competencyPercentage * competencyWeight) / 100;
+                    hasValidScores = true;
+                }
+            });
+            
+            if (hasValidScores) {
+                totalWeightedScores += weightedTotal;
+                validStudentCount++;
+            }
+        });
+        
+        if (validStudentCount > 0) {
+            const grandAvg = totalWeightedScores / validStudentCount;
+            grandAvgCell.innerHTML = `<div>${grandAvg.toFixed(1)}%</div>`;
+        } else {
+            grandAvgCell.innerHTML = '<div>--</div>';
+        }
+        
+        avgRow.appendChild(grandAvgCell);
+    }
+    
+    header.appendChild(avgRow);
 }
 
 
