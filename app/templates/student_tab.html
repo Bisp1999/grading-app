@@ -18,18 +18,20 @@
                         {% if teacher_type == 'specialist' %}
                         <!-- Specialist Teacher Filters -->
                         <div class="col-md-4">
-                            <label for="gradeSelect" class="form-label">{{ _('Grade') }}:</label>
-                            <select id="gradeSelect" class="form-select">
-                                <option value="">{{ _('Select Grade') }}</option>
+                            <label for="classSelect" class="form-label">{{ _('Class') }}:</label>
+                            <select id="classSelect" class="form-select">
+                                <option value="">{{ _('Select Class') }}</option>
                                 {% for grade in grades %}
-                                <option value="{{ grade }}">{{ grade }}</option>
+                                    {% for classroom in classrooms_by_grade[grade] %}
+                                        <option value="{{ classroom.id }}" data-grade="{{ grade }}">{{ classroom.name }} ({{ grade }})</option>
+                                    {% endfor %}
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label for="classSelect" class="form-label">{{ _('Class') }}:</label>
-                            <select id="classSelect" class="form-select" disabled>
-                                <option value="">{{ _('Select Class') }}</option>
+                            <label for="gradeSelect" class="form-label">{{ _('Grade') }}:</label>
+                            <select id="gradeSelect" class="form-select" disabled>
+                                <option value="">{{ _('Grade will auto-populate') }}</option>
                             </select>
                         </div>
                         {% else %}
@@ -161,6 +163,7 @@ const teacherType = "{{ teacher_type }}";
 const translations = {
     selectClass: {{ _('Select Class') | tojson }},
     selectStudent: {{ _('Select Student') | tojson }},
+    selectGrade: {{ _('Grade will auto-populate') | tojson }},
     errorLoadingStudents: {{ _('Error loading students') | tojson }},
     errorLoadingStudentData: {{ _('Error loading student data') | tojson }},
     details: {{ _('Details') | tojson }},
@@ -176,49 +179,46 @@ document.addEventListener('DOMContentLoaded', function() {
     const classSelect = document.getElementById('classSelect');
     const studentSelect = document.getElementById('studentSelect');
 
-    // Handle grade selection for specialist teachers
-    if (teacherType === 'specialist' && gradeSelect) {
-        console.log('Setting up grade selection listener');
-        console.log('Available grades in classroomsByGrade:', Object.keys(classroomsByGrade));
-        
-        gradeSelect.addEventListener('change', function() {
-            const selectedGrade = this.value;
-            console.log('Grade selected:', selectedGrade);
-            console.log('Classrooms for grade:', classroomsByGrade[selectedGrade]);
+    // Handle class selection for specialist teachers (now first)
+    if (teacherType === 'specialist' && classSelect) {
+        classSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const selectedGrade = selectedOption ? selectedOption.getAttribute('data-grade') : '';
             
-            classSelect.innerHTML = `<option value="">${translations.selectClass}</option>`;
+            // Auto-populate grade field
+            if (selectedGrade) {
+                gradeSelect.innerHTML = `<option value="${selectedGrade}">${selectedGrade}</option>`;
+                gradeSelect.value = selectedGrade;
+            } else {
+                gradeSelect.innerHTML = `<option value="">${translations.selectGrade || 'Grade will auto-populate'}</option>`;
+            }
+            
+            // Reset student selection
             studentSelect.innerHTML = `<option value="">${translations.selectStudent}</option>`;
             
-            if (selectedGrade && classroomsByGrade[selectedGrade]) {
-                console.log('Enabling class select and populating options');
-                classSelect.disabled = false;
-                classroomsByGrade[selectedGrade].forEach(classroom => {
-                    const option = document.createElement('option');
-                    option.value = classroom.id;
-                    option.textContent = classroom.name;
-                    classSelect.appendChild(option);
-                });
+            if (this.value) {
+                loadStudents(this.value);
             } else {
-                console.log('No classrooms found for grade, disabling class select');
-                classSelect.disabled = true;
+                studentSelect.disabled = true;
+                hideStudentDetails();
             }
-            studentSelect.disabled = true;
-            hideStudentDetails();
         });
     }
 
-    // Handle class selection
-    classSelect.addEventListener('change', function() {
-        const classroomId = this.value;
-        studentSelect.innerHTML = `<option value="">${translations.selectStudent}</option>`;
-        
-        if (classroomId) {
-            loadStudents(classroomId);
-        } else {
-            studentSelect.disabled = true;
-            hideStudentDetails();
-        }
-    });
+    // Handle class selection for homeroom teachers
+    if (teacherType === 'homeroom' && classSelect) {
+        classSelect.addEventListener('change', function() {
+            const classroomId = this.value;
+            studentSelect.innerHTML = `<option value="">${translations.selectStudent}</option>`;
+            
+            if (classroomId) {
+                loadStudents(classroomId);
+            } else {
+                studentSelect.disabled = true;
+                hideStudentDetails();
+            }
+        });
+    }
 
     // Handle student selection
     studentSelect.addEventListener('change', function() {

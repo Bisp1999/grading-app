@@ -1557,15 +1557,20 @@ def get_grade_matrix():
         students = []
         if grade and class_name:
             # For specialist teachers - specific grade and class
+            # The classroom name format is "ClassName (Grade)"
+            classroom_name_to_find = f"{class_name} ({grade})"
+            
             for school in School.query.filter_by(teacher_id=current_user.id).all():
                 for classroom in Classroom.query.filter_by(school_id=school.id).all():
-                    if f"{class_name} ({grade})" == classroom.name:
-                        students.extend(Student.query.filter_by(classroom_id=classroom.id).all())
+                    if classroom_name_to_find == classroom.name:
+                        classroom_students = Student.query.filter_by(classroom_id=classroom.id).all()
+                        students.extend(classroom_students)
         else:
             # Get all students from all classrooms for this teacher
             for school in School.query.filter_by(teacher_id=current_user.id).all():
                 for classroom in Classroom.query.filter_by(school_id=school.id).all():
-                    students.extend(Student.query.filter_by(classroom_id=classroom.id).all())
+                    classroom_students = Student.query.filter_by(classroom_id=classroom.id).all()
+                    students.extend(classroom_students)
         
         # Get all grades for these tests and students
         test_ids = [test.id for test in tests]

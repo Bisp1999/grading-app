@@ -92,16 +92,6 @@
                                 </select>
                             </div>
 
-                            <!-- Filter by Competency -->
-                            <div class="col-md-3 mb-2">
-                                <label for="filter_competency" class="form-label">{{ _('Competency') }}:</label>
-                                <select class="form-select" id="filter_competency" name="filter_competency" onchange="filterTests()">
-                                    <option value="">{{ _('All Competencies') }}</option>
-                                    {% for competency in competencies %}
-                                        <option value="{{ competency }}">{{ competency }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
 
                             <!-- Filter by Grade (Specialist only) - Last -->
                             <div class="col-md-3 mb-2">
@@ -117,7 +107,7 @@
 
                             {% if teacher_type == 'homeroom' %}
                             <!-- Filter by Subject (Homeroom only) - First -->
-                            <div class="col-md-4 mb-2">
+                            <div class="col-md-6 mb-2">
                                 <label for="filter_subject" class="form-label">{{ _('Subject') }}:</label>
                                 <select class="form-select" id="filter_subject" name="filter_subject" onchange="filterTests()">
                                     <option value="">{{ _('All Subjects') }}</option>
@@ -128,7 +118,7 @@
                             </div>
 
                             <!-- Filter by Semester -->
-                            <div class="col-md-4 mb-2">
+                            <div class="col-md-6 mb-2">
                                 <label for="filter_semester" class="form-label">{{ _('Semester') }}:</label>
                                 <select class="form-select" id="filter_semester" name="filter_semester" onchange="filterTests()">
                                     <option value="">{{ _('All Semesters') }}</option>
@@ -138,22 +128,17 @@
                                 </select>
                             </div>
 
-                            <!-- Filter by Competency -->
-                            <div class="col-md-4 mb-2">
-                                <label for="filter_competency" class="form-label">{{ _('Competency') }}:</label>
-                                <select class="form-select" id="filter_competency" name="filter_competency" onchange="filterTests()">
-                                    <option value="">{{ _('All Competencies') }}</option>
-                                    {% for competency in competencies %}
-                                        <option value="{{ competency }}">{{ competency }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
                             {% endif %}
                         </div>
                     </form>
 
+                    <!-- No Selection Message -->
+                    <div class="text-center py-4" id="noSelectionMessage">
+                        <p class="text-muted">{{ _('Please select a Class and Semester to view tests.') }}</p>
+                    </div>
+                    
                     <!-- Tests Table -->
-                    <div class="table-responsive mt-3">
+                    <div class="table-responsive mt-3" id="testsTable" style="display: none;">
                         <table class="table table-striped">
                             <thead>
                                 <tr>
@@ -193,7 +178,12 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <button class="btn btn-sm btn-success" onclick="selectTest({{ test.id }})">{{ _('Select') }}</button>
+                                        {% set needs_attention = not test.grades_complete or test.has_absent_students %}
+                                        {% if needs_attention %}
+                                            <button class="btn btn-sm btn-primary" onclick="selectTest({{ test.id }})">{{ _('Select') }}</button>
+                                        {% else %}
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="selectTest({{ test.id }})">{{ _('Select') }}</button>
+                                        {% endif %}
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -337,27 +327,43 @@ function filterTests() {
     const gradeEl = document.getElementById('filter_grade');
     const classEl = document.getElementById('filter_class');
     const subjectEl = document.getElementById('filter_subject');
-    const competencyEl = document.getElementById('filter_competency');
     
     const semester = semesterEl ? semesterEl.value : '';
     const grade = (teacherType === 'specialist' && gradeEl) ? gradeEl.value : '';
     const className = (teacherType === 'specialist' && classEl) ? classEl.value : '';
     const subject = (teacherType === 'homeroom' && subjectEl) ? subjectEl.value : '';
-    const competency = competencyEl ? competencyEl.value : '';
     
-    const rows = document.querySelectorAll('.test-row');
+    // Check if required filters are selected
+    let shouldShowTable = false;
+    if (teacherType === 'specialist') {
+        shouldShowTable = className !== '' && semester !== '';
+    } else {
+        shouldShowTable = semester !== '';
+    }
     
-    rows.forEach(row => {
-        let show = true;
+    const testsTable = document.getElementById('testsTable');
+    const noSelectionMessage = document.getElementById('noSelectionMessage');
+    
+    if (shouldShowTable) {
+        testsTable.style.display = 'block';
+        noSelectionMessage.style.display = 'none';
         
-        if (semester && row.dataset.semester !== semester) show = false;
-        if (grade && row.dataset.grade !== grade) show = false;
-        if (className && row.dataset.class !== className) show = false;
-        if (subject && row.dataset.subject !== subject) show = false;
-        if (competency && row.dataset.competency !== competency) show = false;
-        
-        row.style.display = show ? '' : 'none';
-    });
+        // Filter the rows
+        const rows = document.querySelectorAll('.test-row');
+        rows.forEach(row => {
+            let show = true;
+            
+            if (semester && row.dataset.semester !== semester) show = false;
+            if (grade && row.dataset.grade !== grade) show = false;
+            if (className && row.dataset.class !== className) show = false;
+            if (subject && row.dataset.subject !== subject) show = false;
+            
+            row.style.display = show ? '' : 'none';
+        });
+    } else {
+        testsTable.style.display = 'none';
+        noSelectionMessage.style.display = 'block';
+    }
 }
 
 // Update filter class options based on selected grade (for specialist)
@@ -779,6 +785,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (teacherType === 'specialist') {
         updateFilterClassOptions();
     }
+    // Initialize table visibility
+    filterTests();
 });
 </script>
 

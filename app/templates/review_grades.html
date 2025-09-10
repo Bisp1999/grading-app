@@ -45,16 +45,6 @@
                             </select>
                         </div>
 
-                        <!-- Filter by Competency -->
-                        <div class="col-md-3 mb-2">
-                            <label for="filter_competency" class="form-label">{{ _('Competency:') }}</label>
-                            <select class="form-select" id="filter_competency" name="filter_competency" onchange="loadGradeMatrix()">
-                                <option value="">{{ _('All Competencies') }}</option>
-                                {% for competency in competencies %}
-                                    <option value="{{ competency }}">{{ competency }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
 
                         <!-- Filter by Grade (Specialist only) - Last -->
                         <div class="col-md-3 mb-2">
@@ -70,7 +60,7 @@
 
                         {% if teacher_type == 'homeroom' %}
                         <!-- Filter by Subject (Homeroom only) - First -->
-                        <div class="col-md-4 mb-2">
+                        <div class="col-md-6 mb-2">
                             <label for="filter_subject" class="form-label">{{ _('Subject:') }}</label>
                             <select class="form-select" id="filter_subject" name="filter_subject" onchange="loadGradeMatrix()">
                                 <option value="">{{ _('All Subjects') }}</option>
@@ -81,7 +71,7 @@
                         </div>
 
                         <!-- Filter by Semester -->
-                        <div class="col-md-4 mb-2">
+                        <div class="col-md-6 mb-2">
                             <label for="filter_semester" class="form-label">{{ _('Semester:') }}</label>
                             <select class="form-select" id="filter_semester" name="filter_semester" onchange="loadGradeMatrix()">
                                 <option value="">{{ _('All Semesters') }}</option>
@@ -91,17 +81,23 @@
                             </select>
                         </div>
 
-                        <!-- Filter by Competency -->
-                        <div class="col-md-4 mb-2">
-                            <label for="filter_competency" class="form-label">{{ _('Competency:') }}</label>
-                            <select class="form-select" id="filter_competency" name="filter_competency" onchange="loadGradeMatrix()">
-                                <option value="">{{ _('All Competencies') }}</option>
-                                {% for competency in competencies %}
-                                    <option value="{{ competency }}">{{ competency }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
                         {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- No Selection Message -->
+    <div class="row" id="noSelectionSection">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>{{ _('Grade Matrix') }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center py-4">
+                        <p class="text-muted">{{ _('Please select a Class and Semester to view tests.') }}</p>
                     </div>
                 </div>
             </div>
@@ -236,7 +232,27 @@ function loadGradeMatrix() {
     const grade = teacherType === 'specialist' ? document.getElementById('filter_grade').value : '';
     const className = teacherType === 'specialist' ? document.getElementById('filter_class').value : '';
     const subject = teacherType === 'homeroom' ? document.getElementById('filter_subject').value : '';
-    const competency = document.getElementById('filter_competency').value;
+    
+    // Check if required filters are selected
+    let shouldShowMatrix = false;
+    if (teacherType === 'specialist') {
+        shouldShowMatrix = className !== '' && semester !== '';
+    } else {
+        shouldShowMatrix = semester !== '';
+    }
+    
+    const gradeMatrixSection = document.getElementById('gradeMatrixSection');
+    const noSelectionSection = document.getElementById('noSelectionSection');
+    const noDataSection = document.getElementById('noDataSection');
+    
+    if (!shouldShowMatrix) {
+        gradeMatrixSection.style.display = 'none';
+        noDataSection.style.display = 'none';
+        noSelectionSection.style.display = 'block';
+        return;
+    }
+    
+    noSelectionSection.style.display = 'none';
     
     // Build query parameters
     const params = new URLSearchParams();
@@ -244,7 +260,7 @@ function loadGradeMatrix() {
     if (grade) params.append('grade', grade);
     if (className) params.append('class_name', className);
     if (subject) params.append('subject', subject);
-    if (competency) params.append('competency', competency);
+    // Remove competency filter - always show all competencies
     
     fetch(`/api/get_grade_matrix?${params.toString()}`)
         .then(response => {
@@ -264,7 +280,6 @@ function loadGradeMatrix() {
         })
         .catch(error => {
             console.error('Error loading grade matrix:', error);
-            // Only show alert for actual errors, not successful data loads
             if (error.message.includes('HTTP error') || error.message.includes('Failed to fetch')) {
                 alert('Error loading grade data');
             }
@@ -273,16 +288,18 @@ function loadGradeMatrix() {
 
 // Build the grade matrix table grouped by competency
 function buildGradeMatrix(data) {
-    const { tests, students, grades, competency_weights } = data;
+    const { tests, students, grades, competency_weights = {} } = data;
     
     if (tests.length === 0 || students.length === 0) {
         document.getElementById('gradeMatrixSection').style.display = 'none';
         document.getElementById('noDataSection').style.display = 'block';
+        document.getElementById('noSelectionSection').style.display = 'none';
         return;
     }
     
     document.getElementById('gradeMatrixSection').style.display = 'block';
     document.getElementById('noDataSection').style.display = 'none';
+    document.getElementById('noSelectionSection').style.display = 'none';
     
     const table = document.getElementById('gradeMatrix');
     const header = document.getElementById('gradeMatrixHeader');
@@ -305,8 +322,8 @@ function buildGradeMatrix(data) {
     });
     
     const competencies = Object.keys(testsByCompetency).sort();
-    const selectedCompetency = document.getElementById('filter_competency').value;
-    const showAllCompetencies = selectedCompetency === '' || selectedCompetency === 'All Competencies';
+    // Show all competencies since we removed the competency filter
+    const showAllCompetencies = true;
     
     // Build header
     const headerRow = document.createElement('tr');
@@ -500,11 +517,11 @@ function buildGradeMatrix(data) {
     });
     
     // Build footer with averages
-    buildAverageRow(testsByCompetency, competencies, students, grades, footer, showAllCompetencies);
+    buildAverageRow(testsByCompetency, competencies, students, grades, footer, showAllCompetencies, competency_weights);
 }
 
 // Build average row for footer
-function buildAverageRow(testsByCompetency, competencies, students, grades, footer, showAllCompetencies) {
+function buildAverageRow(testsByCompetency, competencies, students, grades, footer, showAllCompetencies, competency_weights) {
     const avgRow = document.createElement('tr');
     avgRow.style.backgroundColor = '#f8f9fa';
     avgRow.style.fontWeight = 'bold';
@@ -637,7 +654,7 @@ function exportToCSV() {
         return;
     }
     
-    const { tests, students, grades } = currentGradeData;
+    const { tests, students, grades, competency_weights = {} } = currentGradeData;
     
     // Group tests by competency
     const testsByCompetency = {};
@@ -650,8 +667,8 @@ function exportToCSV() {
     });
     
     const competencies = Object.keys(testsByCompetency).sort();
-    const selectedCompetency = document.getElementById('filter_competency').value;
-    const showAllCompetencies = selectedCompetency === '' || selectedCompetency === 'All Competencies';
+    // Show all competencies since we removed the competency filter
+    const showAllCompetencies = true;
     
     // Build CSV header
     let csv = translations.studentName;
@@ -745,7 +762,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateFilterClassOptions();
     }
     
-    // Load initial data if any filters are set
+    // Initialize display - show no selection message initially
     loadGradeMatrix();
 });
 </script>
