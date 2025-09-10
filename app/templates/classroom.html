@@ -144,8 +144,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function loadTeacherType() {
     fetch('/api/get_teacher_type')
-        .then(response => response.json())
+        .then(response => {
+            console.log('Teacher type response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('Teacher type data received:', data);
             teacherType = data.teacher_type;
             if (teacherType !== 'specialist') {
                 document.querySelector('.container-fluid').innerHTML = 
@@ -155,28 +159,43 @@ function loadTeacherType() {
                 loadClasses();
             }
         })
-        .catch(error => console.error('Error loading teacher type:', error));
+        .catch(error => {
+            console.error('Error loading teacher type:', error);
+            alert('Error loading teacher type. Please check the browser console for details.');
+        });
 }
 
 function loadClasses() {
     if (teacherType !== 'specialist') return;
     
+    console.log('Loading classes for teacherType:', teacherType);
+    
     fetch('/api/get_setup_wizard_data')
-        .then(response => response.json())
+        .then(response => {
+            console.log('Setup wizard data response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('Setup wizard data received:', data);
             const classSelect = document.getElementById('filter_class');
             classSelect.innerHTML = '<option value="">{{ _("Select Class") }}</option>';
             
             if (data.classes && data.classes.length > 0) {
+                console.log('Found classes:', data.classes);
                 data.classes.forEach(className => {
                     const option = document.createElement('option');
                     option.value = className;
                     option.textContent = className;
                     classSelect.appendChild(option);
                 });
+            } else {
+                console.log('No classes found in data');
             }
         })
-        .catch(error => console.error('Error loading classes:', error));
+        .catch(error => {
+            console.error('Error loading classes:', error);
+            alert('Error loading classes. Please check the browser console for details.');
+        });
 }
 
 function loadGrades() {
