@@ -11,15 +11,15 @@
             <!-- Filter Controls -->
             <div class="row mb-4">
                 <div class="col-md-3">
-                    <label for="filter_grade" class="form-label">{{ _('Grade') }}</label>
-                    <select class="form-select" id="filter_grade" onchange="loadClassrooms()">
-                        <option value="">{{ _('Select Grade') }}</option>
+                    <label for="filter_class" class="form-label">{{ _('Class') }}</label>
+                    <select class="form-select" id="filter_class" onchange="loadGrades()">
+                        <option value="">{{ _('Select Class') }}</option>
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label for="filter_class" class="form-label">{{ _('Class') }}</label>
-                    <select class="form-select" id="filter_class" onchange="loadStudents()">
-                        <option value="">{{ _('Select Class') }}</option>
+                    <label for="filter_grade" class="form-label">{{ _('Grade') }}</label>
+                    <select class="form-select" id="filter_grade" onchange="loadStudents()">
+                        <option value="">{{ _('Select Grade') }}</option>
                     </select>
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
@@ -140,7 +140,7 @@ let isFrozen = false;
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
     loadTeacherType();
-    loadGrades();
+    loadClasses();
 });
 
 function loadTeacherType() {
@@ -156,39 +156,13 @@ function loadTeacherType() {
         .catch(error => console.error('Error loading teacher type:', error));
 }
 
-function loadGrades() {
+function loadClasses() {
     if (teacherType !== 'specialist') return;
     
     fetch('/api/get_setup_wizard_data')
         .then(response => response.json())
         .then(data => {
-            const gradeSelect = document.getElementById('filter_grade');
-            gradeSelect.innerHTML = '<option value="">{{ _("Select Grade") }}</option>';
-            
-            if (data.grades && data.grades.length > 0) {
-                data.grades.forEach(grade => {
-                    const option = document.createElement('option');
-                    option.value = grade;
-                    option.textContent = grade;
-                    gradeSelect.appendChild(option);
-                });
-            }
-        })
-        .catch(error => console.error('Error loading grades:', error));
-}
-
-function loadClassrooms() {
-    const grade = document.getElementById('filter_grade').value;
-    const classSelect = document.getElementById('filter_class');
-    
-    if (!grade) {
-        classSelect.innerHTML = '<option value="">{{ _("Select Class") }}</option>';
-        return;
-    }
-    
-    fetch('/api/get_setup_wizard_data')
-        .then(response => response.json())
-        .then(data => {
+            const classSelect = document.getElementById('filter_class');
             classSelect.innerHTML = '<option value="">{{ _("Select Class") }}</option>';
             
             if (data.classes && data.classes.length > 0) {
@@ -201,6 +175,32 @@ function loadClassrooms() {
             }
         })
         .catch(error => console.error('Error loading classes:', error));
+}
+
+function loadGrades() {
+    const className = document.getElementById('filter_class').value;
+    const gradeSelect = document.getElementById('filter_grade');
+    
+    if (!className) {
+        gradeSelect.innerHTML = '<option value="">{{ _("Select Grade") }}</option>';
+        return;
+    }
+    
+    fetch('/api/get_setup_wizard_data')
+        .then(response => response.json())
+        .then(data => {
+            gradeSelect.innerHTML = '<option value="">{{ _("Select Grade") }}</option>';
+            
+            if (data.grades && data.grades.length > 0) {
+                data.grades.forEach(grade => {
+                    const option = document.createElement('option');
+                    option.value = grade;
+                    option.textContent = grade;
+                    gradeSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => console.error('Error loading grades:', error));
 }
 
 function loadStudents() {
