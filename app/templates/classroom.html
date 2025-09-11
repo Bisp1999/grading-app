@@ -263,15 +263,32 @@ function loadStudents() {
         })
         .then(data => {
             console.log('Teacher classrooms data:', data);
+            console.log('data.schools exists?', !!data.schools);
+            console.log('data.schools type:', typeof data.schools);
+            console.log('data.schools content:', data.schools);
+            
             const targetClassroomName = `${className} (${grade})`;
             console.log('Looking for classroom:', targetClassroomName);
             let classroom = null;
             
-            for (let school of data.schools) {
-                classroom = school.classrooms.find(c => c.name === targetClassroomName);
-                if (classroom) {
-                    console.log('Found classroom:', classroom);
-                    break;
+            // Handle different possible data structures
+            const schools = data.schools || (data.data && data.data.schools) || [];
+            console.log('Schools array to iterate:', schools);
+            
+            if (Array.isArray(schools)) {
+                for (let school of schools) {
+                    classroom = school.classrooms.find(c => c.name === targetClassroomName);
+                    if (classroom) {
+                        console.log('Found classroom:', classroom);
+                        break;
+                    }
+                }
+            } else {
+                console.log('Schools is not an array, checking if data contains classrooms directly');
+                // Maybe the API returns classrooms directly
+                if (data.classrooms && Array.isArray(data.classrooms)) {
+                    classroom = data.classrooms.find(c => c.name === targetClassroomName);
+                    console.log('Found classroom in direct classrooms array:', classroom);
                 }
             }
             
