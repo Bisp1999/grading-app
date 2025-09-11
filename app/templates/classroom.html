@@ -263,6 +263,7 @@ function loadStudents() {
         })
         .then(data => {
             console.log('Teacher classrooms data:', data);
+            console.log('Full API response structure:', JSON.stringify(data, null, 2));
             console.log('data.schools exists?', !!data.schools);
             console.log('data.schools type:', typeof data.schools);
             console.log('data.schools content:', data.schools);
