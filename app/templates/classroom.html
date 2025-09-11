@@ -294,8 +294,10 @@ function loadStudents() {
         })
         .then(data => {
             console.log('Students data:', data);
+            console.log('Full students API response:', JSON.stringify(data, null, 2));
             currentStudents = data.students || [];
             console.log('Current students set to:', currentStudents);
+            console.log('First student object:', currentStudents[0]);
             console.log('Calling showClassroom()...');
             showClassroom();
             console.log('Calling createStudentDesks()...');
