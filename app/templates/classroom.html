@@ -332,11 +332,11 @@ function createStudentDesks() {
     currentStudents.forEach(student => {
         const desk = document.createElement('div');
         desk.className = 'desk student-desk';
-        desk.textContent = student.first_name || student.name || 'Student';
+        desk.textContent = student.firstName || student.first_name || student.name || 'Student';
         desk.dataset.studentId = student.id;
         desk.draggable = true;
         
-        console.log('Created desk for student:', student.first_name || student.name, 'with text:', desk.textContent);
+        console.log('Created desk for student:', student.firstName || student.first_name || student.name, 'with text:', desk.textContent);
         
         // Add drag event listeners
         desk.addEventListener('dragstart', handleDragStart);
