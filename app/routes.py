@@ -1,12 +1,11 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, session
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, login_required, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_babel import _, get_locale
-from . import db, login_manager
-from .models import Teacher, SetupWizardData, Test, School, Classroom, Student
+from . import db
+from .models import Teacher, School, Classroom, Student, SetupWizardData, Test, Grade, ClassroomLayout
 from .forms import LoginForm, RegistrationForm
 import json
-from datetime import datetime
+from datetime import datetime, date
+import logging
 
 main = Blueprint('main', __name__)
 
@@ -953,8 +952,67 @@ def flush_database():
 @main.route('/classroom')
 @login_required
 def classroom():
-    """Classroom seating chart page"""
     return render_template('classroom.html')
+
+@main.route('/api/save_classroom_layout', methods=['POST'])
+@login_required
+def save_classroom_layout():
+    try:
+        data = request.get_json()
+        classroom_id = data.get('classroom_id')
+        layout_data = data.get('layout_data')
+        
+        if not classroom_id or not layout_data:
+            return jsonify({'success': False, 'error': 'Missing classroom_id or layout_data'}), 400
+        
+        # Check if layout already exists for this teacher and classroom
+        existing_layout = ClassroomLayout.query.filter_by(
+            teacher_id=current_user.id,
+            classroom_id=classroom_id
+        ).first()
+        
+        if existing_layout:
+            # Update existing layout
+            existing_layout.layout_data = json.dumps(layout_data)
+            existing_layout.updated_at = datetime.utcnow()
+        else:
+            # Create new layout
+            new_layout = ClassroomLayout(
+                teacher_id=current_user.id,
+                classroom_id=classroom_id,
+                layout_data=json.dumps(layout_data)
+            )
+            db.session.add(new_layout)
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Classroom layout saved successfully'})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@main.route('/api/get_classroom_layout/<int:classroom_id>')
+@login_required
+def get_classroom_layout(classroom_id):
+    try:
+        layout = ClassroomLayout.query.filter_by(
+            teacher_id=current_user.id,
+            classroom_id=classroom_id
+        ).first()
+        
+        if layout:
+            return jsonify({
+                'success': True,
+                'layout_data': json.loads(layout.layout_data)
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'layout_data': None
+            })
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @main.route('/preferences')
 @login_required

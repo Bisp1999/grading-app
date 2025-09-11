@@ -83,3 +83,20 @@ class Grade(db.Model):
     
     def __repr__(self):
         return f'<Grade test_id={self.test_id} student_id={self.student_id} grade={self.grade}>'
+
+class ClassroomLayout(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('teacher.id'), nullable=False)
+    classroom_id = db.Column(db.Integer, db.ForeignKey('classroom.id'), nullable=False)
+    layout_data = db.Column(db.Text, nullable=False)  # JSON string of desk positions
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Ensure unique combination of teacher and classroom
+    __table_args__ = (db.UniqueConstraint('teacher_id', 'classroom_id', name='unique_teacher_classroom_layout'),)
+    
+    teacher = db.relationship('Teacher', backref='classroom_layouts', lazy=True)
+    classroom = db.relationship('Classroom', backref='layout', lazy=True)
+    
+    def __repr__(self):
+        return f'<ClassroomLayout teacher_id={self.teacher_id} classroom_id={self.classroom_id}>'

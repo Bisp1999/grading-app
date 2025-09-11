@@ -302,6 +302,9 @@ function loadStudents() {
             showClassroom();
             console.log('Calling createStudentDesks()...');
             createStudentDesks();
+            
+            // Load saved layout if it exists
+            loadSavedLayout();
         })
         .catch(error => {
             console.error('Error loading students:', error);
@@ -439,19 +442,55 @@ function saveClassroomLayout() {
         };
     });
     
-    classroomLayout = layout;
-    isFrozen = true;
+    // Save to backend
+    const grade = document.getElementById('filter_grade').value;
+    const className = document.getElementById('filter_class').value;
+    const targetClassroomName = `${className} (${grade})`;
     
-    // Update UI
-    document.getElementById('classroom-container').classList.add('frozen');
-    document.getElementById('saveBtn').style.display = 'none';
-    document.getElementById('editBtn').style.display = 'inline-block';
-    
-    // Hide the pool since layout is saved
-    document.getElementById('student-desks-section').style.display = 'none';
-    document.getElementById('instructions').style.display = 'none';
-    
-    alert('{{ _("Classroom layout saved successfully!") }}');
+    // Find classroom ID
+    fetch('/api/get_teacher_classrooms')
+        .then(response => response.json())
+        .then(data => {
+            const classroom = data.classrooms.find(c => c.name === targetClassroomName);
+            if (classroom) {
+                return fetch('/api/save_classroom_layout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        classroom_id: classroom.id,
+                        layout_data: layout
+                    })
+                });
+            } else {
+                throw new Error('Classroom not found');
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                classroomLayout = layout;
+                isFrozen = true;
+                
+                // Update UI
+                document.getElementById('classroom-container').classList.add('frozen');
+                document.getElementById('saveBtn').style.display = 'none';
+                document.getElementById('editBtn').style.display = 'inline-block';
+                
+                // Hide the pool since layout is saved
+                document.getElementById('student-desks-section').style.display = 'none';
+                document.getElementById('instructions').style.display = 'none';
+                
+                alert('{{ _("Classroom layout saved successfully!") }}');
+            } else {
+                alert('Error saving layout: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error saving classroom layout:', error);
+            alert('Error saving classroom layout');
+        });
 }
 
 function editClassroomLayout() {
@@ -468,6 +507,70 @@ function editClassroomLayout() {
     
     // Keep desks in their current positions - don't move them back to pool
     // Teachers can now just adjust 1-2 desks without redoing the entire layout
+}
+
+function loadSavedLayout() {
+    const grade = document.getElementById('filter_grade').value;
+    const className = document.getElementById('filter_class').value;
+    const targetClassroomName = `${className} (${grade})`;
+    
+    // Find classroom ID and load saved layout
+    fetch('/api/get_teacher_classrooms')
+        .then(response => response.json())
+        .then(data => {
+            const classroom = data.classrooms.find(c => c.name === targetClassroomName);
+            if (classroom) {
+                return fetch(`/api/get_classroom_layout/${classroom.id}`);
+            } else {
+                throw new Error('Classroom not found');
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.layout_data) {
+                console.log('Loading saved layout:', data.layout_data);
+                applyLayout(data.layout_data);
+            } else {
+                console.log('No saved layout found for this classroom');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading saved layout:', error);
+        });
+}
+
+function applyLayout(layoutData) {
+    const pool = document.getElementById('student-desks-pool');
+    const classroom = document.getElementById('classroom-container');
+    
+    // Move desks from pool to classroom based on saved positions
+    Object.keys(layoutData).forEach(studentId => {
+        const desk = document.querySelector(`[data-student-id="${studentId}"]`);
+        const position = layoutData[studentId];
+        
+        if (desk && position) {
+            // Move desk to classroom
+            desk.classList.add('in-classroom');
+            desk.style.position = 'absolute';
+            desk.style.left = position.x + 'px';
+            desk.style.top = position.y + 'px';
+            desk.style.margin = '0';
+            classroom.appendChild(desk);
+        }
+    });
+    
+    // If we have a saved layout, set to frozen state
+    if (Object.keys(layoutData).length > 0) {
+        classroomLayout = layoutData;
+        isFrozen = true;
+        
+        // Update UI to frozen state
+        document.getElementById('classroom-container').classList.add('frozen');
+        document.getElementById('saveBtn').style.display = 'none';
+        document.getElementById('editBtn').style.display = 'inline-block';
+        document.getElementById('student-desks-section').style.display = 'none';
+        document.getElementById('instructions').style.display = 'none';
+    }
 }
 </script>
 {% endblock %}
