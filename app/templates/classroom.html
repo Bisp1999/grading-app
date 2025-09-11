@@ -245,33 +245,55 @@ function loadStudents() {
     const grade = document.getElementById('filter_grade').value;
     const className = document.getElementById('filter_class').value;
     
+    console.log('loadStudents called with:', { grade, className });
+    
     if (!grade || !className) {
+        console.log('Missing grade or className, hiding classroom');
         hideClassroom();
         return;
     }
     
+    console.log('Fetching teacher classrooms...');
+    
     // Find the classroom and get students
     fetch('/api/get_teacher_classrooms')
-        .then(response => response.json())
+        .then(response => {
+            console.log('Teacher classrooms response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('Teacher classrooms data:', data);
             const targetClassroomName = `${className} (${grade})`;
+            console.log('Looking for classroom:', targetClassroomName);
             let classroom = null;
             
             for (let school of data.schools) {
                 classroom = school.classrooms.find(c => c.name === targetClassroomName);
-                if (classroom) break;
+                if (classroom) {
+                    console.log('Found classroom:', classroom);
+                    break;
+                }
             }
             
             if (classroom) {
+                console.log('Fetching students for classroom ID:', classroom.id);
                 return fetch(`/api/get_classroom_students/${classroom.id}`);
             } else {
+                console.log('Classroom not found');
                 throw new Error('Classroom not found');
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Students response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('Students data:', data);
             currentStudents = data.students || [];
+            console.log('Current students set to:', currentStudents);
+            console.log('Calling showClassroom()...');
             showClassroom();
+            console.log('Calling createStudentDesks()...');
             createStudentDesks();
         })
         .catch(error => {
