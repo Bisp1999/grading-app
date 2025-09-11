@@ -404,12 +404,17 @@ function handleDrop(e) {
         const x = e.clientX - classroomRect.left - 40; // Center the desk
         const y = e.clientY - classroomRect.top - 25;
         
+        // Snap to 22px grid
+        const snapSize = 22;
+        const snappedX = Math.round(x / snapSize) * snapSize;
+        const snappedY = Math.round(y / snapSize) * snapSize;
+        
         // Ensure desk stays within bounds
         const maxX = classroomRect.width - 80;
         const maxY = classroomRect.height - 50;
         
-        const finalX = Math.max(10, Math.min(x, maxX));
-        const finalY = Math.max(40, Math.min(y, maxY - 80)); // Leave space for teacher desk
+        const finalX = Math.max(10, Math.min(snappedX, maxX));
+        const finalY = Math.max(40, Math.min(snappedY, maxY - 80)); // Leave space for teacher desk
         
         // Move desk to classroom
         desk.classList.add('in-classroom');
@@ -461,18 +466,8 @@ function editClassroomLayout() {
     document.getElementById('student-desks-section').style.display = 'block';
     document.getElementById('instructions').style.display = 'block';
     
-    // Move any remaining desks back to pool
-    const desksInClassroom = document.querySelectorAll('#classroom-container .student-desk');
-    const pool = document.getElementById('student-desks-pool');
-    
-    desksInClassroom.forEach(desk => {
-        desk.classList.remove('in-classroom');
-        desk.style.position = 'relative';
-        desk.style.left = 'auto';
-        desk.style.top = 'auto';
-        desk.style.margin = '5px';
-        pool.appendChild(desk);
-    });
+    // Keep desks in their current positions - don't move them back to pool
+    // Teachers can now just adjust 1-2 desks without redoing the entire layout
 }
 </script>
 {% endblock %}
