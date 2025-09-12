@@ -1,0 +1,3 @@
+# nixpacks.toml
+[start]
+cmd = "gunicorn run:app"
