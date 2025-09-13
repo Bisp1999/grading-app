@@ -110,12 +110,51 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5>{{ _('Grade Matrix') }}</h5>
-                    <div>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="exportToCSV()">
-                            {{ _('Export CSV') }}
-                        </button>
+                </div>
+                
+                <!-- Actions Section -->
+                <div class="card-body border-bottom">
+                    <h6 class="mb-3">{{ _('Actions') }}</h6>
+                    
+                    <div class="row">
+                        <!-- Test Actions -->
+                        <div class="col-md-4 mb-3">
+                            <h6 class="text-muted small">{{ _('Test Actions') }}</h6>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-primary btn-sm" onclick="bellGradeTest()">
+                                    <i class="fas fa-bell me-1"></i>{{ _('Bell Grade a Test') }}
+                                </button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="changeTestWeighting()">
+                                    <i class="fas fa-balance-scale me-1"></i>{{ _('Change Test Weighting') }}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Student Actions -->
+                        <div class="col-md-4 mb-3">
+                            <h6 class="text-muted small">{{ _('Student Actions') }}</h6>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-warning btn-sm" onclick="dealWithAbsences()">
+                                    <i class="fas fa-user-times me-1"></i>{{ _('Deal with Absences') }}
+                                </button>
+                                <button class="btn btn-outline-warning btn-sm" onclick="reviseGrades()">
+                                    <i class="fas fa-edit me-1"></i>{{ _('Revise Grades') }}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Class Actions -->
+                        <div class="col-md-4 mb-3">
+                            <h6 class="text-muted small">{{ _('Class Actions') }}</h6>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-success btn-sm" onclick="exportToCSV()">
+                                    <i class="fas fa-download me-1"></i>{{ _('Export CSV') }}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
+                
                 <div class="card-body">
                     <div class="table-responsive" style="overflow-x: auto; max-height: 600px; overflow-y: auto;">
                         <table id="gradeMatrix" class="table table-bordered table-sm" style="min-width: 100%; white-space: nowrap;">
@@ -143,15 +182,15 @@
 <!-- Translations for JavaScript -->
 <script type="application/json" id="translations">
 {
-    "allClasses": {{ _('All Classes')|tojson|safe }},
-    "studentName": {{ _('Student Name')|tojson|safe }},
-    "weight": {{ _('Weight:')|tojson|safe }},
-    "total": {{ _('Total')|tojson|safe }},
-    "grandTotal": {{ _('Grand Total')|tojson|safe }},
-    "weighted": {{ _('weighted')|tojson|safe }},
-    "notGraded": {{ _('Not graded')|tojson|safe }},
-    "classAverage": {{ _('Class Average')|tojson|safe }},
-    "noDataToExport": {{ _('No data to export.')|tojson|safe }}
+    "allClasses": {{ _('All Classes')|tojson }},
+    "studentName": {{ _('Student Name')|tojson }},
+    "weight": {{ _('Weight:')|tojson }},
+    "total": {{ _('Total')|tojson }},
+    "grandTotal": {{ _('Grand Total')|tojson }},
+    "weighted": {{ _('weighted')|tojson }},
+    "notGraded": {{ _('Not graded')|tojson }},
+    "classAverage": {{ _('Class Average')|tojson }},
+    "noDataToExport": {{ _('No data to export.')|tojson }}
 }
 </script>
 
@@ -909,6 +948,23 @@ function exportToCSV() {
     a.download = 'grade_matrix_by_competency.csv';
     a.click();
     window.URL.revokeObjectURL(url);
+}
+
+// Add placeholder functions for the action buttons
+function bellGradeTest() {
+    alert('Bell Grade a Test functionality will be implemented here');
+}
+
+function changeTestWeighting() {
+    alert('Change Test Weighting functionality will be implemented here');
+}
+
+function dealWithAbsences() {
+    alert('Deal with Absences functionality will be implemented here');
+}
+
+function reviseGrades() {
+    alert('Revise Grades functionality will be implemented here');
 }
 
 // Initialize page
