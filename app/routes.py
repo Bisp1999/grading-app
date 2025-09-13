@@ -1603,8 +1603,8 @@ def get_grade_matrix():
     
     # Get filter parameters
     semester = request.args.get('semester', '')
-    grade = request.args.get('grade', '')
     class_name = request.args.get('class_name', '')
+    subject = request.args.get('subject', '')
     competency = request.args.get('competency', '')
     
     try:
@@ -1613,10 +1613,10 @@ def get_grade_matrix():
         
         if semester:
             test_query = test_query.filter(Test.semester == semester)
-        if grade:
-            test_query = test_query.filter(Test.grade == grade)
         if class_name:
             test_query = test_query.filter(Test.class_name == class_name)
+        if subject:
+            test_query = test_query.filter(Test.subject == subject)
         if competency:
             test_query = test_query.filter(Test.competency == competency)
         
