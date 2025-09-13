@@ -1638,7 +1638,9 @@ def get_grade_matrix():
             for school in School.query.filter_by(teacher_id=current_user.id).all():
                 for classroom in Classroom.query.filter_by(school_id=school.id).all():
                     print(f"DEBUG: Checking classroom '{classroom.name}' against class_name '{class_name}'")
-                    if classroom.name == class_name:
+                    # Extract class name from classroom name (format: "ClassName (Grade X)")
+                    classroom_class_name = classroom.name.split(' (')[0] if ' (' in classroom.name else classroom.name
+                    if classroom_class_name == class_name:
                         classroom_students = Student.query.filter_by(classroom_id=classroom.id).all()
                         students.extend(classroom_students)
                         print(f"DEBUG: Found matching classroom, added {len(classroom_students)} students")
