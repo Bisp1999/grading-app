@@ -12,7 +12,7 @@
     </div>
 
     <!-- Actions Section -->
-    <div class="row mb-4">
+    <div class="row mb-4" id="actionsSection" style="display: none;">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
@@ -233,15 +233,18 @@ function loadGradeMatrix() {
     const gradeMatrixSection = document.getElementById('gradeMatrixSection');
     const noSelectionSection = document.getElementById('noSelectionSection');
     const noDataSection = document.getElementById('noDataSection');
+    const actionsSection = document.getElementById('actionsSection');
     
     if (!shouldShowMatrix) {
         gradeMatrixSection.style.display = 'none';
         noDataSection.style.display = 'none';
         noSelectionSection.style.display = 'block';
+        actionsSection.style.display = 'none';
         return;
     }
     
     noSelectionSection.style.display = 'none';
+    actionsSection.style.display = 'block';
     
     // Build query parameters
     const params = new URLSearchParams();
