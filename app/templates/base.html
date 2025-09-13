@@ -11,6 +11,25 @@
     <div class="container-fluid d-flex justify-content-between align-items-center">
         <a class="navbar-brand text-white" href="{{ url_for('main.index') }}">{{ _('Grading Application for Teachers') }}</a>
         <div class="d-flex align-items-center">
+            <!-- Global Context Filters -->
+            {% if current_user.is_authenticated %}
+            <div class="d-flex align-items-center me-4">
+                <!-- Class Filter -->
+                <div class="me-3">
+                    <select class="form-select form-select-sm" id="global_class_filter" style="min-width: 150px;" onchange="saveGlobalFilters()">
+                        <option value="">{{ _('Select Class') }}</option>
+                    </select>
+                </div>
+                
+                <!-- Semester Filter -->
+                <div class="me-3">
+                    <select class="form-select form-select-sm" id="global_semester_filter" style="min-width: 120px;" onchange="saveGlobalFilters()">
+                        <option value="">{{ _('Select Semester') }}</option>
+                    </select>
+                </div>
+            </div>
+            {% endif %}
+            
             <!-- Language Switcher -->
             <div class="dropdown me-3">
                 <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" id="langSelector">
@@ -118,6 +137,57 @@ if (langButton && currentLocale) {
         langButton.innerHTML = '🇺🇸 EN';
     }
 }
+
+// Global filter management
+function saveGlobalFilters() {
+    const classFilter = document.getElementById('global_class_filter');
+    const semesterFilter = document.getElementById('global_semester_filter');
+    
+    if (classFilter && semesterFilter) {
+        localStorage.setItem('global_class_filter', classFilter.value);
+        localStorage.setItem('global_semester_filter', semesterFilter.value);
+        
+        // Trigger page-specific updates if functions exist
+        if (typeof onGlobalFiltersChanged === 'function') {
+            onGlobalFiltersChanged();
+        }
+    }
+}
+
+function loadGlobalFilters() {
+    const classFilter = document.getElementById('global_class_filter');
+    const semesterFilter = document.getElementById('global_semester_filter');
+    
+    if (classFilter) {
+        const savedClass = localStorage.getItem('global_class_filter');
+        if (savedClass) {
+            classFilter.value = savedClass;
+        }
+    }
+    
+    if (semesterFilter) {
+        const savedSemester = localStorage.getItem('global_semester_filter');
+        if (savedSemester) {
+            semesterFilter.value = savedSemester;
+        }
+    }
+}
+
+// Populate global filters with data
+function populateGlobalFilters() {
+    // This will be called by individual pages to populate the dropdowns
+    // with their specific data
+}
+
+// Initialize global filters when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadGlobalFilters();
+    
+    // Populate filters if data is available
+    if (typeof initializeGlobalFilters === 'function') {
+        initializeGlobalFilters();
+    }
+});
 </script>
 
 </body>
