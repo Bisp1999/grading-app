@@ -1627,14 +1627,12 @@ def get_grade_matrix():
         
         # Get students from the relevant classroom(s)
         students = []
-        if grade and class_name:
-            # For specialist teachers - specific grade and class
-            # The classroom name format is "ClassName (Grade)"
-            classroom_name_to_find = f"{class_name} ({grade})"
-            
+        if class_name:
+            # For specialist teachers - specific class
+            # Find the classroom that matches the class name
             for school in School.query.filter_by(teacher_id=current_user.id).all():
                 for classroom in Classroom.query.filter_by(school_id=school.id).all():
-                    if classroom_name_to_find == classroom.name:
+                    if classroom.name == class_name:
                         classroom_students = Student.query.filter_by(classroom_id=classroom.id).all()
                         students.extend(classroom_students)
         else:
