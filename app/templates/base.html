@@ -12,7 +12,7 @@
         <a class="navbar-brand text-white" href="{{ url_for('main.index') }}">{{ _('Grading Application for Teachers') }}</a>
         <div class="d-flex align-items-center">
             <!-- Global Context Filters -->
-            {% if current_user.is_authenticated %}
+            {% if current_user.is_authenticated and show_global_filters %}
             <div class="d-flex align-items-center me-4">
                 <!-- Class Filter -->
                 <div class="me-3">
@@ -173,20 +173,72 @@ function loadGlobalFilters() {
     }
 }
 
-// Populate global filters with data
-function populateGlobalFilters() {
-    // This will be called by individual pages to populate the dropdowns
-    // with their specific data
+// Centralized global filter initialization
+function initializeGlobalFiltersFromBase() {
+    const globalClassFilter = document.getElementById('global_class_filter');
+    const globalSemesterFilter = document.getElementById('global_semester_filter');
+    
+    // Only initialize if filters exist and are empty
+    if (!globalClassFilter || !globalSemesterFilter) return;
+    
+    // Fetch setup wizard data to populate filters
+    fetch('/api/get_setup_wizard_data')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Base.html: Initializing global filters with data:', data);
+            
+            if (!data.success || !data.data) {
+                console.log('Base.html: No setup wizard data available');
+                return;
+            }
+            
+            const wizardData = data.data;
+            
+            // Populate Class filter
+            if (globalClassFilter && globalClassFilter.children.length <= 1) {
+                globalClassFilter.innerHTML = '<option value="">{{ _("Select Class") }}</option>';
+                
+                if (wizardData.classrooms && wizardData.classrooms.length > 0) {
+                    wizardData.classrooms.forEach(classroom => {
+                        const option = document.createElement('option');
+                        option.value = classroom.name;
+                        option.textContent = `${classroom.name} (${classroom.grade})`;
+                        globalClassFilter.appendChild(option);
+                    });
+                }
+            }
+            
+            // Populate Semester filter
+            if (globalSemesterFilter && globalSemesterFilter.children.length <= 1) {
+                globalSemesterFilter.innerHTML = '<option value="">{{ _("Select Semester") }}</option>';
+                
+                if (wizardData.num_semesters) {
+                    for (let i = 1; i <= wizardData.num_semesters; i++) {
+                        const option = document.createElement('option');
+                        option.value = `Semester ${i}`;
+                        option.textContent = `Semester ${i}`;
+                        globalSemesterFilter.appendChild(option);
+                    }
+                }
+            }
+            
+            // Load saved values after populating
+            loadGlobalFilters();
+            
+            // Trigger page-specific updates if functions exist
+            if (typeof onGlobalFiltersChanged === 'function') {
+                onGlobalFiltersChanged();
+            }
+        })
+        .catch(error => {
+            console.error('Base.html: Error initializing global filters:', error);
+        });
 }
 
 // Initialize global filters when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    loadGlobalFilters();
-    
-    // Populate filters if data is available
-    if (typeof initializeGlobalFilters === 'function') {
-        initializeGlobalFilters();
-    }
+    // Initialize global filters centrally
+    initializeGlobalFiltersFromBase();
 });
 </script>
 

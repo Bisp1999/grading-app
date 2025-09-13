@@ -18,68 +18,10 @@
                 </div>
 
                 <div class="card-body" id="testsTableContainer">
-                    <!-- Filter Form -->
+                    {% if teacher_type == 'homeroom' %}
+                    <!-- Subject Filter for Homeroom Teachers -->
                     <form id="filterForm" class="mb-3">
                         <div class="row justify-content-center">
-                            {% if teacher_type == 'specialist' %}
-                            <!-- Filter Class (Specialist only) - First -->
-                            <div class="col-md-3 mb-2">
-                                <label for="filter_class" class="form-label">{{ _('Class') }}:</label>
-                                <select class="form-select" id="filter_class" name="filter_class" onchange="updateGradeFromClass(); filterTests()">
-                                    <option value="">{{ _('All Classes') }}</option>
-                                    {% for grade in grades %}
-                                        {% for class_name in classrooms_by_grade[grade] %}
-                                            <option value="{{ class_name }}" data-grade="{{ grade }}">{{ class_name }} ({{ grade }})</option>
-                                        {% endfor %}
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <!-- Filter Semester -->
-                            <div class="col-md-3 mb-2">
-                                <label for="filter_semester" class="form-label">{{ _('Semester') }}:</label>
-                                <select class="form-select" id="filter_semester" name="filter_semester" onchange="filterTests()">
-                                    <option value="">{{ _('All Semesters') }}</option>
-                                    {% for semester in semesters %}
-                                        <option value="Semester {{ semester }}" 
-                                                {% if last_test and last_test.semester == 'Semester ' + semester|string %}selected{% endif %}>
-                                            {{ _('Semester') }} {{ semester }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <!-- Filter Grade (Specialist only) -->
-                            <div class="col-md-3 mb-2">
-                                <label for="filter_grade" class="form-label">{{ _('Grade') }}:</label>
-                                <select class="form-select" id="filter_grade" name="filter_grade" onchange="updateFilterClassOptions(); filterTests();">
-                                    <option value="">{{ _('All Grades') }}</option>
-                                    {% for grade in grades %}
-                                        <option value="{{ grade }}" 
-                                                {% if last_test and last_test.grade == grade %}selected{% endif %}>
-                                            {{ grade }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            {% else %}
-                            <!-- Filter Semester -->
-                            <div class="col-md-3 mb-2">
-                                <label for="filter_semester" class="form-label">{{ _('Semester') }}:</label>
-                                <select class="form-select" id="filter_semester" name="filter_semester" onchange="filterTests()">
-                                    <option value="">{{ _('All Semesters') }}</option>
-                                    {% for semester in semesters %}
-                                        <option value="Semester {{ semester }}" 
-                                                {% if last_test and last_test.semester == 'Semester ' + semester|string %}selected{% endif %}>
-                                            {{ _('Semester') }} {{ semester }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            {% endif %}
-
-                            {% if teacher_type == 'homeroom' %}
-                            <!-- Filter Subject (Homeroom only) -->
                             <div class="col-md-3 mb-2">
                                 <label for="filter_subject" class="form-label">{{ _('Subject') }}:</label>
                                 <select class="form-select" id="filter_subject" name="filter_subject" onchange="filterTests()">
@@ -92,9 +34,9 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            {% endif %}
                         </div>
                     </form>
+                    {% endif %}
                     <div class="text-center py-4" id="noSelectionMessage">
                         <p class="text-muted">{{ _('Please select a Class and Semester to view tests.') }}</p>
                     </div>
@@ -362,10 +304,14 @@ function updateFilterClassOptions() {
 
 // Filter tests based on selected criteria
 function filterTests() {
-    const semester = document.getElementById('filter_semester').value;
-    const grade = teacherType === 'specialist' ? document.getElementById('filter_grade').value : '';
-    const className = teacherType === 'specialist' ? document.getElementById('filter_class').value : '';
-    const subject = teacherType === 'homeroom' ? document.getElementById('filter_subject').value : '';
+    // Get values from global filters in header
+    const globalClassFilter = document.getElementById('global_class_filter');
+    const globalSemesterFilter = document.getElementById('global_semester_filter');
+    const subjectFilter = document.getElementById('filter_subject'); // Only for homeroom
+    
+    const className = globalClassFilter ? globalClassFilter.value : '';
+    const semester = globalSemesterFilter ? globalSemesterFilter.value : '';
+    const subject = teacherType === 'homeroom' && subjectFilter ? subjectFilter.value : '';
     
     const rows = document.querySelectorAll('.test-row');
     let visibleCount = 0;
@@ -374,7 +320,6 @@ function filterTests() {
         let show = true;
         
         if (semester && row.dataset.semester !== semester) show = false;
-        if (grade && row.dataset.grade !== grade) show = false;
         if (className && row.dataset.class !== className) show = false;
         if (subject && row.dataset.subject !== subject) show = false;
         
@@ -385,6 +330,9 @@ function filterTests() {
     // Update filter display text and totals
     updateFilterDisplay();
     calculateTotals();
+    
+    // Update Create Tests button state
+    checkCreateTestsButtonState();
 }
 
 // Update the filter display text
@@ -516,22 +464,22 @@ function resetForm() {
 
 // Function to check if Class and Semester are selected and update Create Tests button
 function checkCreateTestsButtonState() {
-    const classFilter = document.getElementById('filter_class');
-    const semesterFilter = document.getElementById('filter_semester');
-    const gradeFilter = document.getElementById('filter_grade');
+    // Get values from global filters in header
+    const globalClassFilter = document.getElementById('global_class_filter');
+    const globalSemesterFilter = document.getElementById('global_semester_filter');
     const createTestsBtn = document.getElementById('createTestsBtn');
     
     let classSelected = false;
     let semesterSelected = false;
     
     if (teacherType === 'specialist') {
-        classSelected = classFilter && classFilter.value !== '';
+        classSelected = globalClassFilter && globalClassFilter.value !== '';
     } else {
         // For homeroom teachers, class is always selected (their own class)
         classSelected = true;
     }
     
-    semesterSelected = semesterFilter && semesterFilter.value !== '';
+    semesterSelected = globalSemesterFilter && globalSemesterFilter.value !== '';
     
     const shouldEnable = classSelected && semesterSelected;
     
@@ -557,9 +505,9 @@ function checkCreateTestsButtonState() {
 
 // Function to update the display values in Define Tests form
 function updateDefineTestsDisplay() {
-    const classFilter = document.getElementById('filter_class');
-    const semesterFilter = document.getElementById('filter_semester');
-    const gradeFilter = document.getElementById('filter_grade');
+    // Get values from global filters in header
+    const globalClassFilter = document.getElementById('global_class_filter');
+    const globalSemesterFilter = document.getElementById('global_semester_filter');
     
     const displayClass = document.getElementById('display_class_name');
     const displaySemester = document.getElementById('display_semester');
@@ -571,21 +519,21 @@ function updateDefineTestsDisplay() {
     
     if (teacherType === 'specialist') {
         // Update Class display and hidden input
-        if (classFilter && classFilter.value !== '') {
-            const selectedOption = classFilter.options[classFilter.selectedIndex];
+        if (globalClassFilter && globalClassFilter.value !== '') {
+            const selectedOption = globalClassFilter.options[globalClassFilter.selectedIndex];
             const displayText = selectedOption.textContent;
             if (displayClass) displayClass.innerHTML = displayText;
-            if (hiddenClass) hiddenClass.value = classFilter.value;
+            if (hiddenClass) hiddenClass.value = globalClassFilter.value;
+            
+            // Extract grade from class selection
+            const grade = selectedOption.getAttribute('data-grade');
+            if (grade) {
+                if (displayGrade) displayGrade.innerHTML = grade;
+                if (hiddenGrade) hiddenGrade.value = grade;
+            }
         } else {
             if (displayClass) displayClass.innerHTML = '<em class="text-muted">{{ _("Select from filters above") }}</em>';
             if (hiddenClass) hiddenClass.value = '';
-        }
-        
-        // Update Grade display and hidden input
-        if (gradeFilter && gradeFilter.value !== '') {
-            if (displayGrade) displayGrade.innerHTML = gradeFilter.value;
-            if (hiddenGrade) hiddenGrade.value = gradeFilter.value;
-        } else {
             if (displayGrade) displayGrade.innerHTML = '<em class="text-muted">{{ _("Select from filters above") }}</em>';
             if (hiddenGrade) hiddenGrade.value = '';
         }
@@ -596,9 +544,9 @@ function updateDefineTestsDisplay() {
     }
     
     // Update Semester display and hidden input (for both teacher types)
-    if (semesterFilter && semesterFilter.value !== '') {
-        if (displaySemester) displaySemester.innerHTML = semesterFilter.value;
-        if (hiddenSemester) hiddenSemester.value = semesterFilter.value;
+    if (globalSemesterFilter && globalSemesterFilter.value !== '') {
+        if (displaySemester) displaySemester.innerHTML = globalSemesterFilter.value;
+        if (hiddenSemester) hiddenSemester.value = globalSemesterFilter.value;
     } else {
         if (displaySemester) displaySemester.innerHTML = '<em class="text-muted">{{ _("Select from filters above") }}</em>';
         if (hiddenSemester) hiddenSemester.value = '';
@@ -621,36 +569,93 @@ function toggleDefineTestsCard() {
     }
 }
 
-// Initialize the page
+// Initialize global filters with data from the page
+function initializeGlobalFilters() {
+    const globalClassFilter = document.getElementById('global_class_filter');
+    const globalSemesterFilter = document.getElementById('global_semester_filter');
+    
+    // Populate Class filter for specialist teachers using setup data
+    if (teacherType === 'specialist' && globalClassFilter) {
+        // Clear existing options except the first one
+        globalClassFilter.innerHTML = '<option value="">{{ _("Select Class") }}</option>';
+        
+        // Use classrooms_by_grade data from the backend (setup wizard data)
+        Object.keys(classroomsByGrade).forEach(grade => {
+            classroomsByGrade[grade].forEach(className => {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = `${className} (${grade})`;
+                option.setAttribute('data-grade', grade);
+                globalClassFilter.appendChild(option);
+            });
+        });
+    } else if (teacherType === 'homeroom' && globalClassFilter) {
+        // For homeroom teachers, populate with their assigned classes
+        globalClassFilter.innerHTML = '<option value="">{{ _("Select Class") }}</option>';
+        
+        Object.keys(classroomsByGrade).forEach(grade => {
+            classroomsByGrade[grade].forEach(className => {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = `${className} (${grade})`;
+                option.setAttribute('data-grade', grade);
+                globalClassFilter.appendChild(option);
+            });
+        });
+    }
+    
+    // Populate Semester filter using setup data
+    if (globalSemesterFilter) {
+        // Clear existing options except the first one
+        globalSemesterFilter.innerHTML = '<option value="">{{ _("Select Semester") }}</option>';
+        
+        // Use semesters data from the backend (setup wizard data)
+        const semesters = [{% for semester in semesters %}'{{ semester }}'{% if not loop.last %},{% endif %}{% endfor %}];
+        semesters.forEach(semester => {
+            const option = document.createElement('option');
+            option.value = semester;
+            option.textContent = semester;
+            globalSemesterFilter.appendChild(option);
+        });
+    }
+}
+
+// Callback function for when global filters change
+function onGlobalFiltersChanged() {
+    filterTests();
+    checkCreateTestsButtonState();
+}
+
+// Initialize page when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // Global filters are now initialized by base.html
+    // Wait a moment for them to be populated, then proceed
+    setTimeout(function() {
+        // Trigger initial filter check after global filters are ready
+        if (typeof onGlobalFiltersChanged === 'function') {
+            onGlobalFiltersChanged();
+        }
+    }, 200);
+    
+    filterTests();
+    checkCreateTestsButtonState();
     calculateTotals();
+    
+    // Add event listener for subject filter (homeroom only)
+    const subjectFilter = document.getElementById('filter_subject');
+    if (subjectFilter) {
+        subjectFilter.addEventListener('change', function() {
+            filterTests();
+        });
+    }
+    
+    // Initialize form display
+    updateDefineTestsDisplay();
     
     // Check initial button state
     checkCreateTestsButtonState();
     
-    // Add event listeners for filter changes
-    document.getElementById('filter_semester').addEventListener('change', function() {
-        filterTests();
-        checkCreateTestsButtonState();
-    });
-    
-    if (teacherType === 'specialist') {
-        document.getElementById('filter_grade').addEventListener('change', function() {
-            updateFilterClassOptions();
-            filterTests();
-            checkCreateTestsButtonState();
-        });
-        document.getElementById('filter_class').addEventListener('change', function() {
-            updateGradeFromClass();
-            filterTests();
-            checkCreateTestsButtonState();
-        });
-    } else {
-        document.getElementById('filter_semester').addEventListener('change', function() {
-            filterTests();
-            checkCreateTestsButtonState();
-        });
-    }
+    // Event listeners for local filters are no longer needed since we use global filters
     
     // Add event listener for Create Tests button
     const createTestsBtn = document.getElementById('createTestsBtn');

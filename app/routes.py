@@ -174,7 +174,8 @@ def student_tab():
                          teacher_type=teacher_type,
                          grades=grades,
                          classrooms_by_grade=classrooms_by_grade,
-                         all_classrooms=all_classrooms)
+                         all_classrooms=all_classrooms,
+                         show_global_filters=True)
 
 @main.route('/input_grades', methods=['GET', 'POST'])
 @login_required
@@ -299,7 +300,8 @@ def input_grades():
                          subjects=subjects,
                          grades=grades,
                          classrooms_by_grade=classrooms_by_grade,
-                         teacher_type=teacher_type)
+                         teacher_type=teacher_type,
+                         show_global_filters=True)
 
 @main.route('/review_grades')
 @login_required
@@ -360,7 +362,8 @@ def review_grades():
                          subjects=subjects,
                          grades=grades,
                          classrooms_by_grade=classrooms_by_grade,
-                         teacher_type=teacher_type)
+                         teacher_type=teacher_type,
+                         show_global_filters=True)
 
 @main.route('/create_tests', methods=['GET', 'POST'])
 @login_required
@@ -376,7 +379,7 @@ def create_tests():
     
     # Parse wizard data
     competencies = json.loads(wizard_data.competencies) if wizard_data.competencies else []
-    semesters = list(range(1, wizard_data.num_semesters + 1)) if wizard_data.num_semesters else []
+    semesters = [f"Semester {i}" for i in range(1, wizard_data.num_semesters + 1)] if wizard_data.num_semesters else []
     
     # Get teacher type from Setup Wizard data (not from classroom count)
     teacher_type = wizard_data.teacher_type if wizard_data.teacher_type else 'homeroom'
@@ -479,7 +482,8 @@ def create_tests():
                          classrooms_by_grade=classrooms_by_grade,
                          teacher_type=teacher_type,
                          tests=tests,
-                         last_test=last_test)
+                         last_test=last_test,
+                         show_global_filters=True)
 
 @main.route('/setup_wizard/submit', methods=['POST'])
 @login_required
@@ -954,7 +958,63 @@ def flush_database():
 @main.route('/classroom')
 @login_required
 def classroom():
-    return render_template('classroom.html')
+    from .models import SetupWizardData, Classroom, School
+    
+    # Get Setup Wizard data for the current user
+    wizard_data = SetupWizardData.query.filter_by(teacher_id=current_user.id).first()
+    
+    if not wizard_data:
+        flash('Please complete the Setup Wizard first.', 'warning')
+        return redirect(url_for('main.setup_wizard'))
+    
+    # Parse wizard data
+    competencies = json.loads(wizard_data.competencies) if wizard_data.competencies else []
+    semesters = [f"Semester {i}" for i in range(1, wizard_data.num_semesters + 1)] if wizard_data.num_semesters else []
+    teacher_type = wizard_data.teacher_type if wizard_data.teacher_type else 'homeroom'
+    
+    # Organize data based on teacher type
+    if teacher_type == 'specialist':
+        # Get all classrooms for specialist teachers
+        classrooms = Classroom.query.join(School).filter(School.teacher_id == current_user.id).all()
+        classrooms_by_grade = {}
+        
+        # Parse the classrooms data from setup wizard to get grade information
+        setup_classrooms = json.loads(wizard_data.classrooms) if wizard_data.classrooms else []
+        
+        for classroom in classrooms:
+            classroom_name = classroom.name
+            
+            # Find the grade from setup wizard data
+            grade = None
+            for setup_classroom in setup_classrooms:
+                if setup_classroom.get('name') == classroom_name:
+                    grade = setup_classroom.get('grade')
+                    break
+            
+            if grade:
+                if grade not in classrooms_by_grade:
+                    classrooms_by_grade[grade] = []
+                classrooms_by_grade[grade].append(classroom_name)
+        
+        # Sort grades and classroom names
+        for grade in classrooms_by_grade:
+            classrooms_by_grade[grade].sort()
+        
+        subjects = json.loads(wizard_data.subjects) if wizard_data.subjects else []
+        grades = sorted(classrooms_by_grade.keys())
+    else:
+        subjects = [wizard_data.subject_name] if wizard_data.subject_name else []
+        grades = []
+        classrooms_by_grade = {}
+    
+    return render_template('classroom.html',
+                         competencies=competencies,
+                         semesters=semesters,
+                         subjects=subjects,
+                         grades=grades,
+                         classrooms_by_grade=classrooms_by_grade,
+                         teacher_type=teacher_type,
+                         show_global_filters=True)
 
 @main.route('/api/save_classroom_layout', methods=['POST'])
 @login_required
@@ -1346,7 +1406,7 @@ def manage_classrooms():
                 db.session.commit()
                 flash('Classroom added!', 'success')
                 return redirect(url_for('main.manage_classrooms', school_id=form.school.data))
-    return render_template('classrooms.html', form=form, classrooms=classrooms, schools=schools, school_id=school_id)
+    return render_template('classrooms.html', form=form, classrooms=classrooms, schools=schools, school_id=school_id, show_global_filters=True)
 
 @main.route('/classrooms/edit/<int:classroom_id>', methods=['GET', 'POST'])
 @login_required

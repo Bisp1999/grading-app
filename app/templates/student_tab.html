@@ -14,39 +14,12 @@
                     <h5 class="mb-0">{{ _('Select Student') }}</h5>
                 </div>
                 <div class="card-body">
+                    <div id="no-class-selected-message" class="alert alert-info" style="display: block;">
+                        <i class="fas fa-info-circle"></i>
+                        {{ _('Please first select a classroom, in order to choose a student. Use the Class filter in the header above to select a classroom.') }}
+                    </div>
                     <div class="row">
-                        {% if teacher_type == 'specialist' %}
-                        <!-- Specialist Teacher Filters -->
-                        <div class="col-md-4">
-                            <label for="classSelect" class="form-label">{{ _('Class') }}:</label>
-                            <select id="classSelect" class="form-select">
-                                <option value="">{{ _('Select Class') }}</option>
-                                {% for grade in grades %}
-                                    {% for classroom in classrooms_by_grade[grade] %}
-                                        <option value="{{ classroom.id }}" data-grade="{{ grade }}">{{ classroom.name }} ({{ grade }})</option>
-                                    {% endfor %}
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="gradeSelect" class="form-label">{{ _('Grade') }}:</label>
-                            <select id="gradeSelect" class="form-select" disabled>
-                                <option value="">{{ _('Grade will auto-populate') }}</option>
-                            </select>
-                        </div>
-                        {% else %}
-                        <!-- Homeroom Teacher Filters -->
-                        <div class="col-md-4">
-                            <label for="classSelect" class="form-label">{{ _('Class') }}:</label>
-                            <select id="classSelect" class="form-select">
-                                <option value="">{{ _('Select Class') }}</option>
-                                {% for classroom in all_classrooms %}
-                                <option value="{{ classroom.id }}">{{ classroom.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        {% endif %}
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label for="studentSelect" class="form-label">{{ _('Student') }}:</label>
                             <select id="studentSelect" class="form-select" disabled>
                                 <option value="">{{ _('Select Student') }}</option>
@@ -175,50 +148,12 @@ const translations = {
 };
 
 document.addEventListener('DOMContentLoaded', function() {
-    const gradeSelect = document.getElementById('gradeSelect');
-    const classSelect = document.getElementById('classSelect');
     const studentSelect = document.getElementById('studentSelect');
 
-    // Handle class selection for specialist teachers (now first)
-    if (teacherType === 'specialist' && classSelect) {
-        classSelect.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const selectedGrade = selectedOption ? selectedOption.getAttribute('data-grade') : '';
-            
-            // Auto-populate grade field
-            if (selectedGrade) {
-                gradeSelect.innerHTML = `<option value="${selectedGrade}">${selectedGrade}</option>`;
-                gradeSelect.value = selectedGrade;
-            } else {
-                gradeSelect.innerHTML = `<option value="">${translations.selectGrade || 'Grade will auto-populate'}</option>`;
-            }
-            
-            // Reset student selection
-            studentSelect.innerHTML = `<option value="">${translations.selectStudent}</option>`;
-            
-            if (this.value) {
-                loadStudents(this.value);
-            } else {
-                studentSelect.disabled = true;
-                hideStudentDetails();
-            }
-        });
-    }
-
-    // Handle class selection for homeroom teachers
-    if (teacherType === 'homeroom' && classSelect) {
-        classSelect.addEventListener('change', function() {
-            const classroomId = this.value;
-            studentSelect.innerHTML = `<option value="">${translations.selectStudent}</option>`;
-            
-            if (classroomId) {
-                loadStudents(classroomId);
-            } else {
-                studentSelect.disabled = true;
-                hideStudentDetails();
-            }
-        });
-    }
+    // Wait for global filters to be initialized by base.html
+    setTimeout(function() {
+        checkGlobalClassSelection();
+    }, 1000);
 
     // Handle student selection
     studentSelect.addEventListener('change', function() {
@@ -232,12 +167,73 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// Check global class filter selection and load students accordingly
+function checkGlobalClassSelection() {
+    const globalClassFilter = document.getElementById('global_class_filter');
+    const selectedClass = globalClassFilter ? globalClassFilter.value : '';
+    const noClassMessage = document.getElementById('no-class-selected-message');
+    const studentSelect = document.getElementById('studentSelect');
+    
+    
+    if (selectedClass) {
+        // Hide the message and enable student selection
+        noClassMessage.style.display = 'none';
+        
+        // Reset student selection
+        studentSelect.innerHTML = `<option value="">${translations.selectStudent}</option>`;
+        
+        // Find the classroom ID by name
+        findClassroomIdByName(selectedClass)
+            .then(classroomId => {
+                if (classroomId) {
+                    loadStudents(classroomId);
+                } else {
+                    studentSelect.disabled = true;
+                }
+            })
+            .catch(error => {
+                studentSelect.disabled = true;
+            });
+    } else {
+        // Show the message and disable student selection
+        noClassMessage.style.display = 'block';
+        studentSelect.disabled = true;
+        studentSelect.innerHTML = `<option value="">${translations.selectStudent}</option>`;
+        hideStudentDetails();
+    }
+}
+
+// Callback function for when global filters change
+function onGlobalFiltersChanged() {
+    checkGlobalClassSelection();
+}
+
+// Find classroom ID by name from the teacher's classrooms
+function findClassroomIdByName(className) {
+    return fetch('/api/get_teacher_classrooms')
+        .then(response => response.json())
+        .then(data => {
+            if (data.classrooms) {
+                // First try exact match
+                let classroom = data.classrooms.find(c => c.name === className);
+                // If not found, try matching just the base name (before the grade part)
+                if (!classroom) {
+                    classroom = data.classrooms.find(c => c.name.startsWith(className + ' ('));
+                }
+                return classroom ? classroom.id : null;
+            }
+            return null;
+        });
+}
+
 function loadStudents(classroomId) {
+    const studentSelect = document.getElementById('studentSelect');
+    
+    
     fetch(`/api/get_classroom_students/${classroomId}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                const studentSelect = document.getElementById('studentSelect');
                 studentSelect.disabled = false;
                 
                 data.students.forEach(student => {
@@ -247,12 +243,11 @@ function loadStudents(classroomId) {
                     studentSelect.appendChild(option);
                 });
             } else {
-                alert(translations.errorLoadingStudents + ': ' + data.error);
+                studentSelect.disabled = true;
             }
         })
         .catch(error => {
-            console.error('Error loading students:', error);
-            alert(translations.errorLoadingStudents);
+            studentSelect.disabled = true;
         });
 }
 

@@ -8,21 +8,19 @@
         <div class="col-12">
             <h1 class="mb-4">{{ _('Classroom Seating Chart') }}</h1>
             
-            <!-- Filter Controls -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <label for="filter_class" class="form-label">{{ _('Class') }}</label>
-                    <select class="form-select" id="filter_class" onchange="loadGrades()">
-                        <option value="">{{ _('Select Class') }}</option>
-                    </select>
+            <!-- No Class Selection Message -->
+            <div class="row mb-4" id="no-class-message">
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        <h5>{{ _('Please select a classroom to display a seating chart') }}</h5>
+                        <p class="mb-0">{{ _('Use the Class filter in the header above to select a classroom.') }}</p>
+                    </div>
                 </div>
-                <div class="col-md-3">
-                    <label for="filter_grade" class="form-label">{{ _('Grade') }}</label>
-                    <select class="form-select" id="filter_grade" onchange="loadStudents()">
-                        <option value="">{{ _('Select Grade') }}</option>
-                    </select>
-                </div>
-                <div class="col-md-3 d-flex align-items-end">
+            </div>
+            
+            <!-- Action Buttons (hidden initially) -->
+            <div class="row mb-4" id="action-buttons" style="display: none;">
+                <div class="col-12 d-flex justify-content-center">
                     <button class="btn btn-success me-2" id="saveBtn" onclick="saveClassroomLayout()" disabled>
                         <i class="bi bi-save"></i> {{ _('Save Layout') }}
                     </button>
@@ -137,193 +135,121 @@ let currentStudents = [];
 let classroomLayout = {};
 let isFrozen = false;
 
-// Initialize page
+// Initialize page when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     loadTeacherType();
+    
+    // Wait a moment for base.html to initialize global filters, then check selection
+    setTimeout(function() {
+        checkGlobalClassSelection();
+    }, 1000);
 });
 
 function loadTeacherType() {
     fetch('/api/get_teacher_type')
-        .then(response => {
-            console.log('Teacher type response status:', response.status);
-            return response.json();
-        })
-        .then(data => {
-            console.log('Teacher type data received:', data);
-            teacherType = data.teacher_type;
-            if (teacherType !== 'specialist') {
-                document.querySelector('.container-fluid').innerHTML = 
-                    '<div class="alert alert-warning">{{ _("Classroom seating charts are only available for specialist teachers.") }}</div>';
-            } else {
-                // Only load classes if teacher is specialist
-                loadClasses();
-            }
-        })
-        .catch(error => {
-            console.error('Error loading teacher type:', error);
-            alert('Error loading teacher type. Please check the browser console for details.');
-        });
-}
-
-function loadClasses() {
-    if (teacherType !== 'specialist') return;
-    
-    console.log('Loading classes for teacherType:', teacherType);
-    
-    fetch('/api/get_setup_wizard_data')
-        .then(response => {
-            console.log('Setup wizard data response status:', response.status);
-            return response.json();
-        })
-        .then(data => {
-            console.log('Setup wizard data received:', data);
-            console.log('Full data structure:', JSON.stringify(data, null, 2));
-            console.log('data.data exists?', !!data.data);
-            console.log('data.data content:', data.data);
-            console.log('data.data.classes exists?', !!(data.data && data.data.classes));
-            console.log('data.data.classes content:', data.data && data.data.classes);
-            
-            const classSelect = document.getElementById('filter_class');
-            classSelect.innerHTML = '<option value="">{{ _("Select Class") }}</option>';
-            
-            // The classes are in data.data.classrooms array - extract unique class names
-            const classrooms = data.data && data.data.classrooms ? data.data.classrooms : [];
-            const classes = [...new Set(classrooms.map(classroom => classroom.name))];
-            console.log('Extracted classes:', classes);
-            
-            if (classes && classes.length > 0) {
-                console.log('Found classes:', classes);
-                classes.forEach(className => {
-                    const option = document.createElement('option');
-                    option.value = className;
-                    option.textContent = className;
-                    classSelect.appendChild(option);
-                });
-            } else {
-                console.log('No classes found in data');
-            }
-        })
-        .catch(error => {
-            console.error('Error loading classes:', error);
-            alert('Error loading classes. Please check the browser console for details.');
-        });
-}
-
-function loadGrades() {
-    const className = document.getElementById('filter_class').value;
-    const gradeSelect = document.getElementById('filter_grade');
-    
-    if (!className) {
-        gradeSelect.innerHTML = '<option value="">{{ _("Select Grade") }}</option>';
-        return;
-    }
-    
-    fetch('/api/get_setup_wizard_data')
         .then(response => response.json())
         .then(data => {
-            gradeSelect.innerHTML = '<option value="">{{ _("Select Grade") }}</option>';
-            
-            // Filter grades based on selected class
-            const classrooms = data.data && data.data.classrooms ? data.data.classrooms : [];
-            const gradesForClass = [...new Set(classrooms
-                .filter(classroom => classroom.name === className)
-                .map(classroom => classroom.grade))];
-            
-            if (gradesForClass && gradesForClass.length > 0) {
-                gradesForClass.forEach(grade => {
-                    const option = document.createElement('option');
-                    option.value = grade;
-                    option.textContent = grade;
-                    gradeSelect.appendChild(option);
-                });
-            }
+            teacherType = data.teacher_type;
+            // Remove the restriction - allow both specialist and homeroom teachers to use classroom page
+            // if (teacherType !== 'specialist') {
+            //     document.querySelector('.container-fluid').innerHTML = 
+            //         '<div class="alert alert-warning">{{ _("Classroom seating charts are only available for specialist teachers.") }}</div>';
+            // }
         })
-        .catch(error => console.error('Error loading grades:', error));
+        .catch(error => {
+            alert('Error loading teacher type.');
+        });
 }
 
-function loadStudents() {
-    const grade = document.getElementById('filter_grade').value;
-    const className = document.getElementById('filter_class').value;
+// This function is no longer needed - global filters are initialized by base.html
+
+// Check global class filter selection and load classroom accordingly
+function checkGlobalClassSelection() {
+    const globalClassFilter = document.getElementById('global_class_filter');
+    const selectedClass = globalClassFilter ? globalClassFilter.value : '';
     
-    console.log('loadStudents called with:', { grade, className });
     
-    if (!grade || !className) {
-        console.log('Missing grade or className, hiding classroom');
-        hideClassroom();
+    if (selectedClass && teacherType === 'specialist') {
+        loadStudentsForClass(selectedClass);
+    } else if (selectedClass && teacherType === 'homeroom') {
+        loadStudentsForClass(selectedClass);
+    } else {
+        showNoClassMessage();
+    }
+}
+
+// Callback function for when global filters change
+function onGlobalFiltersChanged() {
+    checkGlobalClassSelection();
+}
+
+function loadStudentsForClass(className) {
+    
+    if (!className) {
+        showNoClassMessage();
         return;
     }
     
-    console.log('Fetching teacher classrooms...');
     
     // Find the classroom and get students
     fetch('/api/get_teacher_classrooms')
-        .then(response => {
-            console.log('Teacher classrooms response status:', response.status);
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('Teacher classrooms data:', data);
-            console.log('Full API response structure:', JSON.stringify(data, null, 2));
-            console.log('data.schools exists?', !!data.schools);
-            console.log('data.schools type:', typeof data.schools);
-            console.log('data.schools content:', data.schools);
             
-            const targetClassroomName = `${className} (${grade})`;
-            console.log('Looking for classroom:', targetClassroomName);
+            // Look for classroom by name (className already includes grade info like "5A (Grade 5)")
             let classroom = null;
             
-            // The API returns classrooms directly in data.classrooms array
             if (data.classrooms && Array.isArray(data.classrooms)) {
-                classroom = data.classrooms.find(c => c.name === targetClassroomName);
-                console.log('Found classroom in classrooms array:', classroom);
-            } else {
-                console.log('No classrooms array found in response');
+                // First try exact match
+                classroom = data.classrooms.find(c => c.name === className);
+                // If not found, try matching just the base name (before the grade part)
+                if (!classroom) {
+                    classroom = data.classrooms.find(c => c.name.startsWith(className + ' ('));
+                }
             }
             
             if (classroom) {
-                console.log('Fetching students for classroom ID:', classroom.id);
                 return fetch(`/api/get_classroom_students/${classroom.id}`);
             } else {
-                console.log('Classroom not found');
                 throw new Error('Classroom not found');
             }
         })
-        .then(response => {
-            console.log('Students response status:', response.status);
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('Students data:', data);
-            console.log('Full students API response:', JSON.stringify(data, null, 2));
-            currentStudents = data.students || [];
-            console.log('Current students set to:', currentStudents);
-            console.log('First student object:', currentStudents[0]);
-            console.log('Calling showClassroom()...');
-            showClassroom();
-            console.log('Calling createStudentDesks()...');
-            createStudentDesks();
-            
-            // Load saved layout if it exists
-            loadSavedLayout();
+            if (data.success && data.students) {
+                currentStudents = data.students;
+                
+                showClassroom();
+                createStudentDesks();
+                
+                // Load saved layout if it exists
+                loadSavedLayoutForClass(className);
+            }
         })
         .catch(error => {
-            console.error('Error loading students:', error);
-            hideClassroom();
+            showNoClassMessage();
         });
 }
 
 function showClassroom() {
+    document.getElementById('no-class-message').style.display = 'none';
+    document.getElementById('action-buttons').style.display = 'block';
     document.getElementById('classroom-container').style.display = 'block';
     document.getElementById('student-desks-section').style.display = 'block';
     document.getElementById('instructions').style.display = 'block';
     document.getElementById('saveBtn').disabled = false;
 }
 
-function hideClassroom() {
+function showNoClassMessage() {
+    document.getElementById('no-class-message').style.display = 'block';
+    document.getElementById('action-buttons').style.display = 'none';
     document.getElementById('classroom-container').style.display = 'none';
     document.getElementById('student-desks-section').style.display = 'none';
     document.getElementById('instructions').style.display = 'none';
-    document.getElementById('saveBtn').disabled = true;
+}
+
+function hideClassroom() {
+    showNoClassMessage();
 }
 
 function createStudentDesks() {
@@ -442,16 +368,25 @@ function saveClassroomLayout() {
         };
     });
     
-    // Save to backend
-    const grade = document.getElementById('filter_grade').value;
-    const className = document.getElementById('filter_class').value;
-    const targetClassroomName = `${className} (${grade})`;
+    // Get selected class from global filter
+    const globalClassFilter = document.getElementById('global_class_filter');
+    const className = globalClassFilter ? globalClassFilter.value : '';
+    
+    if (!className) {
+        alert('Please select a class first');
+        return;
+    }
     
     // Find classroom ID
     fetch('/api/get_teacher_classrooms')
         .then(response => response.json())
         .then(data => {
-            const classroom = data.classrooms.find(c => c.name === targetClassroomName);
+            // First try exact match
+            let classroom = data.classrooms.find(c => c.name === className);
+            // If not found, try matching just the base name (before the grade part)
+            if (!classroom) {
+                classroom = data.classrooms.find(c => c.name.startsWith(className + ' ('));
+            }
             if (classroom) {
                 return fetch('/api/save_classroom_layout', {
                     method: 'POST',
@@ -488,7 +423,6 @@ function saveClassroomLayout() {
             }
         })
         .catch(error => {
-            console.error('Error saving classroom layout:', error);
             alert('Error saving classroom layout');
         });
 }
@@ -509,16 +443,17 @@ function editClassroomLayout() {
     // Teachers can now just adjust 1-2 desks without redoing the entire layout
 }
 
-function loadSavedLayout() {
-    const grade = document.getElementById('filter_grade').value;
-    const className = document.getElementById('filter_class').value;
-    const targetClassroomName = `${className} (${grade})`;
-    
+function loadSavedLayoutForClass(className) {
     // Find classroom ID and load saved layout
     fetch('/api/get_teacher_classrooms')
         .then(response => response.json())
         .then(data => {
-            const classroom = data.classrooms.find(c => c.name === targetClassroomName);
+            // First try exact match
+            let classroom = data.classrooms.find(c => c.name === className);
+            // If not found, try matching just the base name (before the grade part)
+            if (!classroom) {
+                classroom = data.classrooms.find(c => c.name.startsWith(className + ' ('));
+            }
             if (classroom) {
                 return fetch(`/api/get_classroom_layout/${classroom.id}`);
             } else {
@@ -528,7 +463,6 @@ function loadSavedLayout() {
         .then(response => response.json())
         .then(data => {
             if (data.success && data.layout_data) {
-                console.log('Loading saved layout:', data.layout_data);
                 applyLayout(data.layout_data);
             } else {
                 console.log('No saved layout found for this classroom');
