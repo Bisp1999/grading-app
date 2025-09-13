@@ -253,14 +253,17 @@ function loadGradeMatrix() {
     if (subject) params.append('subject', subject);
     // Remove competency filter - always show all competencies
     
+    console.log('DEBUG: Calling API with params:', params.toString());
     fetch(`/api/get_grade_matrix?${params.toString()}`)
         .then(response => {
+            console.log('DEBUG: API response status:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
         .then(data => {
+            console.log('DEBUG: API response data:', data);
             if (data.error) {
                 console.error('API error:', data.error);
                 alert('Error loading grade data: ' + data.error);
