@@ -65,49 +65,11 @@
                     <h5>{{ _('Select Test') }}</h5>
                 </div>
                 <div class="card-body">
+                    {% if teacher_type == 'homeroom' %}
+                    <!-- Subject Filter for Homeroom Teachers -->
                     <form id="testSelectionForm">
-                        <div class="row">
-                            {% if teacher_type == 'specialist' %}
-                            <!-- Filter by Class (Specialist only) - First -->
-                            <div class="col-md-3 mb-2">
-                                <label for="filter_class" class="form-label">{{ _('Class') }}:</label>
-                                <select class="form-select" id="filter_class" name="filter_class" onchange="filterTests()">
-                                    <option value="">{{ _('All Classes') }}</option>
-                                    {% for grade in grades %}
-                                        {% for class_name in classrooms_by_grade[grade] %}
-                                            <option value="{{ class_name }}" data-grade="{{ grade }}">{{ class_name }} ({{ grade }})</option>
-                                        {% endfor %}
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <!-- Filter by Semester -->
-                            <div class="col-md-3 mb-2">
-                                <label for="filter_semester" class="form-label">{{ _('Semester') }}:</label>
-                                <select class="form-select" id="filter_semester" name="filter_semester" onchange="filterTests()">
-                                    <option value="">{{ _('All Semesters') }}</option>
-                                    {% for semester in semesters %}
-                                        <option value="{{ semester }}">{{ semester }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-
-                            <!-- Filter by Grade (Specialist only) - Last -->
-                            <div class="col-md-3 mb-2">
-                                <label for="filter_grade" class="form-label">{{ _('Grade') }}:</label>
-                                <select class="form-select" id="filter_grade" name="filter_grade" onchange="updateFilterClassOptions(); filterTests();">
-                                    <option value="">{{ _('All Grades') }}</option>
-                                    {% for grade in grades %}
-                                        <option value="{{ grade }}">{{ grade }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            {% endif %}
-
-                            {% if teacher_type == 'homeroom' %}
-                            <!-- Filter by Subject (Homeroom only) - First -->
-                            <div class="col-md-6 mb-2">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
                                 <label for="filter_subject" class="form-label">{{ _('Subject') }}:</label>
                                 <select class="form-select" id="filter_subject" name="filter_subject" onchange="filterTests()">
                                     <option value="">{{ _('All Subjects') }}</option>
@@ -116,21 +78,9 @@
                                     {% endfor %}
                                 </select>
                             </div>
-
-                            <!-- Filter by Semester -->
-                            <div class="col-md-6 mb-2">
-                                <label for="filter_semester" class="form-label">{{ _('Semester') }}:</label>
-                                <select class="form-select" id="filter_semester" name="filter_semester" onchange="filterTests()">
-                                    <option value="">{{ _('All Semesters') }}</option>
-                                    {% for semester in semesters %}
-                                        <option value="{{ semester }}">{{ semester }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            {% endif %}
                         </div>
                     </form>
+                    {% endif %}
 
                     <!-- No Selection Message -->
                     <div class="text-center py-4" id="noSelectionMessage">
@@ -321,16 +271,15 @@ let selectedTestId = null;
 let selectedTestData = null;
 let studentsData = [];
 
-// Filter tests based on selected criteria
+// Filter tests based on global filters
 function filterTests() {
-    const semesterEl = document.getElementById('filter_semester');
-    const gradeEl = document.getElementById('filter_grade');
-    const classEl = document.getElementById('filter_class');
-    const subjectEl = document.getElementById('filter_subject');
+    // Get values from global filters in header
+    const globalClassFilter = document.getElementById('global_class_filter');
+    const globalSemesterFilter = document.getElementById('global_semester_filter');
+    const subjectEl = document.getElementById('filter_subject'); // Only for homeroom
     
-    const semester = semesterEl ? semesterEl.value : '';
-    const grade = (teacherType === 'specialist' && gradeEl) ? gradeEl.value : '';
-    const className = (teacherType === 'specialist' && classEl) ? classEl.value : '';
+    const className = globalClassFilter ? globalClassFilter.value : '';
+    const semester = globalSemesterFilter ? globalSemesterFilter.value : '';
     const subject = (teacherType === 'homeroom' && subjectEl) ? subjectEl.value : '';
     
     // Check if required filters are selected
@@ -780,12 +729,52 @@ function clearTestSelection() {
     document.getElementById('statisticsPanel').style.display = 'none';
 }
 
+// Function to populate global filters from page data
+function initializeGlobalFilters() {
+    const globalClassFilter = document.getElementById('global_class_filter');
+    const globalSemesterFilter = document.getElementById('global_semester_filter');
+    
+    if (globalClassFilter && teacherType === 'specialist') {
+        // Populate class dropdown
+        globalClassFilter.innerHTML = '<option value="">{{ _("Select Class") }}</option>';
+        Object.keys(classroomsByGrade).forEach(grade => {
+            classroomsByGrade[grade].forEach(className => {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = `${className} (${grade})`;
+                option.setAttribute('data-grade', grade);
+                globalClassFilter.appendChild(option);
+            });
+        });
+    }
+    
+    if (globalSemesterFilter) {
+        // Populate semester dropdown
+        globalSemesterFilter.innerHTML = '<option value="">{{ _("Select Semester") }}</option>';
+        const semesters = [{% for semester in semesters %}'{{ semester }}'{% if not loop.last %},{% endif %}{% endfor %}];
+        semesters.forEach(semester => {
+            const option = document.createElement('option');
+            option.value = semester;
+            option.textContent = semester;
+            globalSemesterFilter.appendChild(option);
+        });
+    }
+    
+    // Load saved values
+    loadGlobalFilters();
+}
+
+// Handle global filter changes
+function onGlobalFiltersChanged() {
+    filterTests();
+}
+
 // Initialize page
 document.addEventListener('DOMContentLoaded', function() {
-    if (teacherType === 'specialist') {
-        updateFilterClassOptions();
-    }
-    // Initialize table visibility
+    // Initialize global filters
+    initializeGlobalFilters();
+    
+    // Initialize table visibility based on current filter state
     filterTests();
 });
 </script>
