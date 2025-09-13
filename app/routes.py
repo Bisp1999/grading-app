@@ -1608,6 +1608,9 @@ def get_grade_matrix():
     competency = request.args.get('competency', '')
     
     try:
+        # Debug logging
+        print(f"DEBUG: get_grade_matrix called with semester='{semester}', class_name='{class_name}', subject='{subject}', competency='{competency}'")
+        
         # Build test query with filters
         test_query = Test.query.filter_by(teacher_id=current_user.id)
         
@@ -1621,8 +1624,10 @@ def get_grade_matrix():
             test_query = test_query.filter(Test.competency == competency)
         
         tests = test_query.order_by(Test.test_date).all()
+        print(f"DEBUG: Found {len(tests)} tests")
         
         if not tests:
+            print("DEBUG: No tests found, returning empty response")
             return jsonify({'tests': [], 'students': [], 'grades': {}})
         
         # Get students from the relevant classroom(s)
@@ -1632,15 +1637,19 @@ def get_grade_matrix():
             # Find the classroom that matches the class name
             for school in School.query.filter_by(teacher_id=current_user.id).all():
                 for classroom in Classroom.query.filter_by(school_id=school.id).all():
+                    print(f"DEBUG: Checking classroom '{classroom.name}' against class_name '{class_name}'")
                     if classroom.name == class_name:
                         classroom_students = Student.query.filter_by(classroom_id=classroom.id).all()
                         students.extend(classroom_students)
+                        print(f"DEBUG: Found matching classroom, added {len(classroom_students)} students")
         else:
             # Get all students from all classrooms for this teacher
             for school in School.query.filter_by(teacher_id=current_user.id).all():
                 for classroom in Classroom.query.filter_by(school_id=school.id).all():
                     classroom_students = Student.query.filter_by(classroom_id=classroom.id).all()
                     students.extend(classroom_students)
+        
+        print(f"DEBUG: Total students found: {len(students)}")
         
         # Get all grades for these tests and students
         test_ids = [test.id for test in tests]

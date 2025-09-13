@@ -4,7 +4,7 @@
 
 {% block content %}
 <style>
-#gradeInputSection {
+#gradeInputSection.show {
     display: flex !important;
     flex-wrap: nowrap !important;
     align-items: flex-start;
@@ -32,7 +32,7 @@
 }
 
 @media (max-width: 991px) {
-    #gradeInputSection {
+    #gradeInputSection.show {
         flex-wrap: wrap !important;
     }
     
@@ -388,7 +388,9 @@ function selectTest(testId) {
             displayStudentsTable();
             
             // Show grade input section and statistics panel
-            document.getElementById('gradeInputSection').style.display = 'block';
+            const gradeInputSection = document.getElementById('gradeInputSection');
+            gradeInputSection.style.display = 'block';
+            gradeInputSection.classList.add('show');
             document.getElementById('statisticsPanel').style.display = 'block';
             calculateStatistics(); // Show initial statistics
             document.getElementById('gradeInputSection').scrollIntoView({ behavior: 'smooth' });
@@ -724,7 +726,9 @@ function clearTestSelection() {
     selectedTestId = null;
     selectedTestData = null;
     studentsData = [];
-    document.getElementById('gradeInputSection').style.display = 'none';
+    const gradeInputSection = document.getElementById('gradeInputSection');
+    gradeInputSection.style.display = 'none';
+    gradeInputSection.classList.remove('show');
     document.getElementById('statisticsPanel').style.display = 'none';
 }
 
