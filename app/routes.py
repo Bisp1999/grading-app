@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, login_required, current_user, LoginManager
 from flask_babel import gettext as _
+from werkzeug.security import check_password_hash, generate_password_hash
 from . import db, login_manager
 from .models import Teacher, School, Classroom, Student, SetupWizardData, Test, Grade, ClassroomLayout
 from .forms import LoginForm, RegistrationForm
