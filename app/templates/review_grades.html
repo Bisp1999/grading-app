@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-
 {% block title %}{{ _('Review and Adjust Grades') }}{% endblock %}
 
 {% block content %}
@@ -45,6 +44,74 @@
                                 <button class="btn btn-outline-primary btn-sm" onclick="changeTestWeighting()">
                                     <i class="fas fa-balance-scale me-1"></i>{{ _('Change Test Weighting') }}
                                 </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Bell Grade Expanded Section -->
+                        <div class="col-12" id="bellGradeContainer" style="display:none;">
+                            <hr/>
+                            <h5 class="mb-3">{{ _('Bell Grade a Test') }}</h5>
+                            <div id="bellGradeForm">
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-md-6">
+                                        <label class="form-label" for="bell_test_select">{{ _('Select Test to Bell Grade') }}</label>
+                                        <select id="bell_test_select" class="form-select">
+                                            <option value="">{{ _('Select a test...') }}</option>
+                                        </select>
+                                        <div class="form-text">{{ _('Only tests for the current Class/Semester are listed.') }}</div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="bell_option_adjust_avg" onchange="toggleBellAdjustAvg()">
+                                            <label class="form-check-label" for="bell_option_adjust_avg">{{ _('Adjust class to a new average') }}</label>
+                                        </div>
+                                        <div id="bell_adjust_avg_options" class="mt-2" style="display:none;">
+                                            <label class="form-label" for="bell_target_avg">{{ _('Target class average (%)') }}</label>
+                                            <input id="bell_target_avg" type="number" class="form-control" min="0" max="200" step="0.1" placeholder="e.g. 74">
+                                            <div class="form-check mt-2">
+                                                <input class="form-check-input" type="checkbox" id="bell_allow_over_100">
+                                                <label class="form-check-label" for="bell_allow_over_100">{{ _('Allow scores > 100%') }}</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="bell_option_boost_low" onchange="toggleBellBoostLow()">
+                                            <label class="form-check-label" for="bell_option_boost_low">{{ _('Bring up lower scores more than higher scores') }}</label>
+                                        </div>
+                                        <div id="bell_boost_low_options" class="mt-2" style="display:none;">
+                                            <label class="form-label" for="bell_lowest_score">{{ _('Lowest score floor (%)') }}</label>
+                                            <input id="bell_lowest_score" type="number" class="form-control" min="0" max="100" step="0.1" placeholder="e.g. 50">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 mt-3">
+                                        <button class="btn btn-primary" onclick="submitBellGrading()">{{ _('Generate Solution') }}</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="bellGradeResults" class="mt-4" style="display:none;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">{{ _('Proposed Adjustments') }}</h6>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="editBellGrading()">{{ _('Edit Options') }}</button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered" id="bellGradeTable">
+                                        <thead>
+                                            <tr>
+                                                <th>{{ _('Student Name') }}</th>
+                                                <th>{{ _('Original Score (%)') }}</th>
+                                                <th>{{ _('Linear Scaling (%)') }}</th>
+                                                <th>{{ _('Percentage Scaling (%)') }}</th>
+                                                <th>{{ _('Square Root (%)') }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                         
@@ -146,6 +213,126 @@ const classroomsByGrade = {{ classrooms_by_grade|tojson|safe }};
 const teacherType = {{ teacher_type|tojson|safe }};
 const translations = JSON.parse(document.getElementById('translations').textContent);
 let currentGradeData = null;
+
+// --- Bell Grade Feature ---
+function bellGradeTest() {
+    const container = document.getElementById('bellGradeContainer');
+    if (!container) return;
+    container.style.display = container.style.display === 'none' ? 'block' : 'none';
+    if (container.style.display === 'block') {
+        populateBellTests();
+    }
+}
+
+function toggleBellAdjustAvg() {
+    const checked = document.getElementById('bell_option_adjust_avg').checked;
+    document.getElementById('bell_adjust_avg_options').style.display = checked ? 'block' : 'none';
+}
+
+function toggleBellBoostLow() {
+    const checked = document.getElementById('bell_option_boost_low').checked;
+    document.getElementById('bell_boost_low_options').style.display = checked ? 'block' : 'none';
+}
+
+function getGlobalFilterValues() {
+    const className = document.getElementById('global_class_filter') ? document.getElementById('global_class_filter').value : '';
+    const semester = document.getElementById('global_semester_filter') ? document.getElementById('global_semester_filter').value : '';
+    const subject = (teacherType === 'homeroom') ? ((document.getElementById('filter_subject') ? document.getElementById('filter_subject').value : '') || '') : '';
+    return { className, semester, subject };
+}
+
+function populateBellTests() {
+    const { className, semester, subject } = getGlobalFilterValues();
+    const select = document.getElementById('bell_test_select');
+    if (!semester) {
+        select.innerHTML = '<option value="">Please select a Semester first</option>';
+        return;
+    }
+    const params = new URLSearchParams();
+    params.append('semester', semester);
+    if (className) params.append('class_name', className);
+    if (subject) params.append('subject', subject);
+    fetch(`/api/get_tests_for_context?${params.toString()}`)
+        .then(r => r.json())
+        .then(data => {
+            select.innerHTML = '<option value="">Select a test...</option>';
+            if (data.tests) {
+                data.tests.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.textContent = `${t.test_name} (${t.test_date})`;
+                    select.appendChild(opt);
+                });
+            }
+        })
+        .catch(err => console.error('Failed to load tests for bell grading', err));
+}
+
+function submitBellGrading() {
+    const testId = document.getElementById('bell_test_select').value;
+    if (!testId) { alert('Please select a test'); return; }
+    const adjustAvg = document.getElementById('bell_option_adjust_avg').checked;
+    const targetAvgVal = document.getElementById('bell_target_avg').value;
+    const targetAvg = targetAvgVal ? parseFloat(targetAvgVal) : null;
+    const allowOver100 = document.getElementById('bell_allow_over_100').checked;
+    const boostLow = document.getElementById('bell_option_boost_low').checked;
+    const lowestScoreVal = document.getElementById('bell_lowest_score').value;
+    const lowestScore = lowestScoreVal ? parseFloat(lowestScoreVal) : null;
+
+    if (adjustAvg && (targetAvg === null || isNaN(targetAvg) || targetAvg <= 0)) {
+        alert('Please provide a valid target average');
+        return;
+    }
+    if (boostLow && (lowestScore === null || isNaN(lowestScore) || lowestScore < 0 || lowestScore > 100)) {
+        alert('Please provide a valid lowest score floor (0-100)');
+        return;
+    }
+
+    const payload = {
+        test_id: parseInt(testId),
+        adjust_avg: adjustAvg,
+        target_avg: adjustAvg ? targetAvg : null,
+        allow_over_100: !!allowOver100,
+        boost_low: boostLow,
+        lowest_score: boostLow ? lowestScore : null
+    };
+
+    fetch('/api/bell_grade_scenarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    }).then(r => r.json())
+      .then(data => {
+        if (data.error) { alert(data.error); return; }
+        // Hide form, show results
+        document.getElementById('bellGradeForm').style.display = 'none';
+        const results = document.getElementById('bellGradeResults');
+        results.style.display = 'block';
+        const tbody = document.querySelector('#bellGradeTable tbody');
+        tbody.innerHTML = '';
+        data.students.forEach(s => {
+            const tr = document.createElement('tr');
+            const fmt = (v) => (v === null || v === undefined) ? '--' : v.toFixed(1);
+            tr.innerHTML = `
+                <td>${s.name}</td>
+                <td>${fmt(s.original)}</td>
+                <td>${fmt(s.linear)}</td>
+                <td>${fmt(s.percentage)}</td>
+                <td>${fmt(s.sqrt)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+      })
+      .catch(err => {
+        console.error('Bell grading failed', err);
+        alert('Error generating bell grading scenarios');
+      });
+}
+
+function editBellGrading() {
+    document.getElementById('bellGradeResults').style.display = 'none';
+    document.getElementById('bellGradeForm').style.display = 'block';
+}
 
 // Update grade dropdown when class is selected (for specialist)
 function updateGradeFromClass() {

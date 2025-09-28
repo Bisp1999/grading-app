@@ -6,6 +6,7 @@ from . import db, login_manager
 from .models import Teacher, School, Classroom, Student, SetupWizardData, Test, Grade, ClassroomLayout
 from .forms import LoginForm, RegistrationForm
 import json
+import math
 from datetime import datetime, date
 import logging
 
@@ -612,6 +613,172 @@ def get_teacher_classrooms():
         
         return jsonify({'classrooms': classrooms_data})
         
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main.route('/api/get_tests_for_context')
+@login_required
+def get_tests_for_context():
+    """Return tests for the current teacher filtered by semester and optional class/subject.
+    Query params:
+      - semester (required)
+      - class_name (optional, for specialist)
+      - subject (optional, for homeroom)
+    """
+    from .models import Test, SetupWizardData
+    try:
+        semester = request.args.get('semester', '').strip()
+        class_name = request.args.get('class_name', '').strip()
+        subject = request.args.get('subject', '').strip()
+
+        if not semester:
+            return jsonify({'error': 'semester is required'}), 400
+
+        wizard_data = SetupWizardData.query.filter_by(teacher_id=current_user.id).first()
+        teacher_type = wizard_data.teacher_type if wizard_data and wizard_data.teacher_type else 'homeroom'
+
+        q = Test.query.filter_by(teacher_id=current_user.id, semester=semester)
+        if teacher_type == 'specialist':
+            if class_name:
+                q = q.filter(Test.class_name == class_name)
+        else:
+            if subject:
+                q = q.filter(Test.subject == subject)
+
+        tests = q.order_by(Test.test_date.desc()).all()
+        return jsonify({'tests': [
+            {
+                'id': t.id,
+                'test_name': t.test_name,
+                'test_date': t.test_date.strftime('%Y-%m-%d'),
+                'max_points': t.max_points,
+                'competency': t.competency,
+                'test_weight': t.test_weight
+            } for t in tests
+        ]})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main.route('/api/bell_grade_scenarios', methods=['POST'])
+@login_required
+def bell_grade_scenarios():
+    """Compute bell grading scenarios for a given test.
+    Body JSON:
+      - test_id (int, required)
+      - adjust_avg (bool)
+      - target_avg (float|null)
+      - allow_over_100 (bool)
+      - boost_low (bool)
+      - lowest_score (float|null)
+    Returns per-student original percentage and selected scenario percentages.
+    """
+    from .models import Test, Grade, Student, Classroom, School
+    try:
+        data = request.get_json(force=True) or {}
+        test_id = data.get('test_id')
+        if not test_id:
+            return jsonify({'error': 'test_id is required'}), 400
+
+        adjust_avg = bool(data.get('adjust_avg'))
+        target_avg = data.get('target_avg')
+        allow_over_100 = bool(data.get('allow_over_100'))
+        boost_low = bool(data.get('boost_low'))
+        lowest_score = data.get('lowest_score')
+
+        test = Test.query.filter_by(id=test_id, teacher_id=current_user.id).first()
+        if not test:
+            return jsonify({'error': 'Test not found'}), 404
+
+        # Fetch grades and student names for this test, ensuring students belong to the current teacher
+        grades = (
+            Grade.query.join(Student, Grade.student_id == Student.id)
+            .join(Classroom, Student.classroom_id == Classroom.id)
+            .join(School, Classroom.school_id == School.id)
+            .filter(Grade.test_id == test.id, School.teacher_id == current_user.id)
+            .all()
+        )
+
+        # Build original percentages and compute class average
+        students_map = {}
+        percentages = []
+        for g in grades:
+            name = f"{g.student.first_name} {g.student.last_name}"
+            if g.absent or g.grade is None:
+                pct = None
+            else:
+                pct = (g.grade / test.max_points) * 100.0
+                percentages.append(pct)
+            students_map[g.student_id] = {
+                'name': name,
+                'original': pct
+            }
+
+        # Compute class average of available grades
+        original_class_avg = sum(percentages) / len(percentages) if percentages else None
+
+        # Prepare helpers
+        def cap100(val: float) -> float:
+            return min(val, 100.0)
+
+        # Compute scenarios based on selections
+        if adjust_avg and (target_avg is None or original_class_avg in (None, 0)):
+            return jsonify({'error': 'Target average invalid or no graded data available for adjustment'}), 400
+
+        if isinstance(target_avg, (int, float)):
+            target_avg = float(target_avg)
+        if isinstance(lowest_score, (int, float)):
+            lowest_score = float(lowest_score)
+
+        linear_diff = None
+        ratio = None
+        if adjust_avg and original_class_avg not in (None, 0):
+            linear_diff = (target_avg or 0.0) - original_class_avg
+            ratio = (target_avg or 0.0) / original_class_avg if original_class_avg else None
+
+        # Build response list maintaining name order by student last/first
+        # Sort keys by name for consistent display
+        students_list = sorted(students_map.values(), key=lambda s: s['name'].split(' ')[-1] + ' ' + s['name'].split(' ')[0])
+        response_students = []
+        for s in students_list:
+            original = s['original']
+            out = {
+                'name': s['name'],
+                'original': original if original is not None else None,
+                'linear': None,
+                'percentage': None,
+                'sqrt': None,
+            }
+
+            if original is not None:
+                if adjust_avg and linear_diff is not None:
+                    val = original + linear_diff
+                    if not allow_over_100:
+                        val = cap100(val)
+                    out['linear'] = val
+
+                if adjust_avg and ratio is not None:
+                    val = original * ratio
+                    if not allow_over_100:
+                        val = cap100(val)
+                    out['percentage'] = val
+
+                if boost_low:
+                    val = math.sqrt(max(original, 0.0)) * 10.0
+                    if lowest_score is not None:
+                        val = max(val, lowest_score)
+                    out['sqrt'] = val
+
+            response_students.append(out)
+
+        return jsonify({
+            'test': {
+                'id': test.id,
+                'name': test.test_name,
+                'max_points': test.max_points,
+                'original_class_avg': original_class_avg
+            },
+            'students': response_students
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
