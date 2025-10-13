@@ -9,6 +9,10 @@ import json
 import math
 from datetime import datetime, date
 import logging
+import os
+from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
+import smtplib
+from email.mime.text import MIMEText
 
 main = Blueprint('main', __name__)
 
@@ -110,6 +114,110 @@ def index():
     if not current_user.is_authenticated and 'language' not in session:
         return redirect(url_for('main.language_selector'))
     return redirect(url_for('main.dashboard'))
+
+# ---------------------- Password Reset Flow ----------------------
+
+def _get_serializer():
+    from flask import current_app
+    secret = current_app.config['SECRET_KEY']
+    return URLSafeTimedSerializer(secret_key=secret, salt='password-reset')
+
+def _send_reset_email(to_email: str, reset_url: str):
+    """Send a password reset email. If SMTP isn't configured, flash the link as a fallback."""
+    from flask import current_app
+    mail_server = current_app.config.get('MAIL_SERVER') or os.environ.get('MAIL_SERVER')
+    mail_port = int(current_app.config.get('MAIL_PORT') or os.environ.get('MAIL_PORT') or 0)
+    mail_username = current_app.config.get('MAIL_USERNAME') or os.environ.get('MAIL_USERNAME')
+    mail_password = current_app.config.get('MAIL_PASSWORD') or os.environ.get('MAIL_PASSWORD')
+    mail_use_tls = (str(current_app.config.get('MAIL_USE_TLS') or os.environ.get('MAIL_USE_TLS') or 'false')).lower() == 'true'
+    mail_use_ssl = (str(current_app.config.get('MAIL_USE_SSL') or os.environ.get('MAIL_USE_SSL') or 'false')).lower() == 'true'
+
+    subject = 'Password Reset Instructions'
+    body = f"Click the link to reset your password: {reset_url}\nIf you did not request this, please ignore."
+
+    # No SMTP configured: show the link as a development fallback
+    if not mail_server:
+        flash(_('Password reset link (development): %(link)s', link=reset_url), 'info')
+        return
+
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = mail_username or 'no-reply@example.com'
+    msg['To'] = to_email
+
+    try:
+        if mail_use_ssl:
+            with smtplib.SMTP_SSL(mail_server, mail_port or 465) as server:
+                if mail_username and mail_password:
+                    server.login(mail_username, mail_password)
+                server.send_message(msg)
+        else:
+            with smtplib.SMTP(mail_server, mail_port or 587) as server:
+                if mail_use_tls:
+                    server.starttls()
+                if mail_username and mail_password:
+                    server.login(mail_username, mail_password)
+                server.send_message(msg)
+    except Exception as e:
+        logging.exception('Failed to send reset email')
+        flash(_('Could not send reset email. Please contact support.'), 'danger')
+
+@main.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'POST':
+        email = (request.form.get('email') or '').strip().lower()
+        if not email:
+            flash(_('Please enter your email address.'), 'warning')
+            return redirect(url_for('main.forgot_password'))
+
+        user = Teacher.query.filter_by(email=email).first()
+        
+        # Always show the same message to avoid revealing which emails are registered
+        if user:
+            s = _get_serializer()
+            token = s.dumps({'email': email})
+            reset_url = url_for('main.reset_password', token=token, _external=True)
+            _send_reset_email(email, reset_url)
+
+        flash(_('If an account exists for that email, a reset link has been sent.'), 'info')
+        return redirect(url_for('main.login'))
+
+    return render_template('login.html', mode='forgot')
+
+@main.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    s = _get_serializer()
+    try:
+        data = s.loads(token, max_age=3600)  # 1 hour
+        email = data.get('email')
+    except SignatureExpired:
+        flash(_('The reset link has expired. Please request a new one.'), 'danger')
+        return redirect(url_for('main.forgot_password'))
+    except BadSignature:
+        flash(_('Invalid reset link.'), 'danger')
+        return redirect(url_for('main.forgot_password'))
+
+    if request.method == 'POST':
+        password = request.form.get('password') or ''
+        confirm = request.form.get('confirm_password') or ''
+        if len(password) < 6:
+            flash(_('Password must be at least 6 characters.'), 'warning')
+            return redirect(request.url)
+        if password != confirm:
+            flash(_('Passwords do not match.'), 'warning')
+            return redirect(request.url)
+
+        user = Teacher.query.filter_by(email=email).first()
+        if not user:
+            flash(_('Account not found.'), 'danger')
+            return redirect(url_for('main.forgot_password'))
+
+        user.password_hash = generate_password_hash(password)
+        db.session.commit()
+        flash(_('Your password has been updated. Please log in.'), 'success')
+        return redirect(url_for('main.login'))
+
+    return render_template('login.html', mode='reset', token=token)
 
 @main.route('/setup_wizard')
 @login_required
@@ -689,20 +797,24 @@ def bell_grade_scenarios():
         if not test:
             return jsonify({'error': 'Test not found'}), 404
 
-        # Fetch grades and student names for this test, ensuring students belong to the current teacher
-        grades = (
-            Grade.query.join(Student, Grade.student_id == Student.id)
+        # Fetch (grade, student) tuples for this test, ensuring students belong to the current teacher
+        class_name = (data.get('class_name') or '').strip()
+        q = (
+            db.session.query(Grade, Student)
+            .join(Student, Grade.student_id == Student.id)
             .join(Classroom, Student.classroom_id == Classroom.id)
             .join(School, Classroom.school_id == School.id)
             .filter(Grade.test_id == test.id, School.teacher_id == current_user.id)
-            .all()
         )
+        if class_name:
+            q = q.filter(Classroom.name == class_name)
+        grade_rows = q.all()
 
         # Build original percentages and compute class average
         students_map = {}
         percentages = []
-        for g in grades:
-            name = f"{g.student.first_name} {g.student.last_name}"
+        for g, stu in grade_rows:
+            name = f"{stu.first_name} {stu.last_name}"
             if g.absent or g.grade is None:
                 pct = None
             else:
@@ -780,6 +892,112 @@ def bell_grade_scenarios():
             'students': response_students
         })
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@main.route('/api/apply_bell_selection', methods=['POST'])
+@login_required
+def apply_bell_selection():
+    """Apply the selected bell grading scenario to persist grades.
+    Body JSON expects the same options as scenarios plus 'scenario' key in ['original','linear','percentage','sqrt'].
+    This updates Grade.grade (points) for each student and marks the Test as modified with details.
+    """
+    from .models import Test, Grade, Student, Classroom, School
+    try:
+        data = request.get_json(force=True) or {}
+        test_id = data.get('test_id')
+        scenario = data.get('scenario')
+        if not test_id or scenario not in ['original','linear','percentage','sqrt']:
+            return jsonify({'error': 'Invalid request'}), 400
+
+        adjust_avg = bool(data.get('adjust_avg'))
+        target_avg = data.get('target_avg')
+        allow_over_100 = bool(data.get('allow_over_100'))
+        boost_low = bool(data.get('boost_low'))
+        lowest_score = data.get('lowest_score')
+        class_name = (data.get('class_name') or '').strip()
+
+        test = Test.query.filter_by(id=test_id, teacher_id=current_user.id).first()
+        if not test:
+            return jsonify({'error': 'Test not found'}), 404
+
+        # Query relevant students/grades
+        q = (
+            db.session.query(Grade, Student)
+            .join(Student, Grade.student_id == Student.id)
+            .join(Classroom, Student.classroom_id == Classroom.id)
+            .join(School, Classroom.school_id == School.id)
+            .filter(Grade.test_id == test.id, School.teacher_id == current_user.id)
+        )
+        if class_name:
+            q = q.filter(Classroom.name == class_name)
+        rows = q.all()
+
+        # Build original percentages and class average
+        percentages = []
+        for g, _stu in rows:
+            if not g.absent and g.grade is not None:
+                percentages.append((g.grade / test.max_points) * 100.0)
+        original_class_avg = sum(percentages) / len(percentages) if percentages else None
+
+        if isinstance(target_avg, (int, float)):
+            target_avg = float(target_avg)
+        if isinstance(lowest_score, (int, float)):
+            lowest_score = float(lowest_score)
+
+        # Compute adjustment params
+        linear_diff = None
+        ratio = None
+        if adjust_avg and original_class_avg not in (None, 0):
+            linear_diff = (target_avg or 0.0) - original_class_avg
+            ratio = (target_avg or 0.0) / original_class_avg if original_class_avg else None
+
+        def cap100(val: float) -> float:
+            return min(val, 100.0)
+
+        # Apply scenario per student
+        updated = 0
+        for g, _stu in rows:
+            if g.absent or g.grade is None:
+                continue
+            orig_pct = (g.grade / test.max_points) * 100.0
+            new_pct = None
+            if scenario == 'original':
+                new_pct = orig_pct
+            elif scenario == 'linear' and linear_diff is not None:
+                new_pct = orig_pct + linear_diff
+                if not allow_over_100:
+                    new_pct = cap100(new_pct)
+            elif scenario == 'percentage' and ratio is not None:
+                new_pct = orig_pct * ratio
+                if not allow_over_100:
+                    new_pct = cap100(new_pct)
+            elif scenario == 'sqrt' and boost_low:
+                new_pct = math.sqrt(max(orig_pct, 0.0)) * 10.0
+                if lowest_score is not None:
+                    new_pct = max(new_pct, lowest_score)
+
+            if new_pct is None:
+                continue
+            # Convert percent back to points
+            new_points = (new_pct / 100.0) * test.max_points
+            g.grade = round(new_points, 2)
+            updated += 1
+
+        # Persist changes
+        details = (
+            f"Type: {'Linear scaling' if scenario=='linear' else ('% scaling' if scenario=='percentage' else ('Square root' if scenario=='sqrt' else 'Original'))}; "
+            f"Original average: {original_class_avg if original_class_avg is not None else 'N/A'}; "
+            f"New average: {target_avg if adjust_avg and target_avg is not None else 'N/A'}; "
+            f"Scores > 100% allowed: {'True' if allow_over_100 else 'False'}; "
+            f"Lowest score allowed: {lowest_score if lowest_score is not None else 'N/A'}"
+        )
+        test.scores_modified = True
+        test.scores_modified_details = details
+        db.session.commit()
+
+        return jsonify({'updated': updated, 'test_id': test.id})
+    except Exception as e:
+        db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
 @main.route('/api/save_students', methods=['POST'])
