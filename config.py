@@ -28,7 +28,19 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'grading_app.db')
 
 class ProductionConfig(Config):
-    DEBUG = False
+    DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+    
+    # Database configuration
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        # Railway provides a postgresql:// URL, but SQLAlchemy needs postgresql+psycopg2://
+        if database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql://", 1)
+        SQLALCHEMY_DATABASE_URI = database_url
+    else:
+        # Fallback for local production testing if DATABASE_URL is not set
+        SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'prod.db')
+
     # Force HTTPS in production
     PREFERRED_URL_SCHEME = 'https'
     # Security headers
