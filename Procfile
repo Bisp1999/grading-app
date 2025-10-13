@@ -1,2 +1,2 @@
 release: alembic upgrade head
-web: gunicorn run:app
+web: gunicorn --graceful-timeout 60 --timeout 120 run:app
