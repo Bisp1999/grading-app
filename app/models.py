@@ -60,6 +60,9 @@ class Test(db.Model):
     test_date = db.Column(db.Date, nullable=False)
     test_weight = db.Column(db.Float, nullable=False)  # Percentage weight
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # Bell grading tracking
+    scores_modified = db.Column(db.Boolean, default=False, nullable=False)
+    scores_modified_details = db.Column(db.Text, nullable=True)
     
     # Relationship to grades
     grades = db.relationship('Grade', backref='test', lazy=True, cascade='all, delete-orphan')

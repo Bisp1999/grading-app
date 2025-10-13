@@ -1,1 +1,15 @@
-.env
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment variables
+.env*
+
+# Database files
+*.db
+*.sqlite3
+instance/
+
+# IDE / OS specific
+.DS_Store
+ai-dev-tasks/
