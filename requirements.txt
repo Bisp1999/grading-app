@@ -9,3 +9,4 @@ Flask-Babel>=3.1.0
 gunicorn>=21.2.0
 psycopg2-binary>=2.9.7
 python-dotenv>=0.21.0
+alembic>=1.13.0
