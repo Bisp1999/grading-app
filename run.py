@@ -4,6 +4,7 @@ load_dotenv() # Load environment variables from .env file
 from app import create_app
 import os
 
+# Trigger a new deployment
 app = create_app()
 
 if __name__ == '__main__':
