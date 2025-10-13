@@ -6,16 +6,6 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
-    
-    # Database configuration
-    DATABASE_URL = os.environ.get('DATABASE_URL')
-    if DATABASE_URL:
-        # Railway PostgreSQL
-        SQLALCHEMY_DATABASE_URI = DATABASE_URL
-    else:
-        # Local SQLite for development (absolute path to avoid cwd issues)
-        SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'grading_app.db')
-    
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Flask-Babel configuration
