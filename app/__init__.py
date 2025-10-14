@@ -2,6 +2,7 @@ from flask import Flask, request, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_babel import Babel
+from flask_migrate import Migrate
 import os
 
 # Initialize extensions
@@ -9,6 +10,7 @@ import os
 db = SQLAlchemy()
 login_manager = LoginManager()
 babel = Babel()
+migrate = Migrate()
 
 
 def get_locale():
@@ -40,6 +42,7 @@ def create_app(config_name=None):
     app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hours
 
     db.init_app(app)
+    migrate.init_app(app, db)
     login_manager.init_app(app)
     login_manager.login_view = 'main.login'
     login_manager.login_message = 'Please log in to access this page.'
