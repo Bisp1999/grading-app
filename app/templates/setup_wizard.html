@@ -722,8 +722,8 @@ const skipStep4 = document.getElementById('skip-step4');
 // Skip button handler - allows skipping competency associations
 skipStep4.onclick = () => {
     competenciesSkipped = true;
-    // Clear all step4 weights
-    step4Weights = {};
+    // Keep any partial data they entered - don't clear step4Weights
+    // This allows them to save whatever they filled in so far
     updateProgressBar(5);
     document.getElementById('step4').classList.add('d-none');
     document.getElementById('step5').classList.remove('d-none');
