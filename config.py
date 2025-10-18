@@ -18,12 +18,10 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'grading_app.db')
 
 class ProductionConfig(Config):
-    print("--- LOADING PRODUCTION CONFIG ---")
     DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
     
     # Database configuration
     database_url = os.environ.get('DATABASE_URL')
-    print(f"DATABASE_URL from env: {database_url}")
     if database_url:
         # Railway provides a postgresql:// URL, but SQLAlchemy needs postgresql+psycopg2://
         if database_url.startswith("postgres://"):
