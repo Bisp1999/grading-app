@@ -1,12 +1,8 @@
 import logging
 from logging.config import fileConfig
-
-from app import create_app, db
-import os
-app = create_app(os.getenv('FLASK_ENV') or 'development')
-app.app_context().push()
-
+from flask import current_app
 from alembic import context
+import os
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -20,8 +16,17 @@ if config.config_file_name is not None:
 
 
 
-config.set_main_option('sqlalchemy.url', app.config['SQLALCHEMY_DATABASE_URI'])
-target_metadata = db.metadata
+# Get database URL from current Flask app
+try:
+    # When running via flask db commands, current_app is available
+    config.set_main_option('sqlalchemy.url', current_app.config['SQLALCHEMY_DATABASE_URI'])
+    target_metadata = current_app.extensions['migrate'].db.metadata
+except RuntimeError:
+    # Fallback for when running outside app context
+    from app import create_app, db
+    app = create_app(os.getenv('FLASK_ENV') or 'development')
+    config.set_main_option('sqlalchemy.url', app.config['SQLALCHEMY_DATABASE_URI'])
+    target_metadata = db.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

@@ -11,7 +11,7 @@
                 <div class="card-body">
                     <!-- Progress indicator -->
                     <div class="progress mb-4">
-                        <div class="progress-bar" role="progressbar" style="width: 16.67%" aria-valuenow="1" aria-valuemin="0" aria-valuemax="6"></div>
+                        <div id="wizard-progress-bar" class="progress-bar" role="progressbar" style="width: 14.29%" aria-valuenow="1" aria-valuemin="0" aria-valuemax="7"></div>
                     </div>
     <!-- Step 1 -->
     <div id="step1" class="wizard-step">
@@ -1173,6 +1173,7 @@ backStep1.style.display = 'none';
 
 // Step 2: Back returns to Step 1
 backStep2.onclick = function() {
+    updateProgressBar(1);
     console.log('Step 2 back button clicked'); // Debug log
     document.getElementById('step2').classList.add('d-none');
     document.getElementById('step1').classList.remove('d-none');
@@ -1180,12 +1181,14 @@ backStep2.onclick = function() {
 
 // Step 3: Back returns to Step 2
 backStep3.onclick = function() {
+    updateProgressBar(2);
     document.getElementById('step3').classList.add('d-none');
     document.getElementById('step2').classList.remove('d-none');
 };
 
 // Step 4: Back returns to Step 3
 backStep4.onclick = function() {
+    updateProgressBar(3);
     document.getElementById('step4').classList.add('d-none');
     document.getElementById('step3').classList.remove('d-none');
 };

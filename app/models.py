@@ -42,6 +42,7 @@ class SetupWizardData(db.Model):
     classrooms = db.Column(db.Text, nullable=True)  # JSON string of classroom data (specialist)
     grade_name = db.Column(db.String(100), nullable=True)  # Grade/class name for homeroom
     subject_name = db.Column(db.String(100), nullable=True)  # Subject name for specialist
+    competencies_skipped = db.Column(db.Boolean, default=False, nullable=False)  # Track if Step 4 was skipped
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
     

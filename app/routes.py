@@ -612,6 +612,7 @@ def submit_setup_wizard():
     classrooms_data = data.get('classrooms', [])
     grade_name = data.get('grade_name')
     subject_name = data.get('subject_name')  # For specialist teachers
+    competencies_skipped = data.get('competencies_skipped', False)
     
     try:
         # Save or update Setup Wizard data
@@ -628,6 +629,7 @@ def submit_setup_wizard():
             wizard_data.classrooms = json.dumps(classrooms_data)
             wizard_data.grade_name = grade_name
             wizard_data.subject_name = subject_name
+            wizard_data.competencies_skipped = competencies_skipped
         else:
             # Create new wizard data
             wizard_data = SetupWizardData(
@@ -641,7 +643,8 @@ def submit_setup_wizard():
                 weights=json.dumps(weights),
                 classrooms=json.dumps(classrooms_data),
                 grade_name=grade_name,
-                subject_name=subject_name
+                subject_name=subject_name,
+                competencies_skipped=competencies_skipped
             )
             db.session.add(wizard_data)
         
