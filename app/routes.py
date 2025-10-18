@@ -1551,6 +1551,16 @@ def dashboard():
         # Check for missing students and tests notifications
         notifications = []
         
+        # Check if competencies were skipped in setup wizard
+        wizard_data = SetupWizardData.query.filter_by(teacher_id=current_user.id).first()
+        if wizard_data and wizard_data.competencies_skipped:
+            notifications.append({
+                'type': 'competencies',
+                'message': _('You have not filled out your competency information yet. You will need to do this for the grade calculations to work correctly'),
+                'button_text': _('Complete Setup'),
+                'button_url': url_for('main.setup_wizard')
+            })
+        
         # Check for classes without students
         classes_without_students = []
         for classroom in all_classrooms:
@@ -1573,7 +1583,6 @@ def dashboard():
             })
         
         # Check for classes without tests (missing competency coverage)
-        wizard_data = SetupWizardData.query.filter_by(teacher_id=current_user.id).first()
         if wizard_data:
             competencies = json.loads(wizard_data.competencies) if wizard_data.competencies else []
             classes_without_tests = []

@@ -123,8 +123,9 @@
 <div id="step4-content">
     <!-- Dynamic tables will be rendered here by JS -->
 </div>
-        <div class="d-flex justify-content-end mt-3 wizard-btn-row" style="margin-top:18px;">
-            <button id="back-step4" type="button" class="btn btn-outline-secondary me-2">{{ _('Back') }}</button>
+        <div class="d-flex justify-content-between mt-3 wizard-btn-row" style="margin-top:18px;">
+            <button id="back-step4" type="button" class="btn btn-outline-secondary">{{ _('Back') }}</button>
+            <button id="skip-step4" type="button" class="btn btn-warning">{{ _('Skip for Now') }}</button>
             <button id="next-step4" type="button" class="btn btn-secondary" disabled>{{ _('Next') }}</button>
         </div>
     </div>
@@ -264,6 +265,15 @@ if (document.documentElement.lang === 'fr') {
 // Wizard state
 let teacherType = null;
 let previousWizardData = null;
+let competenciesSkipped = false;
+
+// Progress bar update function (7 total steps for both homeroom and specialist)
+function updateProgressBar(stepNumber) {
+    const progressBar = document.getElementById('wizard-progress-bar');
+    const percentage = (stepNumber / 7) * 100;
+    progressBar.style.width = percentage.toFixed(2) + '%';
+    progressBar.setAttribute('aria-valuenow', stepNumber);
+}
 
 // Load previous wizard data on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -402,6 +412,7 @@ function selectTeacherType(option) {
 }
 
 nextStep1.onclick = () => {
+    updateProgressBar(2);
     document.getElementById('step1').classList.add('d-none');
     document.getElementById('step2').classList.remove('d-none');
     // Show relevant fields
@@ -635,6 +646,7 @@ renderCompetenciesTable();
 
 // Step 2 -> Step 3
 nextStep2.onclick = () => {
+    updateProgressBar(3);
     document.getElementById('step2').classList.add('d-none');
     document.getElementById('step3').classList.remove('d-none');
     // Show correct UI for Step 3
@@ -697,6 +709,7 @@ document.getElementById('grades-list').addEventListener('input', validateStep3);
 
 // Step 3 -> Step 4
 nextStep3.onclick = () => {
+    updateProgressBar(4);
     document.getElementById('step3').classList.add('d-none');
     document.getElementById('step4').classList.remove('d-none');
     renderStep4Tables();
@@ -704,7 +717,22 @@ nextStep3.onclick = () => {
 
 // Step 4 -> Step 5
 const nextStep4 = document.getElementById('next-step4');
+const skipStep4 = document.getElementById('skip-step4');
+
+// Skip button handler - allows skipping competency associations
+skipStep4.onclick = () => {
+    competenciesSkipped = true;
+    // Clear all step4 weights
+    step4Weights = {};
+    updateProgressBar(5);
+    document.getElementById('step4').classList.add('d-none');
+    document.getElementById('step5').classList.remove('d-none');
+    renderStep5();
+};
+
 nextStep4.onclick = () => {
+    competenciesSkipped = false;
+    updateProgressBar(5);
     document.getElementById('step4').classList.add('d-none');
     document.getElementById('step5').classList.remove('d-none');
     renderStep5();
@@ -746,7 +774,8 @@ function submitWizardData(type) {
         weights: step4Weights,
         classrooms: specialistClassrooms,
         subject_name: subjectName,
-        grade_name: gradeName
+        grade_name: gradeName,
+        competencies_skipped: competenciesSkipped
     };
     // POST to backend and redirect
     fetch('/setup_wizard/submit', {
@@ -909,6 +938,7 @@ document.getElementById('classrooms-list').addEventListener('click', function(e)
 // Step 5 navigation
 const backStep5 = document.getElementById('back-step5');
 backStep5.onclick = () => {
+    updateProgressBar(4);
     document.getElementById('step5').classList.add('d-none');
     document.getElementById('step4').classList.remove('d-none');
 };
@@ -919,6 +949,7 @@ doneStep5.onclick = () => {
 };
 const nextStep5 = document.getElementById('next-step5');
 nextStep5.onclick = () => {
+    updateProgressBar(6);
     // Force hide Step 5
     const step5 = document.getElementById('step5');
     const step6 = document.getElementById('step6');
@@ -937,6 +968,7 @@ nextStep5.onclick = () => {
 // Step 6 navigation
 const backStep6 = document.getElementById('back-step6');
 backStep6.onclick = () => {
+    updateProgressBar(5);
     // Force hide Step 6
     const step5 = document.getElementById('step5');
     const step6 = document.getElementById('step6');
