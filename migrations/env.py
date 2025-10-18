@@ -14,29 +14,21 @@ if config.config_file_name is not None:
 
 
 
-# Get database URL from current Flask app
+# Get database URL and metadata from current Flask app
 try:
     # When running via flask db commands, current_app is available
     config.set_main_option('sqlalchemy.url', current_app.config['SQLALCHEMY_DATABASE_URI'])
-    try:
-        connectable = current_app.extensions['migrate'].db.engine
-    except (RuntimeError, KeyError):
-        # Use the app we created in the global scope
-        if '_app' in globals() and _app is not None:
-            connectable = _app.extensions['sqlalchemy'].engine
-        else:
-            from app import db
-            connectable = db.engine
     target_metadata = current_app.extensions['migrate'].db.metadata
     _app = None  # No need to create app
+    _db = None  # Will use current_app's db
 except RuntimeError:
     # Fallback for when running outside app context (e.g., alembic upgrade head)
-    from app import create_app, db
+    from app import create_app, db as _db
     _app = create_app(os.getenv('FLASK_ENV') or 'production')
     _app_context = _app.app_context()
     _app_context.push()
     config.set_main_option('sqlalchemy.url', _app.config['SQLALCHEMY_DATABASE_URI'])
-    target_metadata = db.metadata
+    target_metadata = _db.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -60,7 +52,7 @@ def run_migrations_offline():
     """
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=url, target_metadata=get_metadata(), literal_binds=True
+        url=url, target_metadata=target_metadata, literal_binds=True
     )
 
     with context.begin_transaction():
@@ -75,7 +67,17 @@ def run_migrations_online():
 
     """
 
-    connectable = db.engine
+    # Get the engine from the appropriate source
+    try:
+        connectable = current_app.extensions['migrate'].db.engine
+    except (RuntimeError, KeyError):
+        # Use the db we imported in the fallback
+        if _db is not None:
+            connectable = _db.engine
+        else:
+            # This shouldn't happen, but just in case
+            from app import db
+            connectable = db.engine
 
     with connectable.connect() as connection:
         context.configure(
