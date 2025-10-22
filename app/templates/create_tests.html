@@ -93,9 +93,14 @@
             
             <!-- Define Tests Form Section -->
             <div class="card mb-4" id="defineTestsCard" style="display: none;">
-                <div class="card-header">
-                    <h4>{{ _('Define Tests') }}</h4>
-                    <p class="mb-0">{{ _('Please input the following information to define a test:') }}</p>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4>{{ _('Define Tests') }}</h4>
+                        <p class="mb-0">{{ _('Please input the following information to define a test:') }}</p>
+                    </div>
+                    <div>
+                        <strong id="header_class_semester_info" class="text-muted"></strong>
+                    </div>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('main.create_tests') }}">
@@ -103,36 +108,6 @@
                         <input type="hidden" id="class_name" name="class_name">
                         <input type="hidden" id="semester" name="semester">
                         <input type="hidden" id="grade" name="grade">
-                        
-                        <!-- Display inherited values -->
-                        <div class="row mb-3">
-                            {% if teacher_type == 'specialist' %}
-                            <div class="col-md-4">
-                                <div class="d-flex align-items-center">
-                                    <span class="form-label me-2 mb-0">{{ _('Class') }}:</span>
-                                    <span class="bg-light border rounded px-3 py-2 flex-grow-1" id="display_class_name">
-                                        <em class="text-muted">{{ _('Select from filters above') }}</em>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="d-flex align-items-center">
-                                    <span class="form-label me-2 mb-0">{{ _('Semester') }}:</span>
-                                    <span class="bg-light border rounded px-3 py-2 flex-grow-1" id="display_semester">
-                                        <em class="text-muted">{{ _('Select from filters above') }}</em>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="d-flex align-items-center">
-                                    <span class="form-label me-2 mb-0">{{ _('Grade') }}:</span>
-                                    <span class="bg-light border rounded px-3 py-2 flex-grow-1" id="display_grade">
-                                        <em class="text-muted">{{ _('Select from filters above') }}</em>
-                                    </span>
-                                </div>
-                            </div>
-                            {% endif %}
-                        </div>
 
                         <div class="row">
                             <!-- Competency -->
@@ -531,47 +506,56 @@ function updateDefineTestsDisplay() {
     const globalClassFilter = document.getElementById('global_class_filter');
     const globalSemesterFilter = document.getElementById('global_semester_filter');
     
-    const displayClass = document.getElementById('display_class_name');
-    const displaySemester = document.getElementById('display_semester');
-    const displayGrade = document.getElementById('display_grade');
+    const headerInfo = document.getElementById('header_class_semester_info');
     
     const hiddenClass = document.getElementById('class_name');
     const hiddenSemester = document.getElementById('semester');
     const hiddenGrade = document.getElementById('grade');
     
     if (teacherType === 'specialist') {
-        // Update Class display and hidden input
+        // Update Class and hidden input
         if (globalClassFilter && globalClassFilter.value !== '') {
             const selectedOption = globalClassFilter.options[globalClassFilter.selectedIndex];
             const displayText = selectedOption.textContent;
-            if (displayClass) displayClass.innerHTML = displayText;
             if (hiddenClass) hiddenClass.value = globalClassFilter.value;
             
             // Extract grade from class selection
             const grade = selectedOption.getAttribute('data-grade');
-            if (grade) {
-                if (displayGrade) displayGrade.innerHTML = grade;
-                if (hiddenGrade) hiddenGrade.value = grade;
+            if (grade && hiddenGrade) {
+                hiddenGrade.value = grade;
+            }
+            
+            // Update header with class info
+            if (headerInfo && globalSemesterFilter && globalSemesterFilter.value !== '') {
+                headerInfo.textContent = `CLASS: ${displayText} - SEMESTER: ${globalSemesterFilter.value}`;
+            } else if (headerInfo) {
+                headerInfo.textContent = '';
             }
         } else {
-            if (displayClass) displayClass.innerHTML = '<em class="text-muted">{{ _("Select from filters above") }}</em>';
             if (hiddenClass) hiddenClass.value = '';
-            if (displayGrade) displayGrade.innerHTML = '<em class="text-muted">{{ _("Select from filters above") }}</em>';
             if (hiddenGrade) hiddenGrade.value = '';
+            if (headerInfo) headerInfo.textContent = '';
         }
     } else {
         // For homeroom teachers, use the current user's class
         if (hiddenClass) hiddenClass.value = '{{ current_user.class_name if current_user.class_name else "" }}';
         if (hiddenGrade) hiddenGrade.value = '{{ current_user.grade if current_user.grade else "" }}';
+        
+        // Update header for homeroom teachers
+        if (headerInfo && globalSemesterFilter && globalSemesterFilter.value !== '') {
+            const className = '{{ current_user.class_name if current_user.class_name else "" }}';
+            if (className) {
+                headerInfo.textContent = `CLASS: ${className} - SEMESTER: ${globalSemesterFilter.value}`;
+            }
+        }
     }
     
-    // Update Semester display and hidden input (for both teacher types)
+    // Update Semester hidden input (for both teacher types)
     if (globalSemesterFilter && globalSemesterFilter.value !== '') {
-        if (displaySemester) displaySemester.innerHTML = globalSemesterFilter.value;
         if (hiddenSemester) hiddenSemester.value = globalSemesterFilter.value;
     } else {
-        if (displaySemester) displaySemester.innerHTML = '<em class="text-muted">{{ _("Select from filters above") }}</em>';
         if (hiddenSemester) hiddenSemester.value = '';
+        if (headerInfo) headerInfo.textContent = '';
     }
 }
 
