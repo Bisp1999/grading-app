@@ -784,8 +784,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const hasStudents = (selectedInputMethod === 'manual' && students.length > 0) || 
                            (selectedInputMethod !== 'manual' && uploadedStudents.length > 0);
         
-        document.getElementById('add-another-class-btn').disabled = !hasStudents;
-        document.getElementById('done-btn').disabled = !hasStudents;
+        const addAnotherBtn = document.getElementById('add-another-class-btn');
+        const doneBtn = document.getElementById('done-btn');
+        const saveBtn = document.getElementById('save-students-btn');
+        
+        // For file upload, enable Save button when there are students
+        if (saveBtn && selectedInputMethod !== 'manual') {
+            saveBtn.disabled = !hasStudents || studentsSaved;
+        }
+        
+        // For manual entry, Add Another Class requires students
+        // For file upload, Add Another Class requires saved students
+        if (selectedInputMethod === 'manual') {
+            if (addAnotherBtn) addAnotherBtn.disabled = !hasStudents;
+            if (doneBtn) doneBtn.disabled = !hasStudents;
+        } else {
+            // File upload: require save before allowing navigation
+            if (addAnotherBtn) addAnotherBtn.disabled = !studentsSaved;
+            if (doneBtn) doneBtn.disabled = !studentsSaved;
+        }
     }
     
     document.getElementById('back-step3').addEventListener('click', function() {
