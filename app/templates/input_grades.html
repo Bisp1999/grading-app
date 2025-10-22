@@ -375,6 +375,8 @@ function selectTest(testId) {
             return response.json();
         })
         .then(data => {
+            console.log('API Response:', data);
+            
             if (data.error) {
                 alert('Error loading test: ' + data.error);
                 return;
@@ -382,6 +384,10 @@ function selectTest(testId) {
             
             selectedTestData = data.test;
             studentsData = data.students;
+            
+            console.log('Selected test data:', selectedTestData);
+            console.log('Students data:', studentsData);
+            console.log('Number of students:', studentsData.length);
             
             // Update UI
             displayTestDetails();
@@ -420,8 +426,24 @@ function displayTestDetails() {
 
 // Display students table for grade input
 function displayStudentsTable() {
+    console.log('displayStudentsTable called');
+    console.log('studentsData:', studentsData);
+    
     const tableBody = document.getElementById('studentsGradeTable');
+    if (!tableBody) {
+        console.error('Table body element not found!');
+        return;
+    }
+    
     tableBody.innerHTML = '';
+    
+    if (!studentsData || studentsData.length === 0) {
+        console.warn('No students data available');
+        tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No students found for this test</td></tr>';
+        return;
+    }
+    
+    console.log('Creating rows for', studentsData.length, 'students');
     
     studentsData.forEach((student, index) => {
         const row = document.createElement('tr');
