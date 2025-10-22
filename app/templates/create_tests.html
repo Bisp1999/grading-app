@@ -423,12 +423,22 @@ function editTest(testId) {
                 document.getElementById('submitButton').textContent = 'Update Test';
                 document.getElementById('deleteButton').style.display = 'block';
                 
-                // Scroll to form
-                const testForm = document.getElementById('testForm');
-                if (testForm) {
-                    testForm.scrollIntoView({ behavior: 'smooth' });
+                // Show the form card if it's hidden
+                const defineTestsCard = document.getElementById('defineTestsCard');
+                const createTestsBtn = document.getElementById('createTestsBtn');
+                
+                if (defineTestsCard) {
+                    // Make form visible if hidden
+                    if (defineTestsCard.style.display === 'none' || defineTestsCard.style.display === '') {
+                        defineTestsCard.style.display = 'block';
+                        if (createTestsBtn) {
+                            createTestsBtn.innerHTML = '<i class="fas fa-eye-slash me-1"></i>' + (translations['Hide Form'] || 'Hide Form');
+                        }
+                    }
+                    // Scroll to form
+                    defineTestsCard.scrollIntoView({ behavior: 'smooth' });
                 } else {
-                    console.warn('testForm element not found, cannot scroll');
+                    console.warn('defineTestsCard element not found, cannot scroll');
                 }
                 
                 console.log('Test data successfully loaded into form');
