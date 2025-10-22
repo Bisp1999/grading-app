@@ -804,10 +804,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add Another Class button handler
     document.getElementById('add-another-class-btn').addEventListener('click', function() {
+        console.log('Add Another Class button clicked');
+        console.log('Has students to save:', hasStudentsToSave());
+        
         if (hasStudentsToSave()) {
+            console.log('Saving students to database...');
             saveStudentsToDatabase(function() {
+                console.log('Students saved successfully, reloading classrooms...');
                 // After successful save, refresh classroom data and return to Step 2
                 loadTeacherClassrooms().then(() => {
+                    console.log('Classrooms reloaded, resetting state...');
                     // Reset for next class selection
                     selectedClass = null;
                     students = [];
@@ -820,9 +826,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Force re-render of tables with updated student counts
                     renderClassTables();
                     
+                    console.log('Showing Step 2...');
                     showStep(2);
+                }).catch(error => {
+                    console.error('Error loading classrooms:', error);
+                    alert('Error loading classrooms. Please refresh the page.');
                 });
             });
+        } else {
+            console.log('No students to save, button should be disabled');
         }
     });
     
