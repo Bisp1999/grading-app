@@ -424,7 +424,12 @@ function editTest(testId) {
                 document.getElementById('deleteButton').style.display = 'block';
                 
                 // Scroll to form
-                document.getElementById('testForm').scrollIntoView({ behavior: 'smooth' });
+                const testForm = document.getElementById('testForm');
+                if (testForm) {
+                    testForm.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    console.warn('testForm element not found, cannot scroll');
+                }
                 
                 console.log('Test data successfully loaded into form');
             } catch (formError) {
