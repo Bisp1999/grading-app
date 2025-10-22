@@ -788,7 +788,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('done-btn').disabled = !hasStudents;
     }
     
-    document.getElementById('backStep3').addEventListener('click', function() {
+    document.getElementById('back-step3').addEventListener('click', function() {
         showStep(2);
     });
     
@@ -919,15 +919,19 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById(`step${stepNumber}`).classList.remove('d-none');
         
         // Enable/disable back buttons based on step
+        const backStep1 = document.getElementById('back-step1');
+        const backStep2 = document.getElementById('back-step2');
+        const backStep3 = document.getElementById('back-step3');
+        
         if (stepNumber === 1) {
             // Step 1: no back button needed
-            document.getElementById('back-step1').disabled = true;
+            if (backStep1) backStep1.disabled = true;
         } else if (stepNumber === 2) {
             // Step 2: enable back to step 1
-            document.getElementById('back-step2').disabled = false;
+            if (backStep2) backStep2.disabled = false;
         } else if (stepNumber === 3) {
             // Step 3: enable back to step 2
-            document.getElementById('back-step3').disabled = false;
+            if (backStep3) backStep3.disabled = false;
         }
         
         // Update progress bar
