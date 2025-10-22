@@ -272,10 +272,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let teacherType = 'specialist'; // Will be loaded from API
     let students = []; // Array to store students for current class
     let uploadedStudents = []; // Array to store uploaded students
-    
-    // Real classroom data from database
+    let classStudentCounts = {}; // Track student counts per class
+    let studentsSaved = false; // Track if current students have been saved
     let teacherClassrooms = [];
-    let classStudentCounts = {};
     
     // Get DOM elements
     const nextStep1Btn = document.getElementById('next-step1');
