@@ -266,6 +266,13 @@ function updateGradeFromClass() {
 function updateFilterClassOptions() {
     const gradeSelect = document.getElementById('filter_grade');
     const classSelect = document.getElementById('filter_class');
+    
+    // Check if elements exist (they may not exist for homeroom teachers)
+    if (!gradeSelect || !classSelect) {
+        console.log('Filter elements not found, skipping updateFilterClassOptions');
+        return;
+    }
+    
     const selectedGrade = gradeSelect.value;
     const currentSelectedClass = classSelect.value; // Preserve current selection
     
