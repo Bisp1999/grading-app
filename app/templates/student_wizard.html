@@ -795,9 +795,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Done button handler
     document.getElementById('done-btn').addEventListener('click', function() {
         if (hasStudentsToSave()) {
-            saveStudentsToDatabase();
-            // Redirect to dashboard
-            window.location.href = '{{ url_for("main.dashboard") }}';
+            saveStudentsToDatabase(function() {
+                // Redirect to dashboard after successful save
+                window.location.href = '{{ url_for("main.dashboard") }}';
+            });
         }
     });
     
