@@ -1954,7 +1954,11 @@ def get_test_for_grading(test_id):
             
             current_app.logger.info(f"Checking classroom: name='{classroom_name}', grade='{grade}' against test grade='{test.grade}', class_name='{test.class_name}'")
             
-            if test.grade == grade and test.class_name == classroom_name:
+            # Match on class_name, and if test.grade is provided, also match on grade
+            class_name_matches = test.class_name == classroom_name
+            grade_matches = not test.grade or test.grade == grade  # Match if test.grade is empty or matches
+            
+            if class_name_matches and grade_matches:
                 target_classroom = classroom
                 current_app.logger.info(f"Found matching classroom: {classroom.id} - {classroom.name}")
                 break
