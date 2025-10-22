@@ -806,16 +806,59 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     document.getElementById('back-step3').addEventListener('click', function() {
+        console.log('Back button clicked, resetting studentsSaved');
+        studentsSaved = false; // Reset saved state when going back
         showStep(2);
     });
     
+    // Save Student Names button handler (file upload only)
+    const saveStudentsBtn = document.getElementById('save-students-btn');
+    console.log('Save Students Button element:', saveStudentsBtn);
+    if (saveStudentsBtn) {
+        console.log('Adding click listener to Save Student Names button');
+        saveStudentsBtn.addEventListener('click', function() {
+            console.log('=== Save Student Names button clicked ===');
+            console.log('selectedInputMethod:', selectedInputMethod);
+            console.log('uploadedStudents:', uploadedStudents);
+            console.log('hasStudentsToSave():', hasStudentsToSave());
+            
+            if (hasStudentsToSave()) {
+                console.log('Calling saveStudentsToDatabase...');
+                saveStudentsToDatabase(function() {
+                    console.log('Students saved successfully, updating UI');
+                    studentsSaved = true;
+                    updateNavigationButtons();
+                    // Show success feedback
+                    saveStudentsBtn.textContent = translations['Saved'] || 'Saved ✓';
+                    saveStudentsBtn.classList.remove('btn-primary');
+                    saveStudentsBtn.classList.add('btn-success');
+                    console.log('Save button updated to show success');
+                });
+            } else {
+                console.log('hasStudentsToSave() returned false, not saving');
+            }
+        });
+    } else {
+        console.log('Save Students Button not found in DOM');
+    }
+    
     // Done button handler
     document.getElementById('done-btn').addEventListener('click', function() {
-        if (hasStudentsToSave()) {
+        console.log('Done button clicked');
+        console.log('selectedInputMethod:', selectedInputMethod);
+        console.log('studentsSaved:', studentsSaved);
+        
+        // For manual entry, save before exiting
+        if (selectedInputMethod === 'manual' && hasStudentsToSave()) {
+            console.log('Manual entry: saving before exit');
             saveStudentsToDatabase(function() {
                 // Redirect to dashboard after successful save
                 window.location.href = '{{ url_for("main.dashboard") }}';
             });
+        } else {
+            // For file upload, students should already be saved, just exit
+            console.log('File upload: exiting without save (students already saved)');
+            window.location.href = '{{ url_for("main.dashboard") }}';
         }
     });
     
