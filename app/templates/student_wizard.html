@@ -818,7 +818,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     selectedClass = null;
                     students = [];
                     uploadedStudents = [];
-                    document.getElementById('nextStep2').disabled = true;
+                    studentsSaved = false;
+                    const nextStep2Btn = document.getElementById('next-step2');
+                    if (nextStep2Btn) nextStep2Btn.disabled = true;
+                    
+                    // Reset Save button if it exists
+                    const saveBtn = document.getElementById('save-students-btn');
+                    if (saveBtn) {
+                        saveBtn.textContent = translations['Save Student Names'] || 'Save Student Names';
+                        saveBtn.classList.remove('btn-success');
+                        saveBtn.classList.add('btn-primary');
+                        saveBtn.disabled = true;
+                    }
                     
                     // Clear any visual selection in Step 2 tables
                     clearClassSelection();
