@@ -1940,6 +1940,9 @@ def get_test_for_grading(test_id):
     if teacher_type == 'specialist':
         # For specialist teachers, get students from the specific class
         target_classroom = None
+        current_app.logger.info(f"Looking for students - Test grade: '{test.grade}', Test class_name: '{test.class_name}'")
+        current_app.logger.info(f"Available classrooms: {[(c.id, c.name) for c in all_classrooms]}")
+        
         for classroom in all_classrooms:
             if '(' in classroom.name and ')' in classroom.name:
                 parts = classroom.name.split(' (')
@@ -1949,12 +1952,18 @@ def get_test_for_grading(test_id):
                 classroom_name = classroom.name
                 grade = extract_grade_from_classroom_name(classroom.name)
             
+            current_app.logger.info(f"Checking classroom: name='{classroom_name}', grade='{grade}' against test grade='{test.grade}', class_name='{test.class_name}'")
+            
             if test.grade == grade and test.class_name == classroom_name:
                 target_classroom = classroom
+                current_app.logger.info(f"Found matching classroom: {classroom.id} - {classroom.name}")
                 break
         
         if target_classroom:
             students = Student.query.filter_by(classroom_id=target_classroom.id).order_by(Student.last_name, Student.first_name).all()
+            current_app.logger.info(f"Found {len(students)} students in classroom {target_classroom.id}")
+        else:
+            current_app.logger.warning(f"No matching classroom found for test {test_id}")
     else:
         # For homeroom teachers, get all students from their single classroom
         if all_classrooms:
