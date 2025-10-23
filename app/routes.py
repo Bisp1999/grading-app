@@ -355,9 +355,16 @@ def input_grades():
         # Count absent students (only those with Grade records marked as absent)
         absent_count = sum(1 for grade in all_grades if grade.absent)
         
+        # Debug logging
+        current_app.logger.info(f"Test {test.id} ({test.test_name}): {len(students)} students, {len(all_grades)} grade records, {graded_count} graded, {absent_count} absent")
+        if len(all_grades) > 0:
+            for grade in all_grades:
+                current_app.logger.info(f"  Student {grade.student_id}: grade={grade.grade}, absent={grade.absent}")
+        
         # Set grades_complete attribute
         # Grading is complete when ALL students have been graded (have grade OR absent)
         test.grades_complete = (graded_count == len(students) and len(students) > 0)
+        current_app.logger.info(f"Test {test.id} grades_complete: {test.grades_complete} (graded_count={graded_count}, len(students)={len(students)})")
         
         # Set has_absent_students attribute
         # Check if there are any students marked as absent for this test
