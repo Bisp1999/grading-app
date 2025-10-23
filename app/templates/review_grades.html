@@ -799,37 +799,40 @@ function buildGradeMatrix(data) {
             grandTotalCell.style.fontWeight = 'bold';
             grandTotalCell.style.backgroundColor = '#e7f3ff';
             
-            // Calculate weighted grand total: sum of (competency_percentage * competency_weight)
-            let weightedTotal = 0;
+            // Calculate weighted grand total: (Comp1% × Comp1_weight + Comp2% × Comp2_weight + ...) / (Comp1_weight + Comp2_weight + ...)
+            let weightedSum = 0;
+            let totalWeight = 0;
             let hasValidScores = false;
             
             competencies.forEach(competency => {
                 const competencyTests = testsByCompetency[competency];
                 
-                // Calculate weighted competency totals for this student (excluding ungraded tests)
-                let weightedSum = 0;
-                let totalWeight = 0;
+                // Calculate weighted competency percentage for this student (excluding ungraded tests)
+                let compWeightedSum = 0;
+                let compTotalWeight = 0;
                 
                 competencyTests.forEach(test => {
                     const studentGrades = grades[student.id] || {};
                     const grade = studentGrades[test.id];
                     if (grade !== undefined && grade !== null) {
                         const testPercentage = (grade / test.max_points) * 100;
-                        weightedSum += testPercentage * test.test_weight;
-                        totalWeight += test.test_weight;
+                        compWeightedSum += testPercentage * test.test_weight;
+                        compTotalWeight += test.test_weight;
                     }
                 });
                 
-                if (totalWeight > 0) {
-                    const competencyPercentage = weightedSum / totalWeight;
+                if (compTotalWeight > 0) {
+                    const competencyPercentage = compWeightedSum / compTotalWeight;
                     const competencyWeight = competency_weights[competency] || 0;
-                    weightedTotal += (competencyPercentage / 100) * competencyWeight;
+                    weightedSum += competencyPercentage * competencyWeight;
+                    totalWeight += competencyWeight;
                     hasValidScores = true;
                 }
             });
             
-            if (hasValidScores) {
-                grandTotalCell.innerHTML = `<div class="fw-bold">${weightedTotal.toFixed(1)}%</div>`;
+            if (hasValidScores && totalWeight > 0) {
+                const grandTotal = weightedSum / totalWeight;
+                grandTotalCell.innerHTML = `<div class="fw-bold">${grandTotal.toFixed(1)}%</div>`;
             } else {
                 grandTotalCell.innerHTML = '<div class="text-muted">--</div>';
             }
