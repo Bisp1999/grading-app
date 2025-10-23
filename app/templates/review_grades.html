@@ -1075,46 +1075,54 @@ function buildTestAverageRow(testsByCompetency, competencies, students, grades, 
         grandAvgCell.style.textAlign = 'center';
         grandAvgCell.style.fontWeight = 'bold';
         
-        // Calculate weighted average across all students
-        let totalWeightedScores = 0;
-        let validStudentCount = 0;
+        // Calculate weighted average of competency averages
+        // Formula: (Comp1_avg × Comp1_weight + Comp2_avg × Comp2_weight + ...) / (Comp1_weight + Comp2_weight + ...)
+        let weightedSum = 0;
+        let totalWeight = 0;
+        let hasValidAverages = false;
         
-        students.forEach(student => {
-            let weightedTotal = 0;
-            let hasValidScores = false;
+        competencies.forEach(competency => {
+            const competencyTests = testsByCompetency[competency];
             
-            competencies.forEach(competency => {
-                const competencyTests = testsByCompetency[competency];
-                let compTotalPoints = 0;
-                let compTotalMaxPoints = 0;
+            // Calculate competency average (same logic as competency column)
+            let compWeightedSum = 0;
+            let compTotalWeight = 0;
+            
+            competencyTests.forEach(test => {
+                // Calculate test average
+                let testTotal = 0;
+                let testCount = 0;
                 
-                competencyTests.forEach(test => {
+                students.forEach(student => {
                     const studentGrades = grades[student.id] || {};
                     const grade = studentGrades[test.id];
                     if (grade !== undefined && grade !== null) {
-                        compTotalPoints += grade;
-                        compTotalMaxPoints += test.max_points;
-                    } else {
-                        compTotalMaxPoints += test.max_points;
+                        const percentage = (grade / test.max_points) * 100;
+                        testTotal += percentage;
+                        testCount++;
                     }
                 });
                 
-                if (compTotalMaxPoints > 0) {
-                    const competencyPercentage = (compTotalPoints / compTotalMaxPoints) * 100;
-                    const competencyWeight = competency_weights[competency] || 0;
-                    weightedTotal += (competencyPercentage * competencyWeight) / 100;
-                    hasValidScores = true;
+                if (testCount > 0) {
+                    const testAvg = testTotal / testCount;
+                    const testWeight = test.test_weight || 0;
+                    compWeightedSum += testAvg * testWeight;
+                    compTotalWeight += testWeight;
                 }
             });
             
-            if (hasValidScores) {
-                totalWeightedScores += weightedTotal;
-                validStudentCount++;
+            // If this competency has valid data, add to grand total
+            if (compTotalWeight > 0) {
+                const competencyAvg = compWeightedSum / compTotalWeight;
+                const competencyWeight = competency_weights[competency] || 0;
+                weightedSum += competencyAvg * competencyWeight;
+                totalWeight += competencyWeight;
+                hasValidAverages = true;
             }
         });
         
-        if (validStudentCount > 0) {
-            const grandAvg = totalWeightedScores / validStudentCount;
+        if (hasValidAverages && totalWeight > 0) {
+            const grandAvg = weightedSum / totalWeight;
             grandAvgCell.innerHTML = `<div>${grandAvg.toFixed(1)}%</div>`;
         } else {
             grandAvgCell.innerHTML = '<div>--</div>';
