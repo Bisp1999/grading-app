@@ -2035,26 +2035,38 @@ def save_grades(test_id):
             grade_value = grade_data['grade']
             absent_value = grade_data.get('absent', False)
             
+            current_app.logger.info(f"Processing grade for student {student_id}: grade={grade_value}, absent={absent_value}")
+            
             # Check if grade already exists
             existing_grade = Grade.query.filter_by(
                 test_id=test_id,
                 student_id=student_id
             ).first()
             
-            if existing_grade:
-                # Update existing grade
-                existing_grade.grade = grade_value
-                existing_grade.absent = absent_value
-                existing_grade.updated_at = datetime.utcnow()
+            # Only save if there's actual data (grade exists OR student is absent)
+            # Skip students with no grade and not absent (empty records)
+            if grade_value is not None or absent_value:
+                if existing_grade:
+                    # Update existing grade
+                    existing_grade.grade = grade_value
+                    existing_grade.absent = absent_value
+                    existing_grade.updated_at = datetime.utcnow()
+                    current_app.logger.info(f"Updated grade for student {student_id}")
+                else:
+                    # Create new grade
+                    new_grade = Grade(
+                        test_id=test_id,
+                        student_id=student_id,
+                        grade=grade_value,
+                        absent=absent_value
+                    )
+                    db.session.add(new_grade)
+                    current_app.logger.info(f"Created new grade for student {student_id}")
             else:
-                # Create new grade
-                new_grade = Grade(
-                    test_id=test_id,
-                    student_id=student_id,
-                    grade=grade_value,
-                    absent=absent_value
-                )
-                db.session.add(new_grade)
+                # If there's an existing grade record but now it's empty, delete it
+                if existing_grade:
+                    db.session.delete(existing_grade)
+                    current_app.logger.info(f"Deleted empty grade record for student {student_id}")
         
         db.session.commit()
         
