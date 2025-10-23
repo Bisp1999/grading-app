@@ -651,6 +651,9 @@ function saveGrades() {
             // Hide the Input Grades card after successful save
             clearTestSelection();
             
+            // Reload the page to refresh the tests table with updated completion status
+            window.location.reload();
+            
             // Update the studentsData array and preserve display states
             studentsData.forEach(student => {
                 const gradeInput = document.getElementById(`grade_${student.id}`);

@@ -346,18 +346,18 @@ def input_grades():
             Grade.student_id.in_(student_ids)
         ).all()
         
-        # Count students with actual grades (not absent, not None)
-        grades_count = sum(1 for grade in all_grades if grade.grade is not None and not grade.absent)
+        # Count students with either a grade OR marked as absent
+        # A student is "graded" if they have a grade record with either:
+        # 1. A numeric grade (grade is not None), OR
+        # 2. Marked as absent (absent = True)
+        graded_count = sum(1 for grade in all_grades if (grade.grade is not None or grade.absent))
         
         # Count absent students (only those with Grade records marked as absent)
         absent_count = sum(1 for grade in all_grades if grade.absent)
         
-        # Total students who should have grades = all students - absent students
-        expected_students = len(students) - absent_count
-        
         # Set grades_complete attribute
-        # Grading is complete when: grades_count == expected_students AND expected_students > 0
-        test.grades_complete = (grades_count == expected_students and expected_students > 0)
+        # Grading is complete when ALL students have been graded (have grade OR absent)
+        test.grades_complete = (graded_count == len(students) and len(students) > 0)
         
         # Set has_absent_students attribute
         # Check if there are any students marked as absent for this test
