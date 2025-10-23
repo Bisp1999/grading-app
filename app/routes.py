@@ -330,6 +330,11 @@ def input_grades():
                 full_class_name = f"{test.class_name} ({test.grade})"
                 query_filters.append(Classroom.name == full_class_name)
                 print(f"DEBUG INPUT_GRADES: Looking for classroom: '{full_class_name}'")
+            elif test.class_name:
+                # Match by class name only (when grade is not specified)
+                # Match classrooms that start with the class name
+                query_filters.append(Classroom.name.like(f"{test.class_name}%"))
+                print(f"DEBUG INPUT_GRADES: Looking for class name pattern: '{test.class_name}%'")
             elif test.grade:
                 # Fallback: match any classroom containing the grade in parentheses
                 query_filters.append(Classroom.name.like(f"%({test.grade})%"))
