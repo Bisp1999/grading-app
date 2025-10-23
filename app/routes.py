@@ -323,15 +323,20 @@ def input_grades():
             # Match both class name and grade if available
             query_filters = [School.teacher_id == current_user.id]
             
+            print(f"DEBUG INPUT_GRADES: Test {test.id} - class_name='{test.class_name}', grade='{test.grade}'")
+            
             if test.class_name and test.grade:
                 # Try to match the exact classroom name format: "ClassName (Grade)"
                 full_class_name = f"{test.class_name} ({test.grade})"
                 query_filters.append(Classroom.name == full_class_name)
+                print(f"DEBUG INPUT_GRADES: Looking for classroom: '{full_class_name}'")
             elif test.grade:
                 # Fallback: match any classroom containing the grade in parentheses
                 query_filters.append(Classroom.name.like(f"%({test.grade})%"))
+                print(f"DEBUG INPUT_GRADES: Looking for grade pattern: '%({test.grade})%'")
             
             students = Student.query.join(Classroom).join(School).filter(*query_filters).all()
+            print(f"DEBUG INPUT_GRADES: Found {len(students)} students for test {test.id}")
         else:
             # For homeroom teachers, get students from all classes
             students = Student.query.join(Classroom).join(School).filter(
