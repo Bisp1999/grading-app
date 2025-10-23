@@ -339,9 +339,11 @@ def input_grades():
             print(f"DEBUG INPUT_GRADES: Found {len(students)} students for test {test.id}")
         else:
             # For homeroom teachers, get students from all classes
+            print(f"DEBUG INPUT_GRADES: Test {test.id} - Homeroom teacher, getting all students")
             students = Student.query.join(Classroom).join(School).filter(
                 School.teacher_id == current_user.id
             ).all()
+            print(f"DEBUG INPUT_GRADES: Found {len(students)} students for test {test.id}")
         
         # Count how many of the relevant students have grades for this test
         student_ids = [student.id for student in students]
