@@ -75,61 +75,59 @@
                     <div class="row">
                         <div class="col-12" id="bellGradeContainer" style="display:none;">
                             <hr/>
-                            <h5 class="mb-1">{{ _('Bell Grade a Test') }}</h5>
-                            <div id="bell_selected_test_name" class="text-muted mb-3" style="min-height: 1.2rem;"></div>
+                            
+                            <!-- Title with blue background -->
+                            <div class="bg-primary text-white p-3 mb-4">
+                                <h3 class="mb-0">{{ _('Bell Grade a Test') }}</h3>
+                            </div>
+                            
+                            <!-- Explanation text -->
+                            <p class="mb-4" style="font-size: 1.1rem;">
+                                {{ _("We'll provide you with 3 options of how you want the Bell Grade applied, and you'll be able to see how your students grade compared to their original scores.") }}
+                            </p>
+                            
+                            <!-- Three option cards -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-4">
+                                    <div class="border rounded p-4 text-center h-100" style="background-color: #f8f9fa;">
+                                        <h5 class="mb-3">{{ _('Flat Adjustment:') }}</h5>
+                                        <p class="mb-0">{{ _('Move all students grades equally') }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="border rounded p-4 text-center h-100" style="background-color: #f8f9fa;">
+                                        <h5 class="mb-3">{{ _('Square Root:') }}</h5>
+                                        <p class="mb-0">{{ _('Greater boost to lower scores') }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="border rounded p-4 text-center h-100" style="background-color: #f8f9fa;">
+                                        <h5 class="mb-3">{{ _('Linear Transformation') }}</h5>
+                                        <p class="mb-0">{{ _('Tighten and lift the scores') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Form section -->
                             <div id="bellGradeForm">
                                 <div class="row g-3 align-items-end">
-                                    <!-- 1) Select test (full width) -->
-                                    <div class="col-12">
-                                        <label class="form-label" for="bell_test_select">{{ _('Select Test to Bell Grade') }}</label>
+                                    <!-- Select test -->
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold" for="bell_test_select">{{ _('Select a test') }}</label>
                                         <select id="bell_test_select" class="form-select" onchange="onBellTestChanged()">
                                             <option value="">{{ _('Select a test...') }}</option>
                                         </select>
-                                        <div class="form-text">{{ _('Only tests for the current Class/Semester are listed.') }}</div>
                                     </div>
-
-                                    <!-- 2) Adjust class to new average (checkbox left, input right when ticked) -->
-                                    <div class="col-12 d-flex align-items-center">
-                                        <div class="form-check me-3 mb-0">
-                                            <input class="form-check-input" type="checkbox" id="bell_option_adjust_avg" onchange="toggleBellAdjustAvg()">
-                                            <label class="form-check-label" for="bell_option_adjust_avg">{{ _('Adjust class to a new average') }}</label>
-                                        </div>
-                                        <div id="bell_adjust_avg_options" class="d-none flex-grow-1">
-                                            <div class="row g-2">
-                                                <div class="col-sm-4">
-                                                    <label class="form-label small" for="bell_target_avg">{{ _('Target class average (%%)') }}</label>
-                                                    <input id="bell_target_avg" type="number" class="form-control" min="0" max="200" step="0.1" placeholder="e.g. 74">
-                                                </div>
-                                            </div>
-                                        </div>
+                                    
+                                    <!-- Target class average -->
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold" for="bell_target_avg">{{ _('Target class avg (%%)') }}</label>
+                                        <input id="bell_target_avg" type="number" class="form-control" min="0" max="100" step="0.1" placeholder="e.g. 75">
                                     </div>
-
-                                    <!-- 3) Allow > 100% (own line) -->
-                                    <div class="col-12">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="bell_allow_over_100">
-                                            <label class="form-check-label" for="bell_allow_over_100">{{ _('Allow scores > 100%%') }}</label>
-                                        </div>
-                                    </div>
-
-                                    <!-- 4) Bring up lower scores more than higher scores (checkbox left, input right) -->
-                                    <div class="col-12 d-flex align-items-center">
-                                        <div class="form-check me-3 mb-0">
-                                            <input class="form-check-input" type="checkbox" id="bell_option_boost_low" onchange="toggleBellBoostLow()">
-                                            <label class="form-check-label" for="bell_option_boost_low">{{ _('Bring up lower scores more than higher scores') }}</label>
-                                        </div>
-                                        <div id="bell_boost_low_options" class="d-none flex-grow-1">
-                                            <div class="row g-2">
-                                                <div class="col-sm-4">
-                                                    <label class="form-label small" for="bell_lowest_score">{{ _('Lowest score floor (%%)') }}</label>
-                                                    <input id="bell_lowest_score" type="number" class="form-control" min="0" max="100" step="0.1" placeholder="e.g. 50">
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-12 mt-2">
-                                        <button class="btn btn-primary" onclick="submitBellGrading()">{{ _('Generate Solution') }}</button>
+                                    
+                                    <!-- Generate button -->
+                                    <div class="col-md-4">
+                                        <button class="btn btn-primary w-100" onclick="submitBellGrading()">{{ _('Generate Options') }}</button>
                                     </div>
                                 </div>
                             </div>
