@@ -350,9 +350,6 @@ function submitBellGrading() {
         document.getElementById('bellGradeForm').style.display = 'none';
         const results = document.getElementById('bellGradeResults');
         results.style.display = 'block';
-        // Show test name
-        const nameDiv = document.getElementById('bell_selected_test_name');
-        if (data.test && data.test.name) nameDiv.textContent = data.test.name;
         const tbody = document.querySelector('#bellGradeTable tbody');
         tbody.innerHTML = '';
         data.students.forEach(s => {
