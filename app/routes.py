@@ -850,12 +850,18 @@ def bell_grade_scenarios():
         # Compute class average of available grades
         original_class_avg = sum(percentages) / len(percentages) if percentages else None
 
+        # Debug logging
+        print(f"DEBUG BELL_SCENARIOS: test_id={test_id}, adjust_avg={adjust_avg}, target_avg={target_avg}")
+        print(f"DEBUG BELL_SCENARIOS: grade_rows count={len(grade_rows)}, percentages count={len(percentages)}")
+        print(f"DEBUG BELL_SCENARIOS: original_class_avg={original_class_avg}")
+
         # Prepare helpers
         def cap100(val: float) -> float:
             return min(val, 100.0)
 
         # Compute scenarios based on selections
         if adjust_avg and (target_avg is None or original_class_avg is None):
+            print(f"DEBUG BELL_SCENARIOS: FAILING - adjust_avg={adjust_avg}, target_avg={target_avg}, original_class_avg={original_class_avg}")
             return jsonify({'error': 'Target average invalid or no graded data available for adjustment'}), 400
 
         if isinstance(target_avg, (int, float)):
