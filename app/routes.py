@@ -855,7 +855,7 @@ def bell_grade_scenarios():
             return min(val, 100.0)
 
         # Compute scenarios based on selections
-        if adjust_avg and (target_avg is None or original_class_avg in (None, 0)):
+        if adjust_avg and (target_avg is None or original_class_avg is None):
             return jsonify({'error': 'Target average invalid or no graded data available for adjustment'}), 400
 
         if isinstance(target_avg, (int, float)):
@@ -865,9 +865,9 @@ def bell_grade_scenarios():
 
         linear_diff = None
         ratio = None
-        if adjust_avg and original_class_avg not in (None, 0):
+        if adjust_avg and original_class_avg is not None:
             linear_diff = (target_avg or 0.0) - original_class_avg
-            ratio = (target_avg or 0.0) / original_class_avg if original_class_avg else None
+            ratio = (target_avg or 0.0) / original_class_avg if original_class_avg != 0 else None
 
         # Build response list maintaining name order by student last/first
         # Sort keys by name for consistent display
@@ -969,9 +969,9 @@ def apply_bell_selection():
         # Compute adjustment params
         linear_diff = None
         ratio = None
-        if adjust_avg and original_class_avg not in (None, 0):
+        if adjust_avg and original_class_avg is not None:
             linear_diff = (target_avg or 0.0) - original_class_avg
-            ratio = (target_avg or 0.0) / original_class_avg if original_class_avg else None
+            ratio = (target_avg or 0.0) / original_class_avg if original_class_avg != 0 else None
 
         def cap100(val: float) -> float:
             return min(val, 100.0)

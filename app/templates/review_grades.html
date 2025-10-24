@@ -277,10 +277,7 @@ function toggleBellBoostLow() {
 }
 
 function onBellTestChanged() {
-    const sel = document.getElementById('bell_test_select');
-    const nameDiv = document.getElementById('bell_selected_test_name');
-    const text = sel && sel.selectedIndex > 0 ? sel.options[sel.selectedIndex].textContent : '';
-    nameDiv.textContent = text;
+    // No longer needed - test name display removed from UI
 }
 
 function getGlobalFilterValues() {
