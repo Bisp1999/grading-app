@@ -359,8 +359,8 @@ function submitBellGrading() {
                 <td>${s.name}</td>
                 <td>${fmt(s.original)}</td>
                 <td>${fmt(s.linear)}</td>
-                <td>${fmt(s.percentage)}</td>
                 <td>${fmt(s.sqrt)}</td>
+                <td>${fmt(s.percentage)}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -386,7 +386,7 @@ function submitBellGrading() {
           sqrt: avg(vals.sqrt)
         };
         const headerCells = document.querySelectorAll('#bellGradeTable thead th');
-        // headerCells: [0]=name, [1]=original, [2]=linear, [3]=percentage, [4]=sqrt
+        // headerCells: [0]=name, [1]=original, [2]=linear, [3]=sqrt, [4]=percentage
         const setAvg = (idx, value) => {
           const th = headerCells[idx];
           if (!th) return;
@@ -400,8 +400,8 @@ function submitBellGrading() {
         };
         setAvg(1, avgs.original);
         setAvg(2, avgs.linear);
-        setAvg(3, avgs.percentage);
-        setAvg(4, avgs.sqrt);
+        setAvg(3, avgs.sqrt);
+        setAvg(4, avgs.percentage);
       })
       .catch(err => {
         console.error('Bell grading failed', err);

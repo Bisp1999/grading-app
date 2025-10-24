@@ -891,23 +891,28 @@ def bell_grade_scenarios():
             }
 
             if original is not None:
+                # Equal Adjustment: flat adjustment to all scores
                 if adjust_avg and linear_diff is not None:
                     val = original + linear_diff
                     if not allow_over_100:
                         val = cap100(val)
                     out['linear'] = val
 
-                if adjust_avg and ratio is not None:
-                    val = original * ratio
-                    if not allow_over_100:
-                        val = cap100(val)
-                    out['percentage'] = val
-
+                # Lower Boost: square root boost for lower scores
                 if boost_low:
                     val = math.sqrt(max(original, 0.0)) * 10.0
                     if lowest_score is not None:
                         val = max(val, lowest_score)
                     out['sqrt'] = val
+
+                # Typical Distribution: compress and lift
+                if adjust_avg and original_class_avg is not None:
+                    ratio = 0.85
+                    uplift = target_avg - (original_class_avg * ratio)
+                    val = (original * ratio) + uplift
+                    if not allow_over_100:
+                        val = cap100(val)
+                    out['percentage'] = val
 
             response_students.append(out)
 
