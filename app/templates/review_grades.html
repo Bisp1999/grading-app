@@ -137,15 +137,15 @@
                                     <h6 class="mb-0">{{ _('Proposed Adjustments') }}</h6>
                                     <button class="btn btn-sm btn-outline-secondary" onclick="editBellGrading()">{{ _('Edit Options') }}</button>
                                 </div>
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-bordered" id="bellGradeTable">
+                                <div>
+                                    <table class="table table-sm table-bordered" id="bellGradeTable" style="width: auto;">
                                         <thead class="table-light">
                                             <tr>
                                                 <th>{{ _('Student Name') }}</th>
-                                                <th>{{ _('Original Grades - baseline') }}</th>
-                                                <th>{{ _('Equal Adjustment') }}</th>
-                                                <th>{{ _('Lower Boost') }}</th>
-                                                <th>{{ _('Typical Distribution') }}</th>
+                                                <th class="text-center">{{ _('Original Grades - baseline') }}</th>
+                                                <th class="text-center">{{ _('Equal Adjustment') }}</th>
+                                                <th class="text-center">{{ _('Lower Boost') }}</th>
+                                                <th class="text-center">{{ _('Typical Distribution') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody></tbody>
@@ -357,10 +357,10 @@ function submitBellGrading() {
             const fmt = (v) => (v === null || v === undefined) ? '--' : v.toFixed(1);
             tr.innerHTML = `
                 <td>${s.name}</td>
-                <td>${fmt(s.original)}</td>
-                <td>${fmt(s.linear)}</td>
-                <td>${fmt(s.sqrt)}</td>
-                <td>${fmt(s.percentage)}</td>
+                <td class="text-center">${fmt(s.original)}</td>
+                <td class="text-center">${fmt(s.linear)}</td>
+                <td class="text-center">${fmt(s.sqrt)}</td>
+                <td class="text-center">${fmt(s.percentage)}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -390,12 +390,15 @@ function submitBellGrading() {
         const setAvg = (idx, value) => {
           const th = headerCells[idx];
           if (!th) return;
-          // Extract only the base title from the current TH (strip any previous avg line)
-          const baseText = th.textContent.split('\n')[0].replace(/\s*\(.*\)\s*$/,'').trim();
+          // Get original header text (without any previous average)
+          const originalText = th.getAttribute('data-original-text') || th.textContent.split('\n')[0].trim();
+          if (!th.getAttribute('data-original-text')) {
+            th.setAttribute('data-original-text', originalText);
+          }
           if (value === null) {
-            th.textContent = baseText;
+            th.innerHTML = originalText;
           } else {
-            th.innerHTML = `${baseText}<div class="text-muted small">Avg = ${value.toFixed(1)}%</div>`;
+            th.innerHTML = `${originalText}<br><span class="text-muted small">Avg = ${value.toFixed(1)}%</span>`;
           }
         };
         setAvg(1, avgs.original);
