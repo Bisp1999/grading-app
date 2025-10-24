@@ -137,8 +137,8 @@
                                     <h6 class="mb-0">{{ _('Proposed Adjustments') }}</h6>
                                     <button class="btn btn-sm btn-outline-secondary" onclick="editBellGrading()">{{ _('Edit Options') }}</button>
                                 </div>
-                                <div>
-                                    <table class="table table-sm table-bordered" id="bellGradeTable" style="width: auto;">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered" id="bellGradeTable" style="width: 80%;">
                                         <thead class="table-light">
                                             <tr>
                                                 <th>{{ _('Student Name') }}</th>
@@ -1021,7 +1021,7 @@ function buildTestAverageRow(testsByCompetency, competencies, students, grades, 
         
         // Competency average column
         const competencyAvgCell = document.createElement('td');
-        competencyAvgCell.style.backgroundColor = '#e9ecef';
+        competencyAvgCell.style.backgroundColor = '#fff3cd';
         competencyAvgCell.style.textAlign = 'center';
         competencyAvgCell.style.fontWeight = 'bold';
         
@@ -1066,7 +1066,7 @@ function buildTestAverageRow(testsByCompetency, competencies, students, grades, 
     // Grand total average (only if showing all competencies)
     if (showAllCompetencies && competencies.length > 1) {
         const grandAvgCell = document.createElement('td');
-        grandAvgCell.style.backgroundColor = '#e7f3ff';
+        grandAvgCell.style.backgroundColor = '#fff3cd';
         grandAvgCell.style.textAlign = 'center';
         grandAvgCell.style.fontWeight = 'bold';
         
