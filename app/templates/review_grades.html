@@ -90,19 +90,19 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-md-4">
                                     <div class="border rounded p-4 text-center h-100" style="background-color: #f8f9fa;">
-                                        <h5 class="mb-3">{{ _('Flat Adjustment:') }}</h5>
+                                        <h5 class="mb-3">{{ _('Equal Adjustment') }}</h5>
                                         <p class="mb-0">{{ _('Move all students grades equally') }}</p>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="border rounded p-4 text-center h-100" style="background-color: #f8f9fa;">
-                                        <h5 class="mb-3">{{ _('Square Root:') }}</h5>
+                                        <h5 class="mb-3">{{ _('Lower Boost') }}</h5>
                                         <p class="mb-0">{{ _('Greater boost to lower scores') }}</p>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="border rounded p-4 text-center h-100" style="background-color: #f8f9fa;">
-                                        <h5 class="mb-3">{{ _('Linear Transformation') }}</h5>
+                                        <h5 class="mb-3">{{ _('Typical Distribution') }}</h5>
                                         <p class="mb-0">{{ _('Tighten and lift the scores') }}</p>
                                     </div>
                                 </div>
@@ -143,9 +143,9 @@
                                             <tr>
                                                 <th>{{ _('Student Name') }}</th>
                                                 <th>{{ _('Original Grades - baseline') }}</th>
-                                                <th>{{ _('Flat Adjustment') }}</th>
-                                                <th>{{ _('Square Root') }}</th>
-                                                <th>{{ _('Linear Transformation') }}</th>
+                                                <th>{{ _('Equal Adjustment') }}</th>
+                                                <th>{{ _('Lower Boost') }}</th>
+                                                <th>{{ _('Typical Distribution') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody></tbody>
@@ -158,9 +158,9 @@
                                         <label class="form-label fw-bold" for="bell_option_select">{{ _('Which option would you like to apply?') }}</label>
                                         <select id="bell_option_select" class="form-select">
                                             <option value="original">{{ _('Keep original grades') }}</option>
-                                            <option value="linear">{{ _('Flat Adjustment') }}</option>
-                                            <option value="sqrt">{{ _('Square Root') }}</option>
-                                            <option value="percentage">{{ _('Linear Transformation') }}</option>
+                                            <option value="linear">{{ _('Equal Adjustment') }}</option>
+                                            <option value="sqrt">{{ _('Lower Boost') }}</option>
+                                            <option value="percentage">{{ _('Typical Distribution') }}</option>
                                         </select>
                                     </div>
                                     <div class="col-md-3">

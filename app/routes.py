@@ -829,7 +829,8 @@ def bell_grade_scenarios():
             .filter(Grade.test_id == test.id, School.teacher_id == current_user.id)
         )
         if class_name:
-            q = q.filter(Classroom.name == class_name)
+            # Match classrooms that start with the class name (e.g., '101' matches '101 (Grade 1)')
+            q = q.filter(Classroom.name.like(f"{class_name}%"))
         grade_rows = q.all()
 
         # Build original percentages and compute class average
