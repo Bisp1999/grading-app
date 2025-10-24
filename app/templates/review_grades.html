@@ -77,8 +77,8 @@
                             <hr/>
                             
                             <!-- Title with blue background -->
-                            <div class="bg-primary text-white p-3 mb-4">
-                                <h3 class="mb-0">{{ _('Bell Grade a Test') }}</h3>
+                            <div class="bg-primary text-white py-2 px-3 mb-4">
+                                <h5 class="mb-0">{{ _('Bell Grade a Test') }}</h5>
                             </div>
                             
                             <!-- Explanation text -->
@@ -113,7 +113,7 @@
                                 <div class="row g-3 align-items-end">
                                     <!-- Select test -->
                                     <div class="col-md-4">
-                                        <label class="form-label fw-bold" for="bell_test_select">{{ _('Select a test') }}</label>
+                                        <label class="form-label" for="bell_test_select">{{ _('Select a test') }}</label>
                                         <select id="bell_test_select" class="form-select" onchange="onBellTestChanged()">
                                             <option value="">{{ _('Select a test...') }}</option>
                                         </select>
@@ -121,7 +121,7 @@
                                     
                                     <!-- Target class average -->
                                     <div class="col-md-4">
-                                        <label class="form-label fw-bold" for="bell_target_avg">{{ _('Target class avg (%%)') }}</label>
+                                        <label class="form-label" for="bell_target_avg">{{ _('Target class avg (%%)') }}</label>
                                         <input id="bell_target_avg" type="number" class="form-control" min="0" max="100" step="0.1" placeholder="e.g. 75">
                                     </div>
                                     
