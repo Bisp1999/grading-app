@@ -900,7 +900,7 @@ def bell_grade_scenarios():
 
                 # Lower Boost: square root boost for lower scores
                 if boost_low and original_class_avg is not None:
-                    adjust = math.sqrt(max(original_class_avg, 0.0)) * 10.0 - original_class_avg
+                    adjust = math.sqrt(max(original_class_avg, 0.0)) * 10.0 - target_avg
                     val = math.sqrt(max(original, 0.0)) * 10.0 - adjust
                     if lowest_score is not None:
                         val = max(val, lowest_score)
