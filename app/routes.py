@@ -904,6 +904,8 @@ def bell_grade_scenarios():
                     val = math.sqrt(max(original, 0.0)) * 10.0 - adjust
                     if lowest_score is not None:
                         val = max(val, lowest_score)
+                    # Ensure scores never go down - use max of (original + 2) or calculated value
+                    val = max(original + 2.0, val)
                     out['sqrt'] = val
 
                 # Typical Distribution: compress and lift
@@ -1006,10 +1008,13 @@ def apply_bell_selection():
                 new_pct = orig_pct * ratio
                 if not allow_over_100:
                     new_pct = cap100(new_pct)
-            elif scenario == 'sqrt' and boost_low:
-                new_pct = math.sqrt(max(orig_pct, 0.0)) * 10.0
+            elif scenario == 'sqrt' and boost_low and original_class_avg is not None:
+                adjust = math.sqrt(max(original_class_avg, 0.0)) * 10.0 - target_avg
+                new_pct = math.sqrt(max(orig_pct, 0.0)) * 10.0 - adjust
                 if lowest_score is not None:
                     new_pct = max(new_pct, lowest_score)
+                # Ensure scores never go down - use max of (original + 2) or calculated value
+                new_pct = max(orig_pct + 2.0, new_pct)
 
             if new_pct is None:
                 continue
