@@ -941,6 +941,7 @@ def apply_bell_selection():
     from .models import Test, Grade, Student, Classroom, School
     try:
         data = request.get_json(force=True) or {}
+        current_app.logger.info(f"DEBUG APPLY_BELL_SELECTION: Called with data={data}")
         test_id = data.get('test_id')
         scenario = data.get('scenario')
         if not test_id or scenario not in ['original','linear','percentage','sqrt']:
