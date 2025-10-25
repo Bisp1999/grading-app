@@ -967,8 +967,10 @@ def apply_bell_selection():
             .filter(Grade.test_id == test.id, School.teacher_id == current_user.id)
         )
         if class_name:
-            q = q.filter(Classroom.name == class_name)
+            # Match classroom names that start with the class_name (e.g., "101" matches "101 (Grade 1)")
+            q = q.filter(Classroom.name.like(f"{class_name}%"))
         rows = q.all()
+        current_app.logger.info(f"DEBUG APPLY_BELL_SELECTION: Found {len(rows)} grade rows for test_id={test.id}, class_name={class_name}")
 
         # Build original percentages and class average
         percentages = []
