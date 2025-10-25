@@ -2065,6 +2065,58 @@ def get_test_for_grading(test_id):
         'students': students_data
     })
 
+@main.route('/admin/run_migration_grade_modifications', methods=['GET'])
+@login_required
+def run_migration_grade_modifications():
+    """Temporary endpoint to run grade modification migration on production.
+    DELETE THIS ENDPOINT AFTER RUNNING ONCE!"""
+    from sqlalchemy import text, inspect
+    
+    try:
+        # Check if columns already exist
+        inspector = inspect(db.engine)
+        columns = [col['name'] for col in inspector.get_columns('grade')]
+        
+        if 'original_grade' in columns:
+            return jsonify({
+                'success': True,
+                'message': 'Migration already completed. Columns already exist.',
+                'action': 'none'
+            })
+        
+        # Run migration
+        with db.engine.connect() as conn:
+            conn.execute(text("ALTER TABLE grade ADD COLUMN original_grade FLOAT"))
+            conn.execute(text("ALTER TABLE grade ADD COLUMN original_absent BOOLEAN"))
+            conn.execute(text("ALTER TABLE grade ADD COLUMN modification_type VARCHAR(50)"))
+            conn.execute(text("ALTER TABLE grade ADD COLUMN modification_notes TEXT"))
+            conn.execute(text("ALTER TABLE grade ADD COLUMN modified_at TIMESTAMP"))
+            conn.commit()
+        
+        # Backfill data
+        grades = Grade.query.all()
+        count = 0
+        for grade in grades:
+            grade.original_grade = grade.grade
+            grade.original_absent = grade.absent
+            count += 1
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Migration completed successfully! Backfilled {count} grade records.',
+            'action': 'completed',
+            'records_updated': count
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @main.route('/api/save_grades/<int:test_id>', methods=['POST'])
 @login_required
 def save_grades(test_id):
