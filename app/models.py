@@ -77,8 +77,18 @@ class Grade(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     test_id = db.Column(db.Integer, db.ForeignKey('test.id'), nullable=False)
     student_id = db.Column(db.Integer, db.ForeignKey('student.id'), nullable=False)
-    grade = db.Column(db.Float)  # Actual points earned (can be null if not graded yet)
-    absent = db.Column(db.Boolean, default=False, nullable=False)  # Track if student was absent
+    grade = db.Column(db.Float)  # Current/modified points earned (can be null if not graded yet)
+    absent = db.Column(db.Boolean, default=False, nullable=False)  # Current absence status
+    
+    # Original values (set when grade is first entered, never changed after)
+    original_grade = db.Column(db.Float)  # Original points when first entered
+    original_absent = db.Column(db.Boolean)  # Original absence status when first entered
+    
+    # Modification tracking
+    modification_type = db.Column(db.String(50))  # 'bell_grade', 'absence_override', 'manual_revision', None
+    modification_notes = db.Column(db.Text)  # Details about the modification
+    modified_at = db.Column(db.DateTime)  # When the modification was made
+    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

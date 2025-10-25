@@ -1021,6 +1021,18 @@ def apply_bell_selection():
             # Convert percent back to points
             new_points = (new_pct / 100.0) * test.max_points
             g.grade = round(new_points, 2)
+            
+            # Set modification tracking fields
+            scenario_names = {
+                'linear': 'Equal Adjustment',
+                'sqrt': 'Lower Boost',
+                'percentage': 'Typical Distribution',
+                'original': 'Original'
+            }
+            g.modification_type = 'bell_grade'
+            g.modification_notes = f"Bell Grade - {scenario_names.get(scenario, scenario)}, Target Avg: {target_avg}%"
+            g.modified_at = datetime.utcnow()
+            
             updated += 1
 
         # Persist changes
@@ -2084,18 +2096,20 @@ def save_grades(test_id):
             # Skip students with no grade and not absent (empty records)
             if grade_value is not None or absent_value:
                 if existing_grade:
-                    # Update existing grade
+                    # Update existing grade - only update current values, preserve original
                     existing_grade.grade = grade_value
                     existing_grade.absent = absent_value
                     existing_grade.updated_at = datetime.utcnow()
                     current_app.logger.info(f"Updated grade for student {student_id}")
                 else:
-                    # Create new grade
+                    # Create new grade - set both current and original values
                     new_grade = Grade(
                         test_id=test_id,
                         student_id=student_id,
                         grade=grade_value,
-                        absent=absent_value
+                        absent=absent_value,
+                        original_grade=grade_value,
+                        original_absent=absent_value
                     )
                     db.session.add(new_grade)
                     current_app.logger.info(f"Created new grade for student {student_id}")
