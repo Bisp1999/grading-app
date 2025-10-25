@@ -465,16 +465,25 @@ function applyBellSelection() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     })
-    .then(r => r.json())
+    .then(r => {
+        console.log('DEBUG APPLY: Fetch response received, status =', r.status);
+        return r.json();
+    })
     .then(data => {
-        if (data.error) { alert(data.error); return; }
+        console.log('DEBUG APPLY: Response data =', data);
+        if (data.error) { 
+            console.log('DEBUG APPLY: Error in response:', data.error);
+            alert(data.error); 
+            return; 
+        }
+        console.log('DEBUG APPLY: Success! Showing alert and refreshing');
         alert('Test scores have been changed.');
         // Hide bell container and refresh grade matrix
         document.getElementById('bellGradeContainer').style.display = 'none';
         loadGradeMatrix();
     })
     .catch(err => {
-        console.error('Apply bell selection failed', err);
+        console.error('DEBUG APPLY: Fetch failed with error:', err);
         alert('Error applying bell selection');
     });
 }
