@@ -419,20 +419,31 @@ function editBellGrading() {
 
 // Apply a selected scenario to persist grades
 function applyBellSelection() {
+    console.log('DEBUG APPLY: Function called');
     const testId = document.getElementById('bell_test_select').value;
+    console.log('DEBUG APPLY: testId =', testId);
     if (!testId) { alert('Please select a test'); return; }
     
     const scenario = document.getElementById('bell_option_select').value;
+    console.log('DEBUG APPLY: scenario =', scenario);
     if (!['original','linear','percentage','sqrt'].includes(scenario)) {
         alert('Please select a valid option');
         return;
     }
     
-    if (!confirm('This will replace student grades for this test. Continue?')) return;
+    console.log('DEBUG APPLY: Showing confirmation dialog');
+    if (!confirm('This will replace student grades for this test. Continue?')) {
+        console.log('DEBUG APPLY: User cancelled');
+        return;
+    }
+    console.log('DEBUG APPLY: User confirmed');
 
     const targetAvgVal = document.getElementById('bell_target_avg').value;
     const targetAvg = targetAvgVal ? parseFloat(targetAvgVal) : null;
+    console.log('DEBUG APPLY: targetAvg =', targetAvg);
+    
     const { className, semester, subject } = getGlobalFilterValues();
+    console.log('DEBUG APPLY: filters =', { className, semester, subject });
 
     const payload = {
         test_id: parseInt(testId),
@@ -446,6 +457,8 @@ function applyBellSelection() {
         semester: semester || null,
         subject: subject || null
     };
+    console.log('DEBUG APPLY: payload =', payload);
+    console.log('DEBUG APPLY: About to call fetch');
 
     fetch('/api/apply_bell_selection', {
         method: 'POST',
