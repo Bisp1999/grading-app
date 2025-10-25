@@ -1033,6 +1033,8 @@ def apply_bell_selection():
             g.modification_notes = f"Bell Grade - {scenario_names.get(scenario, scenario)}, Target Avg: {target_avg}%"
             g.modified_at = datetime.utcnow()
             
+            current_app.logger.info(f"Bell Grade: Updated grade_id={g.id}, student_id={g.student_id}, old={orig_pct:.1f}%, new={new_pct:.1f}%, points={new_points:.2f}")
+            
             updated += 1
 
         # Persist changes
