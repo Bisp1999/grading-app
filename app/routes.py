@@ -941,7 +941,6 @@ def apply_bell_selection():
     from .models import Test, Grade, Student, Classroom, School
     try:
         data = request.get_json(force=True) or {}
-        current_app.logger.info(f"DEBUG APPLY_BELL_SELECTION: Called with data={data}")
         test_id = data.get('test_id')
         scenario = data.get('scenario')
         if not test_id or scenario not in ['original','linear','percentage','sqrt']:
@@ -970,7 +969,6 @@ def apply_bell_selection():
             # Match classroom names that start with the class_name (e.g., "101" matches "101 (Grade 1)")
             q = q.filter(Classroom.name.like(f"{class_name}%"))
         rows = q.all()
-        current_app.logger.info(f"DEBUG APPLY_BELL_SELECTION: Found {len(rows)} grade rows for test_id={test.id}, class_name={class_name}")
 
         # Build original percentages and class average
         percentages = []
@@ -1035,8 +1033,6 @@ def apply_bell_selection():
             g.modification_type = 'bell_grade'
             g.modification_notes = f"Bell Grade - {scenario_names.get(scenario, scenario)}, Target Avg: {target_avg}%"
             g.modified_at = datetime.utcnow()
-            
-            current_app.logger.info(f"Bell Grade: Updated grade_id={g.id}, student_id={g.student_id}, old={orig_pct:.1f}%, new={new_pct:.1f}%, points={new_points:.2f}")
             
             updated += 1
 
