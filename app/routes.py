@@ -1938,9 +1938,10 @@ def delete_student(student_id):
         School.teacher_id==current_user.id
     ).first_or_404()
     classroom_id = student.classroom_id
+    # CASCADE delete will automatically remove all associated grades
     db.session.delete(student)
     db.session.commit()
-    flash('Student deleted!', 'info')
+    flash('Student and all associated grades deleted!', 'info')
     return redirect(url_for('main.manage_students', classroom_id=classroom_id))
 
 @main.route('/api/get_test/<int:test_id>')
@@ -2325,3 +2326,45 @@ def save_grade_updates():
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)})
+
+@main.route('/admin/migrate-cascade-delete')
+@login_required
+def admin_migrate_cascade_delete():
+    """Admin page to run CASCADE delete migration"""
+    return render_template('admin_migrate_cascade.html')
+
+@main.route('/admin/run-cascade-migration', methods=['POST'])
+@login_required
+def run_cascade_migration():
+    """Execute the CASCADE delete migration"""
+    from sqlalchemy import text
+    
+    try:
+        # Drop the existing foreign key constraint
+        db.session.execute(text("""
+            ALTER TABLE grade 
+            DROP CONSTRAINT IF EXISTS grade_student_id_fkey;
+        """))
+        
+        # Add the foreign key constraint with CASCADE delete
+        db.session.execute(text("""
+            ALTER TABLE grade 
+            ADD CONSTRAINT grade_student_id_fkey 
+            FOREIGN KEY (student_id) 
+            REFERENCES student(id) 
+            ON DELETE CASCADE;
+        """))
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'CASCADE delete migration completed successfully! Grades will now be automatically deleted when a student is deleted.'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })

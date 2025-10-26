@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}Admin - CASCADE Delete Migration{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h3 class="mb-0">⚠️ Database Migration: CASCADE Delete</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h5>What this migration does:</h5>
+                        <ul>
+                            <li>Adds CASCADE delete to the <code>grade.student_id</code> foreign key</li>
+                            <li>When a student is deleted, all their grades will be automatically deleted</li>
+                            <li>This prevents foreign key constraint violations</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <h5>⚠️ Important Notes:</h5>
+                        <ul>
+                            <li>This migration modifies the database constraint</li>
+                            <li>Run this migration <strong>once</strong> after deploying the code changes</li>
+                            <li>The migration is safe and will not delete any existing data</li>
+                            <li>After running, deleting a student will also delete their grades</li>
+                        </ul>
+                    </div>
+                    
+                    <div id="migration-status" class="alert d-none"></div>
+                    
+                    <div class="text-center">
+                        <button id="run-migration-btn" class="btn btn-primary btn-lg">
+                            Run CASCADE Delete Migration
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('run-migration-btn').addEventListener('click', function() {
+    const btn = this;
+    const statusDiv = document.getElementById('migration-status');
+    
+    if (!confirm('Are you sure you want to run this migration? This will modify the database constraint.')) {
+        return;
+    }
+    
+    btn.disabled = true;
+    btn.textContent = 'Running migration...';
+    statusDiv.className = 'alert alert-info';
+    statusDiv.textContent = 'Migration in progress...';
+    statusDiv.classList.remove('d-none');
+    
+    fetch('/admin/run-cascade-migration', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            statusDiv.className = 'alert alert-success';
+            statusDiv.innerHTML = '<strong>✅ Success!</strong><br>' + data.message;
+            btn.textContent = 'Migration Completed';
+            btn.className = 'btn btn-success btn-lg';
+        } else {
+            statusDiv.className = 'alert alert-danger';
+            statusDiv.innerHTML = '<strong>❌ Error!</strong><br>' + data.error;
+            btn.disabled = false;
+            btn.textContent = 'Retry Migration';
+        }
+    })
+    .catch(error => {
+        statusDiv.className = 'alert alert-danger';
+        statusDiv.innerHTML = '<strong>❌ Error!</strong><br>' + error.message;
+        btn.disabled = false;
+        btn.textContent = 'Retry Migration';
+    });
+});
+</script>
+{% endblock %}

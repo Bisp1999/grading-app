@@ -76,7 +76,7 @@ class Test(db.Model):
 class Grade(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     test_id = db.Column(db.Integer, db.ForeignKey('test.id'), nullable=False)
-    student_id = db.Column(db.Integer, db.ForeignKey('student.id'), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('student.id', ondelete='CASCADE'), nullable=False)
     grade = db.Column(db.Float)  # Current/modified points earned (can be null if not graded yet)
     absent = db.Column(db.Boolean, default=False, nullable=False)  # Current absence status
     

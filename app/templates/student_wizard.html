@@ -668,9 +668,17 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.remove-student-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const index = parseInt(this.getAttribute('data-index'));
-                students.splice(index, 1);
-                renderStudentsTable();
-                updateNavigationButtons();
+                const student = students[index];
+                
+                // First confirmation
+                if (confirm(`Are you sure you want to delete ${student.firstName} ${student.lastName}? Deleting the student will delete all grades associated with the student.`)) {
+                    // Second confirmation
+                    if (confirm('All grade data will be destroyed for this student. Do you want to proceed?')) {
+                        students.splice(index, 1);
+                        renderStudentsTable();
+                        updateNavigationButtons();
+                    }
+                }
             });
         });
     }
@@ -773,9 +781,17 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.remove-uploaded-student-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const index = parseInt(this.getAttribute('data-index'));
-                uploadedStudents.splice(index, 1);
-                renderUploadedStudentsTable();
-                updateNavigationButtons();
+                const student = uploadedStudents[index];
+                
+                // First confirmation
+                if (confirm(`Are you sure you want to delete ${student.firstName} ${student.lastName}? Deleting the student will delete all grades associated with the student.`)) {
+                    // Second confirmation
+                    if (confirm('All grade data will be destroyed for this student. Do you want to proceed?')) {
+                        uploadedStudents.splice(index, 1);
+                        renderUploadedStudentsTable();
+                        updateNavigationButtons();
+                    }
+                }
             });
         });
     }
