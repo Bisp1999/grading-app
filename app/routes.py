@@ -2327,39 +2327,41 @@ def save_grade_updates():
         db.session.rollback()
         return jsonify({'success': False, 'error': str(e)})
 
-@main.route('/admin/migrate-cascade-delete')
+@main.route('/admin/run_migration_cascade_delete', methods=['GET'])
 @login_required
-def admin_migrate_cascade_delete():
-    """Admin page to run CASCADE delete migration"""
-    return render_template('admin_migrate_cascade.html')
-
-@main.route('/admin/run-cascade-migration', methods=['POST'])
-@login_required
-def run_cascade_migration():
-    """Execute the CASCADE delete migration"""
-    from sqlalchemy import text
+def run_migration_cascade_delete():
+    """Temporary endpoint to run CASCADE delete migration on production.
+    DELETE THIS ENDPOINT AFTER RUNNING ONCE!"""
+    from sqlalchemy import text, inspect
     
     try:
-        # Drop the existing foreign key constraint
-        db.session.execute(text("""
-            ALTER TABLE grade 
-            DROP CONSTRAINT IF EXISTS grade_student_id_fkey;
-        """))
+        # Check if CASCADE delete is already set up by trying to query the constraint
+        inspector = inspect(db.engine)
         
-        # Add the foreign key constraint with CASCADE delete
-        db.session.execute(text("""
-            ALTER TABLE grade 
-            ADD CONSTRAINT grade_student_id_fkey 
-            FOREIGN KEY (student_id) 
-            REFERENCES student(id) 
-            ON DELETE CASCADE;
-        """))
-        
-        db.session.commit()
+        # Try to check if the constraint already has CASCADE
+        # We'll just run the migration - it's idempotent with DROP IF EXISTS
+        with db.engine.connect() as conn:
+            # Drop the existing foreign key constraint
+            conn.execute(text("""
+                ALTER TABLE grade 
+                DROP CONSTRAINT IF EXISTS grade_student_id_fkey;
+            """))
+            
+            # Add the foreign key constraint with CASCADE delete
+            conn.execute(text("""
+                ALTER TABLE grade 
+                ADD CONSTRAINT grade_student_id_fkey 
+                FOREIGN KEY (student_id) 
+                REFERENCES student(id) 
+                ON DELETE CASCADE;
+            """))
+            
+            conn.commit()
         
         return jsonify({
             'success': True,
-            'message': 'CASCADE delete migration completed successfully! Grades will now be automatically deleted when a student is deleted.'
+            'message': 'CASCADE delete migration completed successfully! Grades will now be automatically deleted when a student is deleted.',
+            'action': 'completed'
         })
         
     except Exception as e:
