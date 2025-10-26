@@ -1073,20 +1073,33 @@ def save_students():
         if not classroom:
             return jsonify({'success': False, 'error': 'Classroom not found'}), 404
         
-        # Clear existing students in this classroom (optional - could be append instead)
-        Student.query.filter_by(classroom_id=classroom_id).delete()
+        # Get existing students in this classroom
+        existing_students = Student.query.filter_by(classroom_id=classroom_id).all()
+        existing_students_map = {(s.first_name.lower(), s.last_name.lower()): s for s in existing_students}
         
-        # Add new students
+        # Track which students from the incoming data already exist
+        incoming_student_keys = set()
+        new_students_added = 0
+        
+        # Add or update students from incoming data
         for student_data in students_data:
-            student = Student(
-                first_name=student_data.get('firstName', '').strip(),
-                last_name=student_data.get('lastName', '').strip(),
-                classroom_id=classroom_id
-            )
-            db.session.add(student)
+            first_name = student_data.get('firstName', '').strip()
+            last_name = student_data.get('lastName', '').strip()
+            student_key = (first_name.lower(), last_name.lower())
+            incoming_student_keys.add(student_key)
+            
+            # Only add if student doesn't already exist
+            if student_key not in existing_students_map:
+                student = Student(
+                    first_name=first_name,
+                    last_name=last_name,
+                    classroom_id=classroom_id
+                )
+                db.session.add(student)
+                new_students_added += 1
         
         db.session.commit()
-        return jsonify({'success': True, 'count': len(students_data)})
+        return jsonify({'success': True, 'count': new_students_added, 'total': len(students_data)})
         
     except Exception as e:
         db.session.rollback()
