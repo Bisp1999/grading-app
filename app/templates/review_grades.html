@@ -681,7 +681,7 @@ function buildGradeMatrix(data) {
         competencyTotalHeader.innerHTML = `
             <div class="text-center fw-bold" style="background-color: #e9ecef; padding: 8px;">
                 <div>${translations.total} ${competency}</div>
-                <div class="small text-muted">${translations.weight} ${competencyWeight}%</div>
+                <div class="small text-muted" style="font-weight: normal;">Competency Weight: ${competencyWeight}%</div>
             </div>
         `;
         competencyTotalHeader.style.minWidth = '120px';
@@ -693,7 +693,7 @@ function buildGradeMatrix(data) {
     // Grand total header (only if showing all competencies)
     if (showAllCompetencies && competencies.length > 1) {
         const grandTotalHeader = document.createElement('th');
-        grandTotalHeader.innerHTML = translations.grandTotal + '<br/>(' + translations.weighted + ')';
+        grandTotalHeader.innerHTML = translations.grandTotal;
         grandTotalHeader.style.minWidth = '100px';
         grandTotalHeader.style.backgroundColor = '#e7f3ff';
         grandTotalHeader.style.textAlign = 'center';
