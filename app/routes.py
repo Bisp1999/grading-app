@@ -1710,40 +1710,49 @@ def dashboard():
             ).filter(
                 Test.teacher_id == current_user.id,
                 Grade.absent == True
-            ).order_by(Test.class_name, Student.last_name).all()
+            ).order_by(Test.test_date, Student.last_name).all()  # Sort by date first, then student name
             
             for grade, student, test in absent_grades:
                 makeup_tests.append({
                     'class_name': test.class_name,
                     'student_name': f"{student.first_name} {student.last_name}",
-                    'test_name': test.test_name
+                    'test_name': test.test_name,
+                    'test_date': test.test_date
                 })
         
-        # Get test and grade statistics
+        # Get ungraded tests (tests with no grades entered)
+        ungraded_tests = []
+        if setup_completed:
+            all_tests = Test.query.filter_by(teacher_id=current_user.id).all()
+            for test in all_tests:
+                # Check if test has any grades
+                has_grades = Grade.query.filter_by(test_id=test.id).first() is not None
+                if not has_grades:
+                    ungraded_tests.append({
+                        'class_name': test.class_name or 'N/A',
+                        'test_name': test.test_name,
+                        'test_date': test.test_date,
+                        'status': 'Not graded'
+                    })
+            # Sort by date (oldest first)
+            ungraded_tests.sort(key=lambda x: x['test_date'])
         
-        # Count total tests created
-        total_tests = Test.query.filter_by(teacher_id=current_user.id).count()
-        
-        # Count tests with grades entered
-        tests_with_grades = Test.query.filter_by(teacher_id=current_user.id).join(Grade).distinct().count()
-        
-        # Get recent tests (last 5)
-        recent_tests = Test.query.filter_by(teacher_id=current_user.id).order_by(Test.test_date.desc()).limit(5).all()
-        
-        # Calculate grade statistics if there are any grades
-        grade_stats = None
-        if tests_with_grades > 0:
-            # Get all grades for this teacher's tests
-            all_grades = db.session.query(Grade).join(Test).filter(Test.teacher_id == current_user.id).all()
-            if all_grades:
-                grade_values = [g.grade for g in all_grades if g.grade is not None]
-                if grade_values:
-                    grade_stats = {
-                        'total_grades_entered': len(grade_values),
-                        'average_grade': round(sum(grade_values) / len(grade_values), 1),
-                        'highest_grade': max(grade_values),
-                        'lowest_grade': min(grade_values)
-                    }
+        # Get upcoming tests (tests with future dates or today's date)
+        upcoming_tests = []
+        if setup_completed:
+            today = date.today()
+            future_tests = Test.query.filter(
+                Test.teacher_id == current_user.id,
+                Test.test_date >= today
+            ).order_by(Test.test_date).all()
+            
+            for test in future_tests:
+                upcoming_tests.append({
+                    'class_name': test.class_name or 'N/A',
+                    'test_name': test.test_name,
+                    'test_date': test.test_date,
+                    'status': 'Upcoming'
+                })
         
         dashboard_data.update({
             'teacher_type': teacher_type,
@@ -1751,10 +1760,8 @@ def dashboard():
             'all_classrooms': all_classrooms,
             'notifications': notifications,
             'makeup_tests': makeup_tests,
-            'total_tests': total_tests,
-            'tests_with_grades': tests_with_grades,
-            'recent_tests': recent_tests,
-            'grade_stats': grade_stats
+            'ungraded_tests': ungraded_tests,
+            'upcoming_tests': upcoming_tests
         })
     
     return render_template('dashboard.html', **dashboard_data)
