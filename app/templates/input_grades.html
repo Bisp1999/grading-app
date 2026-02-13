@@ -271,6 +271,46 @@ let selectedTestId = null;
 let selectedTestData = null;
 let studentsData = [];
 
+function moveFocusToNextGradeInput(currentEl) {
+    const gradeInputs = Array.from(document.querySelectorAll('#studentsGradeTable .grade-input'));
+    const currentIndex = gradeInputs.indexOf(currentEl);
+    if (currentIndex === -1) return;
+
+    for (let i = currentIndex + 1; i < gradeInputs.length; i++) {
+        if (!gradeInputs[i].disabled) {
+            gradeInputs[i].focus();
+            gradeInputs[i].select();
+            return;
+        }
+    }
+
+    const saveBtn = document.getElementById('saveGradesBtn');
+    if (saveBtn) saveBtn.focus();
+}
+
+// Fallback: handle Enter at the document level (capture) so it works even if the table is re-rendered
+if (!window.__gradeEnterAdvanceAttached) {
+    document.addEventListener('keydown', function(e) {
+        const target = e.target;
+        if (!target || !(target instanceof HTMLElement)) return;
+        if (!target.classList.contains('grade-input')) return;
+
+        const isEnter = (
+            e.key === 'Enter' ||
+            e.key === 'NumpadEnter' ||
+            e.code === 'Enter' ||
+            e.code === 'NumpadEnter' ||
+            e.keyCode === 13 ||
+            e.which === 13
+        );
+        if (!isEnter) return;
+
+        e.preventDefault();
+        moveFocusToNextGradeInput(target);
+    }, true);
+    window.__gradeEnterAdvanceAttached = true;
+}
+
 // Filter tests based on global filters
 function filterTests() {
     // Get values from global filters in header
@@ -436,6 +476,30 @@ function displayStudentsTable() {
     }
     
     tableBody.innerHTML = '';
+
+    // Pressing Enter in a grade input moves focus to the next student's grade input
+    // (Delegated handler so it keeps working even if we re-render the rows)
+    if (!tableBody.dataset.enterHandlerAttached) {
+        tableBody.addEventListener('keydown', function(e) {
+            const target = e.target;
+            if (!target || !(target instanceof HTMLElement)) return;
+            if (!target.classList.contains('grade-input')) return;
+
+            const isEnter = (
+                e.key === 'Enter' ||
+                e.key === 'NumpadEnter' ||
+                e.code === 'Enter' ||
+                e.code === 'NumpadEnter' ||
+                e.keyCode === 13 ||
+                e.which === 13
+            );
+            if (!isEnter) return;
+
+            e.preventDefault();
+            moveFocusToNextGradeInput(target);
+        });
+        tableBody.dataset.enterHandlerAttached = 'true';
+    }
     
     if (!studentsData || studentsData.length === 0) {
         console.warn('No students data available');
@@ -450,12 +514,11 @@ function displayStudentsTable() {
         row.innerHTML = `
             <td>${student.first_name} ${student.last_name}</td>
             <td>
-                <input type="number" 
+                <input type="text" 
                        class="form-control grade-input" 
                        id="grade_${student.id}" 
-                       min="0" 
-                       max="${selectedTestData.max_points}" 
-                       step="0.5"
+                       inputmode="decimal"
+                       data-max="${selectedTestData.max_points}"
                        value="${student.grade || ''}"
                        onchange="updateGradeDisplay(${student.id})"
                        placeholder="${translations['Enter grade']}">
@@ -470,6 +533,8 @@ function displayStudentsTable() {
             </td>
         `;
         tableBody.appendChild(row);
+
+        const gradeInput = document.getElementById(`grade_${student.id}`);
         
         // Attach event listener to absent checkbox after DOM element is created
         const absentCheckbox = document.getElementById(`absent_${student.id}`);
