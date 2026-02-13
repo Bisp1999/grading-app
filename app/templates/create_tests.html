@@ -109,6 +109,18 @@
                         <input type="hidden" id="semester" name="semester">
                         <input type="hidden" id="grade" name="grade">
 
+                        {% if teacher_type == 'specialist' %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="test_scope" class="form-label">{{ _('Test scope') }}:</label>
+                                <select class="form-select" id="test_scope" name="test_scope" required>
+                                    <option value="class_only">{{ _('Create test for this class only') }}</option>
+                                    <option value="grade_all" selected>{{ _('Create test for all classes in the grade') }}</option>
+                                </select>
+                            </div>
+                        </div>
+                        {% endif %}
+
                         <div class="row">
                             <!-- Competency -->
                             <div class="col-md-4 mb-3">
@@ -397,6 +409,12 @@ function editTest(testId) {
                 document.getElementById('editTestId').value = testId;
                 document.getElementById('submitButton').textContent = 'Update Test';
                 document.getElementById('deleteButton').style.display = 'block';
+
+                const scopeSelect = document.getElementById('test_scope');
+                if (scopeSelect) {
+                    scopeSelect.value = 'class_only';
+                    scopeSelect.disabled = true;
+                }
                 
                 // Show the form card if it's hidden
                 const defineTestsCard = document.getElementById('defineTestsCard');
@@ -457,6 +475,12 @@ function resetForm() {
     document.getElementById('editTestId').value = '';
     document.getElementById('submitButton').textContent = 'Create Test';
     document.getElementById('deleteButton').style.display = 'none';
+
+    const scopeSelect = document.getElementById('test_scope');
+    if (scopeSelect) {
+        scopeSelect.value = 'grade_all';
+        scopeSelect.disabled = false;
+    }
 }
 
 // Function to check if Class and Semester are selected and update Create Tests button
@@ -520,7 +544,13 @@ function updateDefineTestsDisplay() {
             if (hiddenClass) hiddenClass.value = globalClassFilter.value;
             
             // Extract grade from class selection
-            const grade = selectedOption.getAttribute('data-grade');
+            let grade = selectedOption.getAttribute('data-grade');
+            if (!grade) {
+                const match = (displayText || '').match(/\(([^)]+)\)\s*$/);
+                if (match && match[1]) {
+                    grade = match[1];
+                }
+            }
             if (grade && hiddenGrade) {
                 hiddenGrade.value = grade;
             }
@@ -667,6 +697,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const createTestsBtn = document.getElementById('createTestsBtn');
     if (createTestsBtn) {
         createTestsBtn.addEventListener('click', toggleDefineTestsCard);
+    }
+
+    // Ensure hidden fields (class/grade/semester) are up-to-date right before submitting the form
+    const defineTestsForm = document.querySelector('#defineTestsCard form');
+    if (defineTestsForm) {
+        defineTestsForm.addEventListener('submit', function() {
+            updateDefineTestsDisplay();
+        });
     }
     
     // Set today's date as default for test date

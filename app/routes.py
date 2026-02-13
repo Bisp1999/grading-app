@@ -552,6 +552,11 @@ def create_tests():
     if request.method == 'POST':
         try:
             test_id = request.form.get('test_id')
+            test_scope = request.form.get('test_scope', 'grade_all')
+            form_semester = (request.form.get('semester') or '').strip()
+            form_grade = (request.form.get('grade') or '').strip()
+            form_class_name = (request.form.get('class_name') or '').strip()
+            form_subject = (request.form.get('subject') or '').strip()
             
             if test_id:
                 # Update existing test
@@ -560,10 +565,10 @@ def create_tests():
                     flash('Test not found.', 'error')
                     return redirect(url_for('main.create_tests'))
                 
-                test.semester = request.form['semester']
-                test.grade = request.form.get('grade', '')
-                test.class_name = request.form.get('class_name', '')
-                test.subject = request.form.get('subject', '')
+                test.semester = form_semester
+                test.grade = form_grade
+                test.class_name = form_class_name
+                test.subject = form_subject
                 test.competency = request.form['competency']
                 test.test_name = request.form['test_name']
                 test.max_points = int(request.form['max_points'])
@@ -572,22 +577,48 @@ def create_tests():
                 
                 flash('Test updated successfully!', 'success')
             else:
-                # Create new test
-                test = Test(
-                    teacher_id=current_user.id,
-                    semester=request.form['semester'],
-                    grade=request.form.get('grade', ''),
-                    class_name=request.form.get('class_name', ''),
-                    subject=request.form.get('subject', ''),
-                    competency=request.form['competency'],
-                    test_name=request.form['test_name'],
-                    max_points=int(request.form['max_points']),
-                    test_date=datetime.strptime(request.form['test_date'], '%Y-%m-%d').date(),
-                    test_weight=float(request.form['test_weight'])
-                )
-                
-                db.session.add(test)
-                flash('Test created successfully!', 'success')
+                if teacher_type == 'specialist' and test_scope == 'grade_all':
+                    selected_grade = form_grade
+                    class_names = classrooms_by_grade.get(selected_grade, []) if selected_grade else []
+
+                    if not selected_grade or not class_names:
+                        flash('Please select a Grade/Class before creating tests.', 'error')
+                        return redirect(url_for('main.create_tests'))
+
+                    tests_to_create = []
+                    for class_name in class_names:
+                        tests_to_create.append(Test(
+                            teacher_id=current_user.id,
+                            semester=form_semester,
+                            grade=selected_grade,
+                            class_name=class_name,
+                            subject=form_subject,
+                            competency=request.form['competency'],
+                            test_name=request.form['test_name'],
+                            max_points=int(request.form['max_points']),
+                            test_date=datetime.strptime(request.form['test_date'], '%Y-%m-%d').date(),
+                            test_weight=float(request.form['test_weight'])
+                        ))
+
+                    db.session.add_all(tests_to_create)
+                    flash('Tests created successfully!', 'success')
+                else:
+                    # Create new test
+                    test = Test(
+                        teacher_id=current_user.id,
+                        semester=form_semester,
+                        grade=form_grade,
+                        class_name=form_class_name,
+                        subject=form_subject,
+                        competency=request.form['competency'],
+                        test_name=request.form['test_name'],
+                        max_points=int(request.form['max_points']),
+                        test_date=datetime.strptime(request.form['test_date'], '%Y-%m-%d').date(),
+                        test_weight=float(request.form['test_weight'])
+                    )
+                    
+                    db.session.add(test)
+                    flash('Test created successfully!', 'success')
             
             db.session.commit()
             return redirect(url_for('main.create_tests'))

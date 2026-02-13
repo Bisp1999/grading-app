@@ -203,6 +203,7 @@ function initializeGlobalFiltersFromBase() {
                         const option = document.createElement('option');
                         option.value = classroom.name;
                         option.textContent = `${classroom.name} (${classroom.grade})`;
+                        option.setAttribute('data-grade', classroom.grade);
                         globalClassFilter.appendChild(option);
                     });
                 }
