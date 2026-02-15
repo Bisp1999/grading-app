@@ -54,9 +54,17 @@ def create_app(config_name=None):
     @app.context_processor
     def inject_conf_vars():
         from flask_babel import get_locale
+        static_version = (
+            app.config.get('STATIC_VERSION')
+            or os.environ.get('STATIC_VERSION')
+            or os.environ.get('RAILWAY_GIT_COMMIT_SHA')
+            or os.environ.get('RAILWAY_DEPLOYMENT_ID')
+            or 'dev'
+        )
         return {
             'get_locale': get_locale,
-            'LANGUAGES': {'en': 'English', 'fr': 'Français'}
+            'LANGUAGES': {'en': 'English', 'fr': 'Français'},
+            'static_version': static_version,
         }
 
     from .routes import main as main_blueprint
