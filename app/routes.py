@@ -408,8 +408,8 @@ def input_grades():
 
         if wizard_classrooms:
             for classroom in wizard_classrooms:
-                classroom_name = (classroom.get('name') or '').strip()
-                grade = (classroom.get('grade') or '').strip()
+                classroom_name = str(classroom.get('name') or '').strip()
+                grade = str(classroom.get('grade') or '').strip()
 
                 if not classroom_name or not grade:
                     continue
