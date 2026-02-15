@@ -89,7 +89,7 @@
                     
                     <!-- Tests Table -->
                     <div class="table-responsive mt-3" id="testsTable" style="display: none;">
-                        <table class="table table-striped">
+                        <table class="table">
                             <thead>
                                 <tr>
                                     <th>{{ _('Test Name') }}</th>
@@ -104,6 +104,7 @@
                             <tbody id="testsTableBody">
                                 {% for test in tests %}
                                 <tr class="test-row" 
+                                    data-test-id="{{ test.id }}"
                                     data-semester="{{ test.semester }}"
                                     data-grade="{{ test.grade or '' }}"
                                     data-class="{{ test.class_name or '' }}"
@@ -405,6 +406,13 @@ function updateFilterClassOptions() {
 // Select a test for grade input
 function selectTest(testId) {
     selectedTestId = testId;
+
+    // Update selected row highlight in the tests table
+    document.querySelectorAll('.test-row.table-active').forEach(row => row.classList.remove('table-active'));
+    const selectedRow = document.querySelector(`.test-row[data-test-id="${testId}"]`);
+    if (selectedRow) {
+        selectedRow.classList.add('table-active');
+    }
     
     // Fetch test details and students
     fetch(`/api/get_test_for_grading/${testId}`)
@@ -863,6 +871,9 @@ function initializeGlobalFilters() {
 
 // Handle global filter changes
 function onGlobalFiltersChanged() {
+    // Changing global filters invalidates any previously selected test
+    clearTestSelection();
+    document.querySelectorAll('.test-row.table-active').forEach(row => row.classList.remove('table-active'));
     filterTests();
 }
 

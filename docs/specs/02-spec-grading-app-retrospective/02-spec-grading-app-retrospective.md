@@ -442,6 +442,24 @@ This section intentionally lists gaps seen in the existing implementation.
   - Acceptance criteria / proof artifacts:
     - A backup can be triggered and produces an artifact that can be restored into a fresh environment.
     - Production backup artifacts are access-controlled and encrypted.
+- **Minimal regression smoke test script (high-signal checklist)**
+  - Create a lightweight, repeatable test script/checklist to run after any change that touches shared data models, routes, templates, or caching.
+  - Goal: catch accidental regressions early (e.g. Create Tests changes breaking Input Grades).
+  - Proposed minimum coverage (manual checklist or automated script):
+    - Login/logout
+    - Setup Wizard data present (global dropdowns populate)
+    - Create Tests:
+      - Create test (class-only)
+      - Create test (grade-wide)
+      - Edit + delete test
+    - Input Grades:
+      - Load a class+semester
+      - Enter a grade, save, refresh, verify persistence
+    - Review Grades:
+      - Load matrix for a class+semester
+  - Acceptance criteria / proof artifacts:
+    - A single documented checklist exists in the repo and can be executed in <10 minutes.
+    - Any change that affects core flows includes evidence that the checklist was run (notes, screenshots, or log output).
 - **Monitoring / uptime alerting**
   - Monitor the public web service and notify when the service is down.
   - Notification requirement: email notifications only.

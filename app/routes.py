@@ -319,28 +319,59 @@ def input_grades():
     for test in tests:
         # Get students for this test based on teacher type and test details
         if teacher_type == 'specialist':
-            # For specialist teachers, get students from the specific class
-            # Match both class name and grade if available
-            query_filters = [School.teacher_id == current_user.id]
-            
+            # For specialist teachers, get students from the specific class.
+            # Do NOT depend on parsing/formatting Classroom.name like "Class (Grade X)", since
+            # grade labels are teacher-defined (e.g., "5" vs "Grade 5").
+
+            def _normalize_grade_label(value):
+                if value is None:
+                    return ''
+                s = str(value).strip()
+                if not s:
+                    return ''
+                lower = s.lower()
+                if lower.startswith('grade '):
+                    s = s[6:].strip()
+                return s
+
+            normalized_test_grade = _normalize_grade_label(test.grade)
+            target_classroom = None
+            class_name_candidates = []
+
             print(f"DEBUG INPUT_GRADES: Test {test.id} - class_name='{test.class_name}', grade='{test.grade}'")
-            
-            if test.class_name and test.grade:
-                # Try to match the exact classroom name format: "ClassName (Grade)"
-                full_class_name = f"{test.class_name} ({test.grade})"
-                query_filters.append(Classroom.name == full_class_name)
-                print(f"DEBUG INPUT_GRADES: Looking for classroom: '{full_class_name}'")
-            elif test.class_name:
-                # Match by class name only (when grade is not specified)
-                # Match classrooms that start with the class name
-                query_filters.append(Classroom.name.like(f"{test.class_name}%"))
-                print(f"DEBUG INPUT_GRADES: Looking for class name pattern: '{test.class_name}%'")
-            elif test.grade:
-                # Fallback: match any classroom containing the grade in parentheses
-                query_filters.append(Classroom.name.like(f"%({test.grade})%"))
-                print(f"DEBUG INPUT_GRADES: Looking for grade pattern: '%({test.grade})%'")
-            
-            students = Student.query.join(Classroom).join(School).filter(*query_filters).all()
+
+            for classroom in all_classrooms:
+                if '(' in classroom.name and ')' in classroom.name:
+                    parts = classroom.name.split(' (')
+                    classroom_name = parts[0]
+                    grade = parts[1].rstrip(')')
+                else:
+                    classroom_name = classroom.name
+                    grade = extract_grade_from_classroom_name(classroom.name)
+
+                class_name_matches = (
+                    test.class_name == classroom_name or
+                    test.class_name == classroom.name
+                )
+                if not class_name_matches:
+                    continue
+
+                normalized_classroom_grade = _normalize_grade_label(grade)
+                grade_matches = (not normalized_test_grade) or (normalized_test_grade == normalized_classroom_grade)
+                class_name_candidates.append((classroom, grade_matches))
+
+            if class_name_candidates:
+                matching_grade_candidates = [c for c in class_name_candidates if c[1]]
+                if matching_grade_candidates:
+                    target_classroom = matching_grade_candidates[0][0]
+                else:
+                    target_classroom = class_name_candidates[0][0]
+
+            if target_classroom:
+                students = Student.query.filter_by(classroom_id=target_classroom.id).all()
+            else:
+                students = []
+
             print(f"DEBUG INPUT_GRADES: Found {len(students)} students for test {test.id}")
         else:
             # For homeroom teachers, get students from all classes
@@ -2101,6 +2132,20 @@ def get_test_for_grading(test_id):
         target_classroom = None
         current_app.logger.info(f"Looking for students - Test grade: '{test.grade}', Test class_name: '{test.class_name}'")
         current_app.logger.info(f"Available classrooms: {[(c.id, c.name) for c in all_classrooms]}")
+
+        def _normalize_grade_label(value):
+            if value is None:
+                return ''
+            s = str(value).strip()
+            if not s:
+                return ''
+            lower = s.lower()
+            if lower.startswith('grade '):
+                s = s[6:].strip()
+            return s
+
+        normalized_test_grade = _normalize_grade_label(test.grade)
+        class_name_candidates = []
         
         for classroom in all_classrooms:
             if '(' in classroom.name and ')' in classroom.name:
@@ -2113,14 +2158,35 @@ def get_test_for_grading(test_id):
             
             current_app.logger.info(f"Checking classroom: name='{classroom_name}', grade='{grade}' against test grade='{test.grade}', class_name='{test.class_name}'")
             
-            # Match on class_name, and if test.grade is provided, also match on grade
-            class_name_matches = test.class_name == classroom_name
-            grade_matches = not test.grade or test.grade == grade  # Match if test.grade is empty or matches
-            
-            if class_name_matches and grade_matches:
-                target_classroom = classroom
-                current_app.logger.info(f"Found matching classroom: {classroom.id} - {classroom.name}")
-                break
+            # Primary match is class name. Grade label is used only as a tie-breaker since
+            # specialist grade labels can be teacher-defined (e.g., "5" vs "Grade 5").
+            class_name_matches = (
+                test.class_name == classroom_name or
+                test.class_name == classroom.name
+            )
+
+            if not class_name_matches:
+                continue
+
+            normalized_classroom_grade = _normalize_grade_label(grade)
+            grade_matches = (not normalized_test_grade) or (normalized_test_grade == normalized_classroom_grade)
+
+            class_name_candidates.append((classroom, grade_matches, normalized_classroom_grade))
+
+        if class_name_candidates:
+            # Prefer the candidate whose grade matches (if grade is supplied). Otherwise,
+            # fall back to the first class-name match.
+            matching_grade_candidates = [c for c in class_name_candidates if c[1]]
+            if matching_grade_candidates:
+                target_classroom = matching_grade_candidates[0][0]
+            else:
+                target_classroom = class_name_candidates[0][0]
+
+            current_app.logger.info(
+                "Selected classroom for grading: "
+                f"test_id={test_id} test_class='{test.class_name}' test_grade='{test.grade}' "
+                f"-> classroom_id={target_classroom.id} classroom_name='{target_classroom.name}'"
+            )
         
         if target_classroom:
             students = Student.query.filter_by(classroom_id=target_classroom.id).order_by(Student.last_name, Student.first_name).all()
