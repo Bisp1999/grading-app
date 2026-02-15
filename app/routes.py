@@ -397,18 +397,40 @@ def input_grades():
     # Organize data based on teacher type
     if teacher_type == 'specialist':
         classrooms_by_grade = {}
-        for classroom in all_classrooms:
-            if '(' in classroom.name and ')' in classroom.name:
-                parts = classroom.name.split(' (')
-                classroom_name = parts[0]
-                grade = parts[1].rstrip(')')
-            else:
-                classroom_name = classroom.name
-                grade = extract_grade_from_classroom_name(classroom.name)
-            
-            if grade not in classrooms_by_grade:
-                classrooms_by_grade[grade] = []
-            classrooms_by_grade[grade].append(classroom_name)
+
+        # Prefer the authoritative setup wizard data, which preserves the exact grade labels
+        # the teacher defined (e.g. "V", "Cinq", "My Favorite Grade").
+        wizard_classrooms = []
+        try:
+            wizard_classrooms = json.loads(wizard_data.classrooms) if wizard_data.classrooms else []
+        except Exception:
+            wizard_classrooms = []
+
+        if wizard_classrooms:
+            for classroom in wizard_classrooms:
+                classroom_name = (classroom.get('name') or '').strip()
+                grade = (classroom.get('grade') or '').strip()
+
+                if not classroom_name or not grade:
+                    continue
+
+                if grade not in classrooms_by_grade:
+                    classrooms_by_grade[grade] = []
+                classrooms_by_grade[grade].append(classroom_name)
+        else:
+            # Fallback for older data: parse from Classroom.name
+            for classroom in all_classrooms:
+                if '(' in classroom.name and ')' in classroom.name:
+                    parts = classroom.name.split(' (')
+                    classroom_name = parts[0]
+                    grade = parts[1].rstrip(')')
+                else:
+                    classroom_name = classroom.name
+                    grade = extract_grade_from_classroom_name(classroom.name)
+
+                if grade not in classrooms_by_grade:
+                    classrooms_by_grade[grade] = []
+                classrooms_by_grade[grade].append(classroom_name)
         
         # Sort grades and classroom names
         for grade in classrooms_by_grade:
