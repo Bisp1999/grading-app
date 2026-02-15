@@ -601,10 +601,38 @@ def create_tests():
             else:
                 if teacher_type == 'specialist' and test_scope == 'grade_all':
                     selected_grade = form_grade
-                    class_names = classrooms_by_grade.get(selected_grade, []) if selected_grade else []
+                    class_names = []
+
+                    try:
+                        wizard_classrooms = json.loads(wizard_data.classrooms) if wizard_data.classrooms else []
+                    except Exception:
+                        wizard_classrooms = []
+
+                    if selected_grade and wizard_classrooms:
+                        for classroom in wizard_classrooms:
+                            grade_label = str(classroom.get('grade') or '').strip()
+                            classroom_name = str(classroom.get('name') or '').strip()
+                            if grade_label == selected_grade and classroom_name:
+                                class_names.append(classroom_name)
+
+                    if not class_names and selected_grade:
+                        class_names = classrooms_by_grade.get(selected_grade, [])
+
+                    if not class_names:
+                        try:
+                            available_grades = sorted({str(c.get('grade') or '').strip() for c in (wizard_classrooms or []) if c.get('grade') is not None})
+                        except Exception:
+                            available_grades = []
+                        current_app.logger.warning(
+                            "create_tests grade_all: no class_names found", extra={
+                                "teacher_id": current_user.id,
+                                "selected_grade": selected_grade,
+                                "available_grades": available_grades,
+                            }
+                        )
 
                     if not selected_grade or not class_names:
-                        flash('Please select a Grade/Class before creating tests.', 'error')
+                        flash('Unable to create tests for the selected grade. Please re-select your Class and Semester and try again.', 'danger')
                         return redirect(url_for('main.create_tests'))
 
                     tests_to_create = []
@@ -623,7 +651,14 @@ def create_tests():
                         ))
 
                     db.session.add_all(tests_to_create)
-                    flash('Tests created successfully!', 'success')
+                    current_app.logger.info(
+                        "create_tests grade_all: creating tests", extra={
+                            "teacher_id": current_user.id,
+                            "selected_grade": selected_grade,
+                            "class_count": len(tests_to_create),
+                        }
+                    )
+                    flash(f'Tests created successfully! Created {len(tests_to_create)} tests.', 'success')
                 else:
                     # Create new test
                     test = Test(
