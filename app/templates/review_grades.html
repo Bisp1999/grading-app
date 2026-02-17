@@ -1373,11 +1373,12 @@ function printGradeMatrixPDF() {
         <style>
             @page { size: letter landscape; margin: 0.5in; }
             html, body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
-            .print-title { font-size: 14px; font-weight: 600; margin: 0 0 10px 0; }
+            .print-title { font-size: 18px; font-weight: 600; margin: 0 0 10px 0; }
             .print-wrap { width: 100%; }
             table { border-collapse: collapse; width: auto; }
-            th, td { border: 1px solid #ccc; padding: 4px 6px; font-size: 9px; white-space: nowrap; }
-            th { background: #f2f2f2; }
+            th, td { border: 1px solid #ccc; padding: 4px 6px; white-space: nowrap; }
+            th { background: #f2f2f2; font-size: 12px; }
+            td { font-size: 16px; }
         </style>
     `;
 
@@ -1599,10 +1600,11 @@ function printGradeMatrixPDFSummary() {
         <style>
             @page { size: letter portrait; margin: 0.5in; }
             html, body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
-            .print-title { font-size: 14px; font-weight: 600; margin: 0 0 10px 0; }
+            .print-title { font-size: 18px; font-weight: 600; margin: 0 0 10px 0; }
             table { border-collapse: collapse; width: 100%; }
-            th, td { border: 1px solid #ccc; padding: 6px 8px; font-size: 11px; }
-            th { background: #f2f2f2; text-align: center; }
+            th, td { border: 1px solid #ccc; padding: 6px 8px; }
+            th { background: #f2f2f2; text-align: center; font-size: 14px; }
+            td { font-size: 12px; }
             td { text-align: center; }
             td.name { text-align: left; font-weight: 600; }
             td.total { background: #e9ecef; font-weight: 700; }
