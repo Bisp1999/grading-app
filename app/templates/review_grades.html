@@ -69,7 +69,10 @@
                                     <i class="fas fa-download me-1"></i>{{ _('Export CSV') }}
                                 </button>
                                 <button class="btn btn-outline-primary btn-sm" onclick="printGradeMatrixPDF()">
-                                    <i class="fas fa-print me-1"></i>{{ _('Print PDF') }}
+                                    <i class="fas fa-print me-1"></i>{{ _('Print PDF (full)') }}
+                                </button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="printGradeMatrixPDFSummary()">
+                                    <i class="fas fa-print me-1"></i>{{ _('Print PDF (summary)') }}
                                 </button>
                             </div>
                         </div>
@@ -1422,6 +1425,207 @@ function printGradeMatrixPDF() {
                         window.focus();
                         setTimeout(() => window.print(), 150);
                     })();
+                <\/script>
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
+
+function printGradeMatrixPDFSummary() {
+    if (!currentGradeData || !currentGradeData.tests || currentGradeData.tests.length === 0) {
+        alert(translations.noDataToExport);
+        return;
+    }
+
+    const { tests, students, grades, competency_weights = {} } = currentGradeData;
+
+    const testsByCompetency = {};
+    tests.forEach(test => {
+        const competency = test.competency || 'Unassigned';
+        if (!testsByCompetency[competency]) testsByCompetency[competency] = [];
+        testsByCompetency[competency].push(test);
+    });
+    const competencies = Object.keys(testsByCompetency).sort();
+    const showGrandTotal = competencies.length > 1;
+
+    const globalClassFilter = document.getElementById('global_class_filter');
+    const globalSemesterFilter = document.getElementById('global_semester_filter');
+    const className = globalClassFilter ? globalClassFilter.value : '';
+    const semester = globalSemesterFilter ? globalSemesterFilter.value : '';
+    const title = `${className || ''}${className && semester ? ' - ' : ''}${semester || ''}`.trim();
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        alert('Popup blocked');
+        return;
+    }
+
+    const escapeHtml = (s) => {
+        return (s || '').toString()
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    };
+
+    const fmtPct = (v) => {
+        if (v === null || v === undefined || Number.isNaN(v)) return '--';
+        return `${v.toFixed(1)}%`;
+    };
+
+    let html = '';
+    html += '<table>';
+    html += '<thead><tr>';
+    html += `<th>${escapeHtml(translations.studentName || 'Student Name')}</th>`;
+    competencies.forEach(c => {
+        html += `<th>${escapeHtml((translations.total || 'Total') + ' ' + c)}</th>`;
+    });
+    if (showGrandTotal) {
+        html += `<th>${escapeHtml(translations.grandTotal || 'Grand Total')}</th>`;
+    }
+    html += '</tr></thead>';
+
+    html += '<tbody>';
+    students.forEach(student => {
+        const studentName = `${student.first_name} ${student.last_name}`;
+        html += '<tr>';
+        html += `<td class="name">${escapeHtml(studentName)}</td>`;
+
+        let grandWeightedSum = 0;
+        let grandTotalWeight = 0;
+
+        competencies.forEach(competency => {
+            const competencyTests = testsByCompetency[competency];
+            let weightedTestPctSum = 0;
+            let totalTestWeight = 0;
+
+            competencyTests.forEach(test => {
+                const studentGrades = grades[student.id] || {};
+                const grade = studentGrades[test.id];
+                if (grade !== undefined && grade !== null) {
+                    const testPct = (grade / test.max_points) * 100;
+                    const testWeight = test.test_weight || 0;
+                    if (testWeight > 0) {
+                        weightedTestPctSum += testPct * testWeight;
+                        totalTestWeight += testWeight;
+                    }
+                }
+            });
+
+            if (totalTestWeight > 0) {
+                const competencyPct = weightedTestPctSum / totalTestWeight;
+                html += `<td class="total">${escapeHtml(fmtPct(competencyPct))}</td>`;
+
+                const competencyWeight = competency_weights[competency] || 0;
+                if (competencyWeight > 0) {
+                    grandWeightedSum += competencyPct * competencyWeight;
+                    grandTotalWeight += competencyWeight;
+                }
+            } else {
+                html += '<td class="total">--</td>';
+            }
+        });
+
+        if (showGrandTotal) {
+            if (grandTotalWeight > 0) {
+                const grandPct = grandWeightedSum / grandTotalWeight;
+                html += `<td class="grand">${escapeHtml(fmtPct(grandPct))}</td>`;
+            } else {
+                html += '<td class="grand">--</td>';
+            }
+        }
+        html += '</tr>';
+    });
+
+    html += '<tr class="avg">';
+    html += `<td class="name">${escapeHtml(translations.classAverage || 'Class Average')}</td>`;
+
+    let classGrandWeightedSum = 0;
+    let classGrandTotalWeight = 0;
+
+    competencies.forEach(competency => {
+        const competencyTests = testsByCompetency[competency];
+        let compWeightedSum = 0;
+        let compTotalTestWeight = 0;
+
+        competencyTests.forEach(test => {
+            let sumPct = 0;
+            let count = 0;
+            students.forEach(student => {
+                const studentGrades = grades[student.id] || {};
+                const grade = studentGrades[test.id];
+                if (grade !== undefined && grade !== null) {
+                    sumPct += (grade / test.max_points) * 100;
+                    count++;
+                }
+            });
+            if (count > 0) {
+                const testAvg = sumPct / count;
+                const testWeight = test.test_weight || 0;
+                compWeightedSum += testAvg * testWeight;
+                compTotalTestWeight += testWeight;
+            }
+        });
+
+        if (compTotalTestWeight > 0) {
+            const compAvg = compWeightedSum / compTotalTestWeight;
+            html += `<td class="total">${escapeHtml(fmtPct(compAvg))}</td>`;
+
+            const competencyWeight = competency_weights[competency] || 0;
+            if (competencyWeight > 0) {
+                classGrandWeightedSum += compAvg * competencyWeight;
+                classGrandTotalWeight += competencyWeight;
+            }
+        } else {
+            html += '<td class="total">--</td>';
+        }
+    });
+
+    if (showGrandTotal) {
+        if (classGrandTotalWeight > 0) {
+            const classGrandAvg = classGrandWeightedSum / classGrandTotalWeight;
+            html += `<td class="grand">${escapeHtml(fmtPct(classGrandAvg))}</td>`;
+        } else {
+            html += '<td class="grand">--</td>';
+        }
+    }
+
+    html += '</tr>';
+    html += '</tbody></table>';
+
+    const styles = `
+        <style>
+            @page { size: letter portrait; margin: 0.5in; }
+            html, body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+            .print-title { font-size: 14px; font-weight: 600; margin: 0 0 10px 0; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ccc; padding: 6px 8px; font-size: 11px; }
+            th { background: #f2f2f2; text-align: center; }
+            td { text-align: center; }
+            td.name { text-align: left; font-weight: 600; }
+            td.total { background: #e9ecef; font-weight: 700; }
+            td.grand { background: #e7f3ff; font-weight: 700; }
+            tr.avg td { background: #f8f9fa; font-weight: 700; }
+            tr.avg td.total { background: #e9ecef; }
+            tr.avg td.grand { background: #e7f3ff; }
+        </style>
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>${title ? `Grade Summary - ${title}` : 'Grade Summary'}</title>
+                ${styles}
+            </head>
+            <body>
+                ${title ? `<div class="print-title">${escapeHtml(title)}</div>` : ''}
+                ${html}
+                <script>
+                    window.focus();
+                    setTimeout(() => window.print(), 150);
                 <\/script>
             </body>
         </html>
