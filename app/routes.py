@@ -338,7 +338,16 @@ def input_grades():
             target_classroom = None
             class_name_candidates = []
 
-            print(f"DEBUG INPUT_GRADES: Test {test.id} - class_name='{test.class_name}', grade='{test.grade}'")
+            logger = current_app.logger
+            input_grades_debug = (os.environ.get('INPUT_GRADES_DEBUG', '') or '').strip().lower() in ('1', 'true', 'yes', 'on')
+            log_debug = input_grades_debug and logger.isEnabledFor(logging.DEBUG)
+            if log_debug:
+                logger.debug(
+                    "INPUT_GRADES: Test %s - class_name='%s', grade='%s'",
+                    test.id,
+                    test.class_name,
+                    test.grade,
+                )
 
             for classroom in all_classrooms:
                 if '(' in classroom.name and ')' in classroom.name:
@@ -372,14 +381,22 @@ def input_grades():
             else:
                 students = []
 
-            print(f"DEBUG INPUT_GRADES: Found {len(students)} students for test {test.id}")
+            if log_debug:
+                logger.debug("INPUT_GRADES: Found %s students for test %s", len(students), test.id)
         else:
             # For homeroom teachers, get students from all classes
-            print(f"DEBUG INPUT_GRADES: Test {test.id} - Homeroom teacher, getting all students")
             students = Student.query.join(Classroom).join(School).filter(
                 School.teacher_id == current_user.id
             ).all()
-            print(f"DEBUG INPUT_GRADES: Found {len(students)} students for test {test.id}")
+            logger = current_app.logger
+            input_grades_debug = (os.environ.get('INPUT_GRADES_DEBUG', '') or '').strip().lower() in ('1', 'true', 'yes', 'on')
+            log_debug = input_grades_debug and logger.isEnabledFor(logging.DEBUG)
+            if log_debug:
+                logger.debug(
+                    "INPUT_GRADES: Test %s - Homeroom teacher, found %s students",
+                    test.id,
+                    len(students),
+                )
         
         # Count how many of the relevant students have grades for this test
         student_ids = [student.id for student in students]
@@ -397,17 +414,32 @@ def input_grades():
         
         # Count absent students (only those with Grade records marked as absent)
         absent_count = sum(1 for grade in all_grades if grade.absent)
-        
-        # Debug logging
-        print(f"DEBUG INPUT_GRADES: Test {test.id} ({test.test_name}): {len(students)} students, {len(all_grades)} grade records, {graded_count} graded, {absent_count} absent")
-        if len(all_grades) > 0:
-            for grade in all_grades:
-                print(f"DEBUG INPUT_GRADES:   Student {grade.student_id}: grade={grade.grade}, absent={grade.absent}")
+
+        logger = current_app.logger
+        input_grades_debug = (os.environ.get('INPUT_GRADES_DEBUG', '') or '').strip().lower() in ('1', 'true', 'yes', 'on')
+        log_debug = input_grades_debug and logger.isEnabledFor(logging.DEBUG)
+        if log_debug:
+            logger.debug(
+                "INPUT_GRADES: Test %s (%s): %s students, %s grade records, %s graded, %s absent",
+                test.id,
+                test.test_name,
+                len(students),
+                len(all_grades),
+                graded_count,
+                absent_count,
+            )
         
         # Set grades_complete attribute
         # Grading is complete when ALL students have been graded (have grade OR absent)
         test.grades_complete = (graded_count == len(students) and len(students) > 0)
-        print(f"DEBUG INPUT_GRADES: Test {test.id} grades_complete: {test.grades_complete} (graded_count={graded_count}, len(students)={len(students)})")
+        if log_debug:
+            logger.debug(
+                "INPUT_GRADES: Test %s grades_complete: %s (graded_count=%s, len(students)=%s)",
+                test.id,
+                test.grades_complete,
+                graded_count,
+                len(students),
+            )
         
         # Set has_absent_students attribute
         # Check if there are any students marked as absent for this test

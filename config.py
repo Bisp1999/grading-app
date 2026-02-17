@@ -27,6 +27,20 @@ class ProductionConfig(Config):
         if database_url.startswith("postgres://"):
             database_url = database_url.replace("postgres://", "postgresql://", 1)
         SQLALCHEMY_DATABASE_URI = database_url
+
+        # Database timeouts (defense-in-depth)
+        # - connect_timeout: avoid hanging connection attempts
+        # - statement_timeout: kill runaway queries server-side
+        connect_timeout_seconds = int(os.environ.get('DB_CONNECT_TIMEOUT_SECONDS', '10') or 10)
+        statement_timeout_ms = int(os.environ.get('DB_STATEMENT_TIMEOUT_MS', '30000') or 30000)
+
+        SQLALCHEMY_ENGINE_OPTIONS = {
+            'connect_args': {
+                'connect_timeout': connect_timeout_seconds,
+                'options': f'-c statement_timeout={statement_timeout_ms}',
+            },
+            'pool_pre_ping': True,
+        }
     else:
         # Fallback for local production testing if DATABASE_URL is not set
         SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASE_DIR, 'prod.db')
