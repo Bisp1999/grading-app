@@ -65,8 +65,8 @@
                         <div class="col-md-4 mb-3">
                             <h6 class="text-muted small">{{ _('Class Actions') }}</h6>
                             <div class="d-grid gap-2">
-                                <button class="btn btn-outline-primary btn-sm" onclick="exportToCSV()">
-                                    <i class="fas fa-download me-1"></i>{{ _('Export CSV') }}
+                                <button class="btn btn-outline-primary btn-sm" onclick="exportToExcel()">
+                                    <i class="fas fa-file-excel me-1"></i>{{ _('Export Excel') }}
                                 </button>
                                 <button class="btn btn-outline-primary btn-sm" onclick="printGradeMatrixPDF()">
                                     <i class="fas fa-print me-1"></i>{{ _('Print PDF (full)') }}
@@ -1343,6 +1343,29 @@ function exportToCSV() {
     a.download = filenameParts.join('_') + '.csv';
     a.click();
     window.URL.revokeObjectURL(url);
+}
+
+function exportToExcel() {
+    if (!currentGradeData || !currentGradeData.tests || currentGradeData.tests.length === 0) {
+        alert(translations.noDataToExport);
+        return;
+    }
+
+    const globalClassFilter = document.getElementById('global_class_filter');
+    const globalSemesterFilter = document.getElementById('global_semester_filter');
+    const subjectFilter = document.getElementById('filter_subject');
+
+    const className = globalClassFilter ? globalClassFilter.value : '';
+    const semester = globalSemesterFilter ? globalSemesterFilter.value : '';
+    const subject = (teacherType === 'homeroom' && subjectFilter) ? subjectFilter.value : '';
+
+    const params = new URLSearchParams();
+    if (semester) params.append('semester', semester);
+    if (className) params.append('class_name', className);
+    if (subject) params.append('subject', subject);
+
+    const url = `/export/grade_matrix.xlsx?${params.toString()}`;
+    window.location.href = url;
 }
 
 function printGradeMatrixPDF() {

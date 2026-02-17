@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, session, current_app
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, session, current_app, send_file
 from flask_login import login_user, logout_user, login_required, current_user, LoginManager
 from flask_babel import gettext as _
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -863,6 +863,303 @@ def get_teacher_classrooms():
         return jsonify({'classrooms': classrooms_data})
         
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@main.route('/export/grade_matrix.xlsx')
+@login_required
+def export_grade_matrix_xlsx():
+    from io import BytesIO
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.utils import get_column_letter
+    from .models import Test, Student, Grade, Classroom, School, SetupWizardData
+
+    semester = request.args.get('semester', '')
+    class_name = request.args.get('class_name', '')
+    subject = request.args.get('subject', '')
+
+    def sanitize_for_filename(s: str) -> str:
+        return ''.join([c if c.isalnum() else '_' for c in (s or '').strip()]).strip('_').lower()
+
+    try:
+        test_query = Test.query.filter_by(teacher_id=current_user.id)
+        if semester:
+            test_query = test_query.filter(Test.semester == semester)
+        if class_name:
+            test_query = test_query.filter(Test.class_name == class_name)
+        if subject:
+            test_query = test_query.filter(Test.subject == subject)
+
+        tests = test_query.order_by(Test.test_date).all()
+        if not tests:
+            return jsonify({'error': 'No data to export'}), 400
+
+        students = []
+        if class_name:
+            for school in School.query.filter_by(teacher_id=current_user.id).all():
+                for classroom in Classroom.query.filter_by(school_id=school.id).all():
+                    classroom_class_name = classroom.name.split(' (')[0] if ' (' in classroom.name else classroom.name
+                    if classroom_class_name == class_name:
+                        students.extend(Student.query.filter_by(classroom_id=classroom.id).all())
+        else:
+            for school in School.query.filter_by(teacher_id=current_user.id).all():
+                for classroom in Classroom.query.filter_by(school_id=school.id).all():
+                    students.extend(Student.query.filter_by(classroom_id=classroom.id).all())
+
+        students = sorted(students, key=lambda s: (s.last_name or '', s.first_name or ''))
+        if not students:
+            return jsonify({'error': 'No data to export'}), 400
+
+        test_ids = [t.id for t in tests]
+        student_ids = [s.id for s in students]
+        grades_query = Grade.query.filter(
+            Grade.test_id.in_(test_ids),
+            Grade.student_id.in_(student_ids)
+        ).all()
+
+        grades_matrix = {}
+        for gr in grades_query:
+            grades_matrix.setdefault(gr.student_id, {})[gr.test_id] = gr.grade
+
+        wizard_data = SetupWizardData.query.filter_by(teacher_id=current_user.id).first()
+        competency_weights = {}
+        if wizard_data and wizard_data.weights and wizard_data.competencies:
+            try:
+                weights_data = json.loads(wizard_data.weights)
+                competencies_list = json.loads(wizard_data.competencies)
+                for grade_key in weights_data:
+                    for semester_key in weights_data[grade_key]:
+                        semester_weights = weights_data[grade_key][semester_key]
+                        for comp_index, weight in semester_weights.items():
+                            idx = int(comp_index)
+                            if idx < len(competencies_list):
+                                competency_weights[competencies_list[idx]] = int(weight)
+                        break
+                    break
+            except Exception:
+                competency_weights = {}
+
+        tests_by_comp = {}
+        for t in tests:
+            comp = t.competency or 'Unassigned'
+            tests_by_comp.setdefault(comp, []).append(t)
+        competencies = sorted(tests_by_comp.keys())
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'Grade Matrix'
+
+        fill_total = PatternFill('solid', fgColor='E9ECEF')
+        fill_grand = PatternFill('solid', fgColor='E7F3FF')
+        font_bold = Font(bold=True)
+        align_center = Alignment(horizontal='center', vertical='center', wrap_text=True)
+
+        # Row layout:
+        # 1: title
+        # 2: max points (tests)
+        # 3: test weights (tests)
+        # 4: competency weights (competency total columns)
+        # 5: headers (test names)
+        # 6: student-name label row
+        title = 'Grade Matrix'
+        if class_name or semester:
+            parts = [p for p in [class_name, semester] if p]
+            title = f"Grade Matrix - {' - '.join(parts)}"
+        ws['A1'] = title
+        ws['A1'].font = Font(bold=True, size=16)
+
+        max_points_row = 2
+        test_weights_row = 3
+        comp_weights_row = 4
+        header_row = 5
+        student_label_row = 6
+        first_student_row = 7
+
+        header_fill = PatternFill('solid', fgColor='D9D9D9')
+        info_font = Font(color='7F7F7F')
+        info_align = Alignment(horizontal='left', vertical='center')
+
+        ws.cell(row=max_points_row, column=1, value='Test - Max Points').font = info_font
+        ws.cell(row=max_points_row, column=1).alignment = info_align
+        ws.cell(row=test_weights_row, column=1, value='Test Weight').font = info_font
+        ws.cell(row=test_weights_row, column=1).alignment = info_align
+        ws.cell(row=comp_weights_row, column=1, value='Competency Weight').font = info_font
+        ws.cell(row=comp_weights_row, column=1).alignment = info_align
+
+        col = 1
+        ws.cell(row=header_row, column=col, value='Test Name').font = font_bold
+        ws.cell(row=header_row, column=col).alignment = align_center
+        ws.cell(row=header_row, column=col).fill = header_fill
+        ws.column_dimensions[get_column_letter(col)].width = 22
+        col += 1
+
+        competency_total_cols = []
+        comp_total_col_by_comp = {}
+        test_cols_by_comp = {}
+
+        for comp in competencies:
+            test_cols = []
+            for t in tests_by_comp[comp]:
+                ws.cell(row=header_row, column=col, value=f"{t.test_name}").font = font_bold
+                ws.cell(row=header_row, column=col).alignment = align_center
+                ws.cell(row=header_row, column=col).fill = header_fill
+                ws.cell(row=max_points_row, column=col, value=t.max_points).alignment = align_center
+                ws.cell(row=max_points_row, column=col).font = info_font
+                ws.cell(row=test_weights_row, column=col, value=(t.test_weight or 0)).alignment = align_center
+                ws.cell(row=test_weights_row, column=col).font = info_font
+                ws.column_dimensions[get_column_letter(col)].width = 12
+                test_cols.append(col)
+                col += 1
+
+            # Competency total column (fraction, formatted as percent)
+            ws.cell(row=header_row, column=col, value=f"Total {comp}").font = font_bold
+            ws.cell(row=header_row, column=col).alignment = align_center
+            ws.cell(row=header_row, column=col).fill = fill_total
+            ws.column_dimensions[get_column_letter(col)].width = 14
+            ws.cell(row=comp_weights_row, column=col, value=int(competency_weights.get(comp, 0))).alignment = align_center
+            ws.cell(row=comp_weights_row, column=col).font = info_font
+            competency_total_cols.append(col)
+            comp_total_col_by_comp[comp] = col
+            test_cols_by_comp[comp] = test_cols
+            col += 1
+
+        show_grand_total = len(competencies) > 1
+        grand_total_col = None
+        if show_grand_total:
+            grand_total_col = col
+            ws.cell(row=header_row, column=col, value='Grand Total').font = font_bold
+            ws.cell(row=header_row, column=col).alignment = align_center
+            ws.cell(row=header_row, column=col).fill = fill_grand
+            ws.column_dimensions[get_column_letter(col)].width = 14
+            col += 1
+
+        last_data_col = col - 1
+
+        ws.cell(row=student_label_row, column=1, value='Student Name').font = font_bold
+        ws.cell(row=student_label_row, column=1).alignment = Alignment(horizontal='left', vertical='center')
+
+        # Helper formulas (use standard Excel functions; keep everything as fractions for formatting)
+        def comp_total_formula(student_row: int, test_cols: list[int]) -> str:
+            # numerator = SUMPRODUCT((points<>"")*(points/max_points)*weights)
+            # denom     = SUMPRODUCT((points<>"")*weights)
+            pts = f"{get_column_letter(test_cols[0])}{student_row}:{get_column_letter(test_cols[-1])}{student_row}"
+            maxs = f"{get_column_letter(test_cols[0])}{max_points_row}:{get_column_letter(test_cols[-1])}{max_points_row}"
+            wts = f"{get_column_letter(test_cols[0])}{test_weights_row}:{get_column_letter(test_cols[-1])}{test_weights_row}"
+            denom = f"SUMPRODUCT(({pts}<>\"\")*{wts})"
+            num = f"SUMPRODUCT(({pts}<>\"\")*({pts}/{maxs})*{wts})"
+            return f"=IF({denom}=0,\"\",{num}/{denom})"
+
+        def comp_total_from_fraction_formula(row: int, fraction_cols: list[int]) -> str:
+            # fraction cells already contain (points/max_points), so do NOT divide by max points again
+            fr = f"{get_column_letter(fraction_cols[0])}{row}:{get_column_letter(fraction_cols[-1])}{row}"
+            wts = f"{get_column_letter(fraction_cols[0])}{test_weights_row}:{get_column_letter(fraction_cols[-1])}{test_weights_row}"
+            denom = f"SUMPRODUCT(({fr}<>\"\")*{wts})"
+            num = f"SUMPRODUCT(({fr}<>\"\")*{fr}*{wts})"
+            return f"=IF({denom}=0,\"\",{num}/{denom})"
+
+        def grand_total_formula(student_row: int) -> str:
+            comp_vals = f"{get_column_letter(competency_total_cols[0])}{student_row}:{get_column_letter(competency_total_cols[-1])}{student_row}"
+            comp_wts = f"{get_column_letter(competency_total_cols[0])}{comp_weights_row}:{get_column_letter(competency_total_cols[-1])}{comp_weights_row}"
+            denom = f"SUMPRODUCT(({comp_vals}<>\"\")*{comp_wts})"
+            num = f"SUMPRODUCT(({comp_vals}<>\"\")*{comp_vals}*{comp_wts})"
+            return f"=IF({denom}=0,\"\",{num}/{denom})"
+
+        # Student rows
+        for i, s in enumerate(students):
+            r = first_student_row + i
+            ws.cell(row=r, column=1, value=f"{s.first_name} {s.last_name}")
+            ws.cell(row=r, column=1).alignment = Alignment(horizontal='left', vertical='center')
+
+            for comp in competencies:
+                # test points (editable)
+                for t, test_col in zip(tests_by_comp[comp], test_cols_by_comp[comp]):
+                    val = grades_matrix.get(s.id, {}).get(t.id)
+                    if val is not None:
+                        ws.cell(row=r, column=test_col, value=float(val))
+                    else:
+                        ws.cell(row=r, column=test_col, value=0)
+                    ws.cell(row=r, column=test_col).alignment = align_center
+
+                # competency total
+                total_col = comp_total_col_by_comp[comp]
+                f = comp_total_formula(r, test_cols_by_comp[comp])
+                cell = ws.cell(row=r, column=total_col, value=f)
+                cell.number_format = '0.0%'
+                cell.font = font_bold
+                cell.fill = fill_total
+                cell.alignment = align_center
+
+            if show_grand_total and grand_total_col:
+                gcell = ws.cell(row=r, column=grand_total_col, value=grand_total_formula(r))
+                gcell.number_format = '0.0%'
+                gcell.font = font_bold
+                gcell.fill = fill_grand
+                gcell.alignment = align_center
+
+        # Class average row
+        avg_row = first_student_row + len(students)
+        ws.cell(row=avg_row, column=1, value='Class Average').font = font_bold
+        ws.cell(row=avg_row, column=1).alignment = Alignment(horizontal='left', vertical='center')
+
+        for comp in competencies:
+            # per-test avg as fraction
+            for test_col in test_cols_by_comp[comp]:
+                col_letter = get_column_letter(test_col)
+                start = first_student_row
+                end = first_student_row + len(students) - 1
+                max_ref = f"{col_letter}{max_points_row}"
+                f = f"=IF(COUNT({col_letter}{start}:{col_letter}{end})=0,\"\",AVERAGE({col_letter}{start}:{col_letter}{end})/{max_ref})"
+                cell = ws.cell(row=avg_row, column=test_col, value=f)
+                cell.number_format = '0.0%'
+                cell.alignment = align_center
+
+            total_col = comp_total_col_by_comp[comp]
+            f = comp_total_from_fraction_formula(avg_row, test_cols_by_comp[comp])
+            cell = ws.cell(row=avg_row, column=total_col, value=f)
+            cell.number_format = '0.0%'
+            cell.font = font_bold
+            cell.fill = fill_total
+            cell.alignment = align_center
+
+        if show_grand_total and grand_total_col:
+            cell = ws.cell(row=avg_row, column=grand_total_col, value=grand_total_formula(avg_row))
+            cell.number_format = '0.0%'
+            cell.font = font_bold
+            cell.fill = fill_grand
+            cell.alignment = align_center
+
+        # Cosmetics: center alignment for meta/header rows
+        for r in [header_row, max_points_row, test_weights_row, comp_weights_row]:
+            for c in range(1, last_data_col + 1):
+                cell = ws.cell(row=r, column=c)
+                if r == header_row:
+                    cell.font = font_bold
+                    cell.alignment = align_center
+                else:
+                    if c != 1:
+                        cell.alignment = align_center
+
+        ws.freeze_panes = ws['B7']
+
+        filename_parts = ['grade_matrix']
+        if class_name:
+            filename_parts.append(sanitize_for_filename(class_name))
+        if semester:
+            filename_parts.append(sanitize_for_filename(semester))
+        filename = '_'.join([p for p in filename_parts if p]) + '.xlsx'
+
+        bio = BytesIO()
+        wb.save(bio)
+        bio.seek(0)
+        return send_file(
+            bio,
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+    except Exception as e:
+        current_app.logger.exception('Error exporting grade matrix to xlsx')
         return jsonify({'error': str(e)}), 500
 
 @main.route('/api/get_tests_for_context')
