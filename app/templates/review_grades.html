@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+
 {% block title %}{{ _('Review and Adjust Grades') }}{% endblock %}
 
 {% block content %}
@@ -66,6 +67,9 @@
                             <div class="d-grid gap-2">
                                 <button class="btn btn-outline-primary btn-sm" onclick="exportToCSV()">
                                     <i class="fas fa-download me-1"></i>{{ _('Export CSV') }}
+                                </button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="printGradeMatrixPDF()">
+                                    <i class="fas fa-print me-1"></i>{{ _('Print PDF') }}
                                 </button>
                             </div>
                         </div>
@@ -555,6 +559,7 @@ function loadGradeMatrix() {
     const actionsSection = document.getElementById('actionsSection');
     
     if (!shouldShowMatrix) {
+        currentGradeData = null;
         gradeMatrixSection.style.display = 'none';
         noDataSection.style.display = 'none';
         noSelectionSection.style.display = 'block';
@@ -602,8 +607,12 @@ function loadGradeMatrix() {
 // Build the grade matrix table grouped by competency
 function buildGradeMatrix(data) {
     const { tests, students, grades, competency_weights = {} } = data;
+
+    // Store data for export actions (CSV/PDF)
+    currentGradeData = data;
     
     if (tests.length === 0 || students.length === 0) {
+        currentGradeData = null;
         document.getElementById('gradeMatrixSection').style.display = 'none';
         document.getElementById('noDataSection').style.display = 'block';
         document.getElementById('noSelectionSection').style.display = 'none';
@@ -754,7 +763,7 @@ function buildGradeMatrix(data) {
             const competencyTotalCell = document.createElement('td');
             competencyTotalCell.style.textAlign = 'center';
             competencyTotalCell.style.fontWeight = 'bold';
-            competencyTotalCell.style.backgroundColor = '#f8f9fa';
+            competencyTotalCell.style.backgroundColor = '#e9ecef';
             
             // Calculate weighted competency total: sum of (grade/max_points * weight) / sum of weights
             let weightedSum = 0;
@@ -888,26 +897,26 @@ function buildAverageRow(testsByCompetency, competencies, students, grades, foot
             } else {
                 avgCell.innerHTML = '<div>--</div>';
             }
-            
+                
             avgRow.appendChild(avgCell);
         });
-        
+            
         // Competency average
         const competencyAvgCell = document.createElement('td');
         competencyAvgCell.style.textAlign = 'center';
         competencyAvgCell.style.fontWeight = 'bold';
-        competencyAvgCell.style.backgroundColor = '#f8f9fa';
-        
+        competencyAvgCell.style.backgroundColor = '#e9ecef';
+            
         if (competencyGrades.length > 0) {
             const competencyAvg = competencyGrades.reduce((a, b) => a + b, 0) / competencyGrades.length;
             competencyAvgCell.innerHTML = `<div>${competencyAvg.toFixed(1)}%</div>`;
         } else {
             competencyAvgCell.innerHTML = '<div>--</div>';
         }
-        
+            
         avgRow.appendChild(competencyAvgCell);
     });
-    
+        
     // Grand average (only if showing all competencies)
     if (showAllCompetencies && competencies.length > 1) {
         const grandAvgCell = document.createElement('td');
@@ -1179,14 +1188,14 @@ function exportToCSV() {
     // Build student rows
     students.forEach(student => {
         csv += `"${student.first_name} ${student.last_name}"`;
-        let grandTotalPoints = 0;
-        let grandTotalMaxPoints = 0;
+        let grandWeightedSum = 0;
+        let grandTotalWeight = 0;
         
         // For each competency
         competencies.forEach(competency => {
             const competencyTests = testsByCompetency[competency];
-            let competencyTotalPoints = 0;
-            let competencyTotalMaxPoints = 0;
+            let weightedTestPctSum = 0;
+            let totalTestWeight = 0;
             
             // Individual test columns
             competencyTests.forEach(test => {
@@ -1195,31 +1204,38 @@ function exportToCSV() {
                 
                 if (grade !== undefined && grade !== null) {
                     csv += `,"${grade}/${test.max_points}"`;
-                    competencyTotalPoints += grade;
-                    competencyTotalMaxPoints += test.max_points;
+
+                    const testPct = (grade / test.max_points) * 100;
+                    const testWeight = test.test_weight || 0;
+                    if (testWeight > 0) {
+                        weightedTestPctSum += testPct * testWeight;
+                        totalTestWeight += testWeight;
+                    }
                 } else {
                     csv += ',"--"';
-                    competencyTotalMaxPoints += test.max_points;
                 }
             });
             
             // Competency total
-            if (competencyTotalMaxPoints > 0) {
-                const competencyPercentage = Math.round((competencyTotalPoints / competencyTotalMaxPoints) * 100);
-                csv += `,"${competencyTotalPoints}/${competencyTotalMaxPoints} (${competencyPercentage}%)"`;
+            if (totalTestWeight > 0) {
+                const competencyPct = weightedTestPctSum / totalTestWeight;
+                csv += `,"${competencyPct.toFixed(1)}%"`;
+
+                const competencyWeight = competency_weights[competency] || 0;
+                if (competencyWeight > 0) {
+                    grandWeightedSum += competencyPct * competencyWeight;
+                    grandTotalWeight += competencyWeight;
+                }
             } else {
                 csv += ',"--"';
             }
-            
-            grandTotalPoints += competencyTotalPoints;
-            grandTotalMaxPoints += competencyTotalMaxPoints;
         });
         
         // Grand total (only if showing all competencies)
         if (showAllCompetencies && competencies.length > 1) {
-            if (grandTotalMaxPoints > 0) {
-                const grandPercentage = Math.round((grandTotalPoints / grandTotalMaxPoints) * 100);
-                csv += `,"${grandTotalPoints}/${grandTotalMaxPoints} (${grandPercentage}%)"`;
+            if (grandTotalWeight > 0) {
+                const grandPercentage = grandWeightedSum / grandTotalWeight;
+                csv += `,"${grandPercentage.toFixed(1)}%"`;
             } else {
                 csv += ',"--"';
             }
@@ -1227,15 +1243,190 @@ function exportToCSV() {
         
         csv += '\n';
     });
+
+    // Add class average row (percentages)
+    csv += `"${translations.classAverage}"`;
+    let grandWeightedSum = 0;
+    let grandTotalWeight = 0;
+
+    const safePercent = (value) => {
+        if (value === null || value === undefined || Number.isNaN(value)) return '--';
+        return `${value.toFixed(1)}%`;
+    };
+
+    competencies.forEach(competency => {
+        const competencyTests = testsByCompetency[competency];
+
+        let compWeightedSum = 0;
+        let compTotalTestWeight = 0;
+
+        // Per-test average
+        competencyTests.forEach(test => {
+            let sumPct = 0;
+            let count = 0;
+
+            students.forEach(student => {
+                const studentGrades = grades[student.id] || {};
+                const grade = studentGrades[test.id];
+                if (grade !== undefined && grade !== null) {
+                    sumPct += (grade / test.max_points) * 100;
+                    count++;
+                }
+            });
+
+            const avgPct = count > 0 ? (sumPct / count) : null;
+            csv += `,"${count > 0 ? safePercent(avgPct) : '--'}"`;
+
+            // For competency/grand average, weight test averages by test_weight (matches matrix)
+            if (count > 0) {
+                const testWeight = test.test_weight || 0;
+                compWeightedSum += avgPct * testWeight;
+                compTotalTestWeight += testWeight;
+            }
+        });
+
+        // Competency average column
+        if (compTotalTestWeight > 0) {
+            const compAvg = compWeightedSum / compTotalTestWeight;
+            csv += `,"${safePercent(compAvg)}"`;
+
+            const competencyWeight = competency_weights[competency] || 0;
+            if (competencyWeight > 0) {
+                grandWeightedSum += compAvg * competencyWeight;
+                grandTotalWeight += competencyWeight;
+            }
+        } else {
+            csv += ',"--"';
+        }
+    });
+
+    // Grand total average (only if showing all competencies)
+    if (showAllCompetencies && competencies.length > 1) {
+        if (grandTotalWeight > 0) {
+            const grandAvg = grandWeightedSum / grandTotalWeight;
+            csv += `,"${safePercent(grandAvg)}"`;
+        } else {
+            csv += ',"--"';
+        }
+    }
+
+    csv += '\n';
     
     // Download CSV
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'grade_matrix_by_competency.csv';
+
+    const globalClassFilter = document.getElementById('global_class_filter');
+    const globalSemesterFilter = document.getElementById('global_semester_filter');
+    const className = globalClassFilter ? globalClassFilter.value : '';
+    const semester = globalSemesterFilter ? globalSemesterFilter.value : '';
+
+    const sanitizeForFilename = (s) => {
+        return (s || '')
+            .toString()
+            .trim()
+            .replace(/[^a-z0-9]+/gi, '_')
+            .replace(/^_+|_+$/g, '')
+            .toLowerCase();
+    };
+
+    const classPart = sanitizeForFilename(className);
+    const semesterPart = sanitizeForFilename(semester);
+    const filenameParts = ['grade_matrix'];
+    if (classPart) filenameParts.push(classPart);
+    if (semesterPart) filenameParts.push(semesterPart);
+    a.download = filenameParts.join('_') + '.csv';
     a.click();
     window.URL.revokeObjectURL(url);
+}
+
+function printGradeMatrixPDF() {
+    if (!currentGradeData || !currentGradeData.tests || currentGradeData.tests.length === 0) {
+        alert(translations.noDataToExport);
+        return;
+    }
+
+    const table = document.getElementById('gradeMatrix');
+    if (!table) {
+        alert(translations.noDataToExport);
+        return;
+    }
+
+    const globalClassFilter = document.getElementById('global_class_filter');
+    const globalSemesterFilter = document.getElementById('global_semester_filter');
+    const className = globalClassFilter ? globalClassFilter.value : '';
+    const semester = globalSemesterFilter ? globalSemesterFilter.value : '';
+    const title = `${className || ''}${className && semester ? ' - ' : ''}${semester || ''}`.trim();
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        alert('Popup blocked');
+        return;
+    }
+
+    const styles = `
+        <style>
+            @page { size: letter landscape; margin: 0.5in; }
+            html, body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+            .print-title { font-size: 14px; font-weight: 600; margin: 0 0 10px 0; }
+            .print-wrap { width: 100%; }
+            table { border-collapse: collapse; width: auto; }
+            th, td { border: 1px solid #ccc; padding: 4px 6px; font-size: 9px; white-space: nowrap; }
+            th { background: #f2f2f2; }
+        </style>
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>${title ? `Grade Matrix - ${title}` : 'Grade Matrix'}</title>
+                ${styles}
+            </head>
+            <body>
+                ${title ? `<div class="print-title">${title}</div>` : ''}
+                <div class="print-wrap" id="printWrap"></div>
+                <script>
+                    (function() {
+                        const wrap = document.getElementById('printWrap');
+                        const tableHtml = ${JSON.stringify(table.outerHTML)};
+                        wrap.innerHTML = tableHtml;
+
+                        const tbl = wrap.querySelector('table');
+                        if (!tbl) return;
+
+                        // Remove sticky positioning styles that make printing awkward
+                        tbl.querySelectorAll('[style]').forEach(el => {
+                            const style = el.getAttribute('style') || '';
+                            if (style.includes('position: sticky') || style.includes('position:sticky')) {
+                                el.style.position = '';
+                                el.style.left = '';
+                                el.style.top = '';
+                                el.style.zIndex = '';
+                            }
+                        });
+
+                        // Scale to fit single page width (landscape letter)
+                        const pageWidthIn = 11 - 1; // letter landscape width minus margins (~1in total)
+                        const dpi = 96;
+                        const availablePx = pageWidthIn * dpi;
+                        const tableWidth = tbl.scrollWidth || tbl.offsetWidth || 1;
+                        const scale = Math.min(1, availablePx / tableWidth);
+
+                        wrap.style.transformOrigin = 'top left';
+                        wrap.style.transform = 'scale(' + scale.toFixed(4) + ')';
+                        wrap.style.width = (100 / scale) + '%';
+
+                        window.focus();
+                        setTimeout(() => window.print(), 150);
+                    })();
+                <\/script>
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
 }
 
 
